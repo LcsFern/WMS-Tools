@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WYMS TOOLS</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .user-info {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      color: #90caf9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logout-btn {
+      background-color: #ff5252;
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      padding: 5px 12px;
+      font-size: 0.8em;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .logout-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const username = localStorage.getItem('username');
+    if (!username) {
+      window.location.href = 'login.htm';
+    }
+  </script>
+
+  <div class="user-info">
+    👋 Bem-vindo, <span id="userNameDisplay"></span>
+    <button class="logout-btn" onclick="logout()">Sair</button>
+  </div>
+
+  <div class="container">
+    <h1>WYMS TOOLS</h1>
+    <header>
+      <button onclick="loadPage('shelflife/shelf.htm')">Consulta de Shelf</button>
+      <button onclick="loadPage('monitordepicking/pickingnew.htm')">Pendências de Picking</button>
+    </header>
+    <iframe id="contentFrame" src="home.htm"></iframe>
+    <footer>
+      Feito por Lucas Fernandes<br>
+      <span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.62 10.79a15.091 15.091 0 006.59 6.59l2.2-2.2a1 1 0 011.11-.21 11.36 11.36 0 003.55.57 1 1 0 011 1V20a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.55 1 1 0 01-.21 1.11l-2.24 2.13z"/>
+        </svg>
+        47 99197 0281
+      </span><br>
+      <span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+        jlcs.fernandes@gmail.com
+      </span><br>
+      <a href="https://www.facebook.com/fernandes.lcas/" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M22 12a10 10 0 10-11.64 9.87v-6.99h-2.81v-2.88h2.81V9.41c0-2.78 1.66-4.32 4.2-4.32 1.22 0 2.49.22 2.49.22v2.74h-1.4c-1.38 0-1.81.86-1.81 1.74v2.09h3.08l-.49 2.88h-2.59v6.99A10 10 0 0022 12z"/>
+        </svg>
+        Facebook
+      </a>
+      <a href="https://www.instagram.com/jlsfoff/" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3h10zm-5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm4.5-.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+        </svg>
+        Instagram
+      </a>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('userNameDisplay').textContent = username;
+
+    function loadPage(page) {
+      document.getElementById('contentFrame').src = page;
+    }
+
+    function logout() {
+      localStorage.removeItem('username');
+      window.location.href = 'login.htm';
+    }
+  </script>
+</body>
+</html>
