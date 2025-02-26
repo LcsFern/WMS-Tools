@@ -6,26 +6,39 @@
   <title>Login - WYMS TOOLS</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    /* Ajusta o body para usar a imagem de fundo */
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #121212;
       margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      background: url('1001239598_x4.png') no-repeat center center;
+      background-size: cover;
+      position: relative; /* necessário para usar posicionamento absoluto dos filhos */
+      overflow: hidden;   /* opcional: remove barras de rolagem caso a imagem seja grande */
     }
+
+    /* Contêiner do formulário */
     .login-container {
-      background-color: #1e1e1e;
+      position: absolute;
+      /* Ajuste top e left conforme necessário para ficar “sobre a mesa” */
+      top: 80%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      
+      background-color: rgba(30, 30, 30, 0.027); /* um fundo semi-transparente para destacar o form */
       padding: 40px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.5);
       width: 300px;
     }
+
     .login-container h2 {
       text-align: center;
       margin-bottom: 20px;
       color: #90caf9;
     }
+
     .login-container input[type="password"] {
       width: 100%;
       padding: 10px;
@@ -33,6 +46,7 @@
       border: none;
       border-radius: 4px;
     }
+
     .login-container button {
       width: 100%;
       padding: 10px;
@@ -43,9 +57,11 @@
       font-size: 1em;
       cursor: pointer;
     }
+
     .login-container button:hover {
       background-color: #115293;
     }
+
     .error {
       color: #ff5252;
       text-align: center;
@@ -60,8 +76,30 @@
     <button onclick="login()">Entrar</button>
     <p id="errorMsg" class="error"></p>
   </div>
+  
   <script src="users.js"></script>
   <script>
+    function login() {
+      const password = document.getElementById('password').value;
+      if (users[password]) {
+        localStorage.setItem('username', users[password]);
+        window.location.href = 'index.htm';
+      } else {
+        document.getElementById('errorMsg').textContent = 'Senha incorreta!';
+      }
+    }
+  </script>
+  <script>
+    // Adiciona evento que "escuta" a tecla pressionada
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordField = document.getElementById('password');
+      passwordField.addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+          login();
+        }
+      });
+    });
+
     function login() {
       const password = document.getElementById('password').value;
       if (users[password]) {
