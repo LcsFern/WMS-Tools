@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "baixard.php", "use": "@vercel/php" }
+  ],
+  "routes": [
+    { "src": "/baixard.php", "dest": "baixar.php" }
+  ]
+}
