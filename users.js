@@ -5,5 +5,5 @@ const users = {
   "161322": "Guilherme",
   "637064": "Lucas",
   "423341": "Richard",
-  "adm": "adm"
+  "adm": "Lucas Fernandes"
 };
