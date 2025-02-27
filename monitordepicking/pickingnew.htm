@@ -102,6 +102,18 @@
       vertical-align: middle;
       margin-right: 4px;
     }
+    /* Estilos para a seção de atualização */
+    .update-section {
+      text-align: center;
+      margin: 20px 0;
+    }
+    #progressBar {
+      display: none;
+      width: 60%;
+      height: 10px;
+      border-radius: 5px;
+      margin: 10px auto;
+    }
   </style>
 </head>
 <body>
@@ -110,10 +122,18 @@
 
     <!-- Upload de Arquivo Local -->
     <input type="file" id="csvFile" accept=".csv" onchange="uploadLocalFile(event)">
+
     <!-- Importação via Conteúdo Copiado (Excel) -->
     <div style="text-align: center; margin-top: 20px;">
       <textarea id="csvContent" placeholder="Cole aqui o conteúdo do CSV copiado do Excel"></textarea>
       <button onclick="importCSVFromContent()">Importar via Conteúdo</button>
+    </div>
+
+    <!-- Seção para atualizar CSV via Cloudflare Worker -->
+    <div class="update-section">
+      <button onclick="atualizarCSV()">🔄 Atualizar CSV</button>
+      <br>
+      <progress id="progressBar" value="0" max="100"></progress>
     </div>
 
     <div id="results" style="display: none;">
@@ -156,7 +176,9 @@
       </div>
     </div>
   </div>
+  
   <script>
+    // Função de upload de arquivo local
     function uploadLocalFile(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -169,25 +191,58 @@
       reader.readAsText(file);
     }
 
-    async function importCSVFromLink() {
-      const url = document.getElementById('csvLink').value.trim();
-      if (!url) {
-        alert("Por favor, insira um link válido.");
-        return;
-      }
+    // Função para atualizar CSV via Cloudflare Worker
+    async function atualizarCSV() {
+      // URL do seu Cloudflare Worker
+      const url = "https://sparkling-smoke-4d7e.tjslucasvl.workers.dev/";
+      const progressBar = document.getElementById("progressBar");
+      progressBar.style.display = "block";
+      progressBar.value = 0;
       
       try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Erro ao carregar o CSV: ${response.statusText}`);
-        const csvData = await response.text();
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar o CSV: ${response.statusText}`);
+        }
+        
+        const contentLength = response.headers.get("Content-Length");
+        let csvData = "";
+        if (contentLength) {
+          const total = parseInt(contentLength, 10);
+          let loaded = 0;
+          const reader = response.body.getReader();
+          const chunks = [];
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            loaded += value.length;
+            progressBar.max = total;
+            progressBar.value = loaded;
+          }
+          const allChunks = new Uint8Array(loaded);
+          let position = 0;
+          for (let chunk of chunks) {
+            allChunks.set(chunk, position);
+            position += chunk.length;
+          }
+          csvData = new TextDecoder("utf-8").decode(allChunks);
+        } else {
+          csvData = await response.text();
+          progressBar.value = 100;
+        }
+        
         processCSVData(csvData);
-        document.getElementById('results').style.display = 'block';
+        document.getElementById("results").style.display = "block";
+        progressBar.style.display = "none";
       } catch (error) {
-        console.error('Erro ao carregar o CSV:', error);
+        console.error("Erro ao carregar o CSV:", error);
         alert("Erro ao carregar o CSV. Verifique o link.");
+        progressBar.style.display = "none";
       }
     }
 
+    // Função para importar CSV via conteúdo copiado
     function importCSVFromContent() {
       const content = document.getElementById('csvContent').value.trim();
       if (!content) {
@@ -198,6 +253,7 @@
       document.getElementById('results').style.display = 'block';
     }
 
+    // Função para processar o CSV e extrair dados
     function processCSVData(csvData) {
       const rows = csvData.split('\n');
       if (rows.length === 0) return;
@@ -221,6 +277,7 @@
       processData(data);
     }
 
+    // Função para processar os dados e atualizar as seções
     function processData(data) {
       const totals = {
         boxes: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
