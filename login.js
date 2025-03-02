@@ -8,7 +8,7 @@ function login() {
   // Verifica se a senha existe no objeto users (importado de users.js)
   if (users[password]) {
     localStorage.setItem('username', users[password]);
-    window.location.href = 'index.htm';
+    window.location.href = 'index.html';
   } else {
     document.getElementById('errorMsg').textContent = 'Senha incorreta!';
   }

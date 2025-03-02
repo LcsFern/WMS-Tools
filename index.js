@@ -4,7 +4,7 @@
  */
 const username = localStorage.getItem('username');
 if (!username) {
-  window.location.href = 'login.htm';
+  window.location.href = 'login.html';
 } else {
   document.getElementById('userNameDisplay').textContent = username;
 }
@@ -38,5 +38,5 @@ function loadPage(page) {
  */
 function logout() {
   localStorage.removeItem('username');
-  window.location.href = 'login.htm';
+  window.location.href = 'login.html';
 }
