@@ -1,0 +1,66 @@
+/* Estilos específicos para a página de login */
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  background: url('1001239598_x4.png') no-repeat center center;
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Container principal do formulário */
+.login-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgb(2 8 73 / 79%);
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  width: 300px;
+}
+
+/* Estilização do título */
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #048eff;
+}
+
+/* Campos de entrada */
+.login-container input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 4px;
+}
+
+/* Botão de login */
+.login-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Efeito hover no botão */
+.login-container button:hover {
+  background-color: #115293;
+}
+
+/* Mensagem de erro */
+.error {
+  color: #ff0505;
+  text-align: center;
+  margin-top: 10px;
+  min-height: 20px;
+}

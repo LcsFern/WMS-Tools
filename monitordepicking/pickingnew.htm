@@ -4,142 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitor de Picking CSV</title>
-  <style>
-    /* Estilos mantidos iguais */
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background-color: #121212;
-      color: #e0e0e0;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background-color: #1e1e1e;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-    h1 {
-      text-align: center;
-      color: #90caf9;
-      font-size: 2.2em;
-    }
-    input[type="file"] {
-      display: block;
-      margin: 20px auto;
-      padding: 12px 20px;
-      background: #1976d2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .section {
-      margin: 25px 0;
-      padding: 20px;
-      background: #2c2c2c;
-      border-radius: 8px;
-      border: 1px solid #444;
-    }
-    h2 {
-      color: #90caf9;
-      margin: 0 0 15px 0;
-      font-size: 1.5em;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0;
-    }
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border: 1px solid #444;
-    }
-    th {
-      background: #1976d2;
-      color: white;
-    }
-    tr:nth-child(even) {
-      background-color: #2a2a2a;
-    }
-    tr:hover {
-      background-color: #3a3a3a;
-    }
-    textarea {
-      display: block;
-      margin: 20px auto;
-      padding: 10px;
-      width: 60%;
-      height: 150px;
-      border-radius: 5px;
-      border: 1px solid #444;
-      background: #2c2c2c;
-      color: #e0e0e0;
-    }
-    button {
-      padding: 12px 20px;
-      background: #1976d2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #777;
-      font-size: 0.9em;
-    }
-    footer a {
-      color: inherit;
-      text-decoration: none;
-      margin-right: 10px;
-    }
-    footer svg {
-      vertical-align: middle;
-      margin-right: 4px;
-    }
-    /* Estilos para a seção de atualização */
-    .update-section {
-      text-align: center;
-      margin: 20px 0;
-    }
-    #progressBar {
-      display: none;
-      width: 60%;
-      height: 10px;
-      border-radius: 5px;
-      margin: 10px auto;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <h1>Monitor de Picking - Pendências</h1>
 
-    <!-- Upload de Arquivo Local -->
-    <input type="file" id="csvFile" accept=".csv" onchange="uploadLocalFile(event)">
-
-    <!-- Importação via Conteúdo Copiado (Excel) -->
-    <div style="text-align: center; margin-top: 20px;">
+    <input type="file" id="csvFile" accept=".csv">
+    
+    <div class="import-section">
       <textarea id="csvContent" placeholder="Cole aqui o conteúdo do CSV copiado do Excel"></textarea>
-      <button onclick="importCSVFromContent()">Importar via Conteúdo</button>
+      <button id="importContentBtn">Importar via Conteúdo</button>
     </div>
 
-    <!-- Seção para atualizar CSV via Cloudflare Worker -->
-    <div class="update-section">
-      <button onclick="atualizarCSV()">🔄 Atualizar CSV</button>
-      <br>
-      <progress id="progressBar" value="0" max="100"></progress>
-    </div>
-
-    <div id="results" style="display: none;">
+    <div id="results">
       <div class="section">
         <h2>Resumo Geral</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div class="summary-grid">
           <div>
             <h3>Caixas Faltando</h3>
             <table id="summaryBoxes"></table>
@@ -157,7 +38,6 @@
 
       <div class="section">
         <h2>Separadores Ativos</h2>
-        <!-- Contador de Separadores por Temperatura -->
         <div id="separatorCount"></div>
         <table id="activeSeparators">
           <thead>
@@ -176,211 +56,6 @@
       </div>
     </div>
   </div>
-  
-  <script>
-    // Função de upload de arquivo local
-    function uploadLocalFile(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const csvData = e.target.result;
-        processCSVData(csvData);
-        document.getElementById('results').style.display = 'block';
-      }
-      reader.readAsText(file);
-    }
-
-    // Função para atualizar CSV via Cloudflare Worker
-    async function atualizarCSV() {
-      // URL do seu Cloudflare Worker
-      const url = "https://sparkling-smoke-4d7e.tjslucasvl.workers.dev/";
-      const progressBar = document.getElementById("progressBar");
-      progressBar.style.display = "block";
-      progressBar.value = 0;
-      
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Erro ao carregar o CSV: ${response.statusText}`);
-        }
-        
-        const contentLength = response.headers.get("Content-Length");
-        let csvData = "";
-        if (contentLength) {
-          const total = parseInt(contentLength, 10);
-          let loaded = 0;
-          const reader = response.body.getReader();
-          const chunks = [];
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            loaded += value.length;
-            progressBar.max = total;
-            progressBar.value = loaded;
-          }
-          const allChunks = new Uint8Array(loaded);
-          let position = 0;
-          for (let chunk of chunks) {
-            allChunks.set(chunk, position);
-            position += chunk.length;
-          }
-          csvData = new TextDecoder("utf-8").decode(allChunks);
-        } else {
-          csvData = await response.text();
-          progressBar.value = 100;
-        }
-        
-        processCSVData(csvData);
-        document.getElementById("results").style.display = "block";
-        progressBar.style.display = "none";
-      } catch (error) {
-        console.error("Erro ao carregar o CSV:", error);
-        alert("Erro ao carregar o CSV. Verifique o link.");
-        progressBar.style.display = "none";
-      }
-    }
-
-    // Função para importar CSV via conteúdo copiado
-    function importCSVFromContent() {
-      const content = document.getElementById('csvContent').value.trim();
-      if (!content) {
-        alert("Por favor, cole o conteúdo do CSV.");
-        return;
-      }
-      processCSVData(content);
-      document.getElementById('results').style.display = 'block';
-    }
-
-    // Função para processar o CSV e extrair dados
-    function processCSVData(csvData) {
-      const rows = csvData.split('\n');
-      if (rows.length === 0) return;
-      
-      let delimiter = rows[0].includes('\t') ? '\t' : ';';
-      const headers = rows[0].split(delimiter).map(h => h.trim());
-      const data = [];
-
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i].trim() === '') continue;
-        const values = rows[i].split(delimiter);
-        if (values.length === headers.length) {
-          let obj = {};
-          headers.forEach((header, index) => {
-            obj[header] = values[index] ? values[index].trim() : '';
-          });
-          data.push(obj);
-        }
-      }
-
-      processData(data);
-    }
-
-    // Função para processar os dados e atualizar as seções
-    function processData(data) {
-      const totals = {
-        boxes: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
-        positions: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
-        loads: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 }
-      };
-
-      const activeSeparators = new Map();
-
-      data.forEach(row => {
-        const temp = row['TEMPERATURA'];
-        const tipoPeso = row['TIPO DO PESO'];
-        const caixas = parseInt(row['CAIXAS']) || 0;
-        const posicao = parseInt(row['POSIÇÃO']) || 0;
-        const usuarioAlocacao = row['USUÁRIO DE ALOCAÇÃO'];
-        const progress = parseFloat((row['PERCENTUAL'] || '0').replace(',', '.')) || 0;
-
-        if (usuarioAlocacao === '-' && (tipoPeso === 'FIXO' || tipoPeso === 'VARIÁVEL') && caixas > 0 && posicao > 0) {
-          if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
-            totals.boxes[temp] += caixas;
-            totals.positions[temp] += posicao;
-          }
-        }
-
-        if (usuarioAlocacao === '-' && tipoPeso === 'FIXO' && caixas > 0 && posicao > 0) {
-          if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
-            totals.loads[temp] += 1;
-            totals.loads.Total += 1;
-          }
-        }
-
-        if (progress < 100 && row['SEPARADOR'] && row['SEPARADOR'].trim() !== '') {
-          const oe = row['OE / VIAGEM'] && row['OE / VIAGEM'].trim() !== '' ? row['OE / VIAGEM'].trim() : 'N/A';
-          const key = `${row['SEPARADOR']}|${temp}|${oe}`;
-          
-          if (!activeSeparators.has(key)) {
-            activeSeparators.set(key, {
-              separador: row['SEPARADOR'],
-              camara: temp || 'N/A',
-              oe: oe,
-              caixas: caixas,
-              posicao: posicao,
-              progresso: progress.toFixed(1),
-              caixasFaltando: Math.ceil(caixas * (100 - progress) / 100),
-              posicoesFaltando: Math.ceil(posicao * (100 - progress) / 100)
-            });
-          } else {
-            let existing = activeSeparators.get(key);
-            existing.caixas += caixas;
-            existing.posicao += posicao;
-            existing.progresso = Math.max(parseFloat(existing.progresso), progress).toFixed(1);
-            existing.caixasFaltando = Math.ceil(existing.caixas * (100 - parseFloat(existing.progresso)) / 100);
-            existing.posicoesFaltando = Math.ceil(existing.posicao * (100 - parseFloat(existing.progresso)) / 100);
-            activeSeparators.set(key, existing);
-          }
-        }
-      });
-
-      totals.boxes.Total = totals.boxes.CONGELADO + totals.boxes.RESFRIADO;
-      totals.positions.Total = totals.positions.CONGELADO + totals.positions.RESFRIADO;
-
-      updateSummaryTable('summaryBoxes', totals.boxes);
-      updateSummaryTable('summaryPositions', totals.positions);
-      updateSummaryTable('summaryLoads', totals.loads);
-
-      let sortedSeparators = Array.from(activeSeparators.values())
-        .sort((a, b) => parseFloat(b.progresso) - parseFloat(a.progresso));
-      updateActiveSeparators(sortedSeparators);
-    }
-
-    function updateSummaryTable(elementId, data) {
-      const table = document.getElementById(elementId);
-      table.innerHTML = `
-        <tr><th>Temperatura</th><th>Quantidade</th></tr>
-        <tr><td>CONGELADO</td><td>${data.CONGELADO}</td></tr>
-        <tr><td>RESFRIADO</td><td>${data.RESFRIADO}</td></tr>
-        <tr><td><strong>Total</strong></td><td><strong>${data.Total}</strong></td></tr>
-      `;
-    }
-
-    function updateActiveSeparators(separators) {
-      const tbody = document.getElementById('activeSeparatorsBody');
-      tbody.innerHTML = separators.length > 0 ?
-        separators.map(sep => `
-          <tr>
-            <td>${sep.separador}</td>
-            <td>${sep.caixas}</td>
-            <td>${sep.caixasFaltando}</td>
-            <td>${sep.posicao}</td>
-            <td>${sep.oe}</td>
-            <td>${sep.progresso}%</td>
-            <td>${sep.camara}</td>
-          </tr>
-        `).join('') :
-        `<tr><td colspan="7">Nenhum separador ativo no momento</td></tr>`;
-
-      const countCongelado = separators.filter(sep => sep.camara === 'CONGELADO').length;
-      const countResfriado = separators.filter(sep => sep.camara === 'RESFRIADO').length;
-      const separatorCountElem = document.getElementById('separatorCount');
-      if (separatorCountElem) {
-        separatorCountElem.innerHTML = `<p>Separadores - CONGELADO: ${countCongelado}, RESFRIADO: ${countResfriado}</p>`;
-      }
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
