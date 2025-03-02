@@ -6666,3 +6666,9 @@ const products = [
   { code: "994694", name: "PERNA GRILLER", validity: 365 },
   { code: "991550", name: "KIT24 ESP DEMILLUS", validity: 365 }
 ];
+function autocompleteProduct() {
+  console.log("Products:", products); // Verifique se products existe
+  if (!products) {
+      console.error("Variável products não definida!");
+  }
+}
