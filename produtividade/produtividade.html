@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Ranking de Produtividade dos Separadores</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Ranking de Produtividade dos Separadores</h1>
+    <p>Copie e cole o conteúdo dos arquivos CSV nos campos abaixo e, em seguida, clique em "Calcular Ranking".</p>
+    
+    <label for="historicoInput">Conteúdo do Arquivo Histórico Monitor de Picking do Dia</label>
+    <textarea id="historicoInput" rows="8" placeholder="Cole aqui o conteúdo do arquivo histórico monitor de picking" style="height: 35px;"></textarea>
+    
+    <label for="monitorInput">Conteúdo do Arquivo Monitor Picking do Dia</label>
+    <textarea id="monitorInput" rows="8" placeholder="Cole aqui o conteúdo do arquivo monitor de picking" style="height: 35px;"></textarea>
+    
+    <button id="calcularBtn">Calcular Ranking</button>
+    
+    <div id="resultado"></div>
+  </div>
+  
+  
+  <script src="script.js"></script>
+</body>
+</html>
