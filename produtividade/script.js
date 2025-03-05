@@ -151,7 +151,7 @@ function calcularRanking() {
   html += '<thead><tr><th>Rank</th><th>Separador</th><th>Visitas</th><th>Caixas Separadas</th></tr></thead><tbody>';
   rankingArray.forEach((item, index) => {
     html += '<tr>';
-    html += `<td>${index + 1}</td>`;
+    html += `<td>${index + 1°}</td>`;
     html += `<td>${item.separador}</td>`;
     html += `<td>${item.visitas}</td>`;
     html += `<td>${item.caixasEfetivas}</td>`;
