@@ -152,7 +152,7 @@ function calcularRanking() {
           <th>Separador</th>
           <th>Cargas Separadas</th>
           <th>Peso Separado</th>
-          <th>Visitas</th>
+          <th>Visitas Picking</th>
           <th>Caixas Separadas</th>
         </tr>
       </thead>
