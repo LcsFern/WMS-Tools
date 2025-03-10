@@ -16,7 +16,7 @@
 
 .home-container h2 {
   font-size: 2.5rem;
-  background: linear-gradient(45deg, #7c3aed, #6366f1);
+  background: linear-gradient(45deg, #00a65a, #008d4c);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -61,8 +61,8 @@
 
 /* Mantenha estas variáveis no topo do arquivo */
 :root {
-  --primary: #7c3aed;
-  --secondary: #6366f1;
+  --primary: #00a65a;
+  --secondary: #008d4c;
   --accent: #00f7ff;
   --background: #0f172a;
   --glass: rgba(255, 255, 255, 0.05);

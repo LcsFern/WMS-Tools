@@ -1,7 +1,7 @@
 /* styles.css completo e funcional */
 :root {
-  --primary: #7c3aed;
-  --secondary: #6366f1;
+  --primary: #008d4c;
+  --secondary: #00a65a;
   --accent: #00f7ff;
   --background: #0f172a;
   --glass: rgba(255, 255, 255, 0.05);
@@ -133,7 +133,7 @@ tr:hover {
 .import-section textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+  box-shadow: 0 0 0 3px rgba(64, 237, 58, 0.2);
 }
 
 button {

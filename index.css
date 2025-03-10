@@ -1,8 +1,8 @@
 /* index.css */
 /* Variáveis CSS Modernas */
 :root {
-  --primary: #7c3aed;
-  --secondary: #6366f1;
+  --primary: #008d4c;
+  --secondary: #00a65a;
   --accent: #00f7ff;
   --background: #0f172a;
   --glass: rgba(255, 255, 255, 0.05);
@@ -67,7 +67,7 @@ body {
 .container button {
   /* Estilo Base Original */
   padding: 15px 30px;
-  background-color: #1976d2;
+  background-color: #44d219;
   border: none;
   border-radius: 8px;
   color: white;
