@@ -1,42 +1,41 @@
-/**
- * Verifica autenticação do usuário
- * Redireciona para login se não autenticado
- */
-const username = localStorage.getItem('username');
-if (!username) {
-  window.location.href = 'login.html';
-} else {
-  document.getElementById('userNameDisplay').textContent = username;
-}
+  // Verifica autenticação do usuário
+    const username = localStorage.getItem('username');
+    if (!username) {
+      window.location.href = 'login.html';
+    } else {
+      document.getElementById('userNameDisplay').textContent = username;
+    }
 
-/**
- * Configurações de Event Listeners
- */
-document.addEventListener('DOMContentLoaded', () => {
-  // Botões de navegação
-  document.querySelectorAll('header button').forEach(button => {
-    button.addEventListener('click', () => {
-      loadPage(button.dataset.page);
+    // Seleciona todos os botões de navegação
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const contentFrame = document.getElementById('contentFrame');
+
+    // Função para carregar a página e atualizar o botão ativo
+    function loadPage(page, clickedButton) {
+      contentFrame.src = page;
+      navButtons.forEach(btn => btn.classList.remove('active'));
+      clickedButton.classList.add('active');
+    }
+
+    // Configura event listeners para cada botão de navegação
+    navButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        loadPage(button.dataset.page, button);
+      });
     });
-  });
 
-  // Botão de logout
-  document.querySelector('.logout-btn').addEventListener('click', logout);
-});
+    // Realiza logout
+    document.querySelector('.logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('username');
+      window.location.href = 'login.html';
+    });
 
-/**
- * Carrega página no iframe
- * @param {string} page - Caminho da página a ser carregada
- */
-function loadPage(page) {
-  document.getElementById('contentFrame').src = page;
-}
-
-/**
- * Realiza logout do sistema
- * Remove dados do localStorage e redireciona
- */
-function logout() {
-  localStorage.removeItem('username');
-  window.location.href = 'login.html';
-}
+    // Opcional: Destaca o botão correspondente à página carregada inicialmente (se necessário)
+    window.addEventListener('DOMContentLoaded', () => {
+      const initialPage = contentFrame.src;
+      navButtons.forEach(button => {
+        if (button.dataset.page === initialPage) {
+          button.classList.add('active');
+        }
+      });
+    });

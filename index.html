@@ -9,74 +9,41 @@
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
-  <!-- User Info Mantido Igual + Melhorias Visuais -->
-  <div class="user-info glass-box">
-    <div class="welcome-message">
-      👋 Bem-vindo, <span id="userNameDisplay" class="username-style"></span>
+   <!-- Top Bar com informações do usuário -->
+   <div class="top-bar">
+    <div class="user-info">
+      <i class="fas fa-user-circle fa-2x"></i>
+      <span class="welcome-message">Olá, <span id="userNameDisplay"></span></span>
     </div>
-    <button class="logout-btn neon-hover">
+    <button class="logout-btn">
       <i class="fas fa-sign-out-alt"></i> Sair
     </button>
   </div>
 
-  <!-- Container Principal Mantido -->
+  <!-- Container Principal com Sidebar e Iframe -->
   <div class="container">
-    <!-- Título com Gradiente Moderno -->
-    <h1 class="modern-title">WYMS <span>TOOLS</span></h1>
-    
-    <!-- Header Original com Estilização Aprimorada -->
-    <header class="nav-grid">
+    <!-- Sidebar de Navegação -->
+    <div class="sidebar">
       <button class="nav-btn" data-page="shelflife/shelf.html">
-        <i class="fas fa-box-open icon-btn"></i>
+        <i class="fas fa-box-open"></i>
         Consulta de Shelf
       </button>
       <button class="nav-btn" data-page="monitordepicking/pickingnew.html">
-        <i class="fas fa-tasks icon-btn"></i>
+        <i class="fas fa-tasks"></i>
         Pendências de Picking
       </button>
       <button class="nav-btn" data-page="produtividade/produtividade.html">
-        <i class="fas fa-chart-line icon-btn"></i>
+        <i class="fas fa-chart-line"></i>
         Produtividade
       </button>
-    </header>
-    <style>
-      iframe {
-        width: 200px;
-        height: 15%; /* Adjust the height as needed */
-        border: none;
-        overflow: hidden;
-      }
-    </style>
-    <!-- Iframe Mantido Igual com Borda Moderna -->
-    <iframe id="contentFrame" class="modern-frame" src="home.html"></iframe>
+    </div>
 
-    <!-- Footer Original Aprimorado -->
-    <footer class="modern-footer">
-      <div class="footer-content">
-        <div class="contact-section">
-          <span class="contact-item">
-            <i class="fas fa-phone-alt"></i>
-            47 99197 0281
-          </span>
-            <span class="contact-item"></span>
-            <a href="mailto:jlcs.fernandes@gmail.com"><i class="fas fa-envelope"></i>
-            </a>
-            </span>
-        </div>
-        <div class="social-links">
-          <a href="https://www.facebook.com/fernandes.lcas/" target="_blank" class="social-link">
-            <i class="fab fa-facebook-f"></i>
-          </a>
-          <a href="https://www.instagram.com/jlsfoff/" target="_blank" class="social-link">
-            <i class="fab fa-instagram"></i>
-          </a>
-        </div>
-      </div>
-      <p class="credits">Feito por Lucas Fernandes</p>
-    </footer>
+    <!-- Área do Iframe -->
+    <div class="iframe-container">
+      <iframe id="contentFrame" class="modern-frame" src="home.html"></iframe>
+    </div>
   </div>
 
-  <!-- Script Original Mantido -->
   <script src="index.js"></script>
 </body>
 </html>
