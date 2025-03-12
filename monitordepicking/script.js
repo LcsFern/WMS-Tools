@@ -1,4 +1,3 @@
-document.getElementById('csvFile').addEventListener('change', uploadLocalFile);
 document.getElementById('importContentBtn').addEventListener('click', importCSVFromContent);
 
 function uploadLocalFile(event) {
@@ -9,7 +8,7 @@ function uploadLocalFile(event) {
   reader.onload = function(e) {
     processCSVData(e.target.result);
     document.getElementById('results').style.display = 'block';
-  }
+  };
   reader.readAsText(file);
 }
 
@@ -31,7 +30,7 @@ function processCSVData(csvData) {
   for (let i = 1; i < rows.length; i++) {
     const values = rows[i].split(delimiter);
     if (values.length === headers.length) {
-      const rowObject = {};
+      const rowObject = {}; 
       headers.forEach((header, index) => {
         rowObject[header] = values[index]?.trim() || '';
       });
@@ -76,8 +75,8 @@ function processData(data) {
       totals.loads[temp === 'CONGELADO' || temp === 'RESFRIADO' ? temp : 'Total']++;
     }
 
-    if (progress < 100 && row['SEPARADOR']?.trim()) {
-      const oe = row['OE / VIAGEM']?.trim() || 'N/A';
+    if (progress < 100 && row['SEPARADOR'] && row['SEPARADOR'].trim()) {
+      const oe = (row['OE / VIAGEM'] && row['OE / VIAGEM'].trim()) || 'N/A';
       const key = `${row['SEPARADOR']}|${temp}|${oe}`;
       
       if (!activeSeparators.has(key)) {

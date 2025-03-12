@@ -118,7 +118,7 @@ tr:hover {
   display: block;
   width: 100%;
   max-width: 600px;
-  min-height: 120px;
+  max-height: 30px;
   margin: 1.5rem auto;
   padding: 1.2rem;
   border-radius: 12px;

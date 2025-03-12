@@ -16,7 +16,7 @@
     
     <p class="instruction-text">Cole os conteúdos dos arquivos CSV nos campos abaixo:</p>
     
-    <!-- Cada textarea terá um evento para armazenar o conteúdo colado e, em seguida, mostrar "Conteúdo carregado" -->
+    <!-- Os textareas agora mantêm o conteúdo original (sem sobrescrever) -->
     <div class="input-group">
       <label for="historicoInput">
         <i class="fas fa-file-csv"></i>
@@ -30,7 +30,7 @@
         <i class="fas fa-file-csv"></i>
         Monitor Picking do Dia
       </label>
-      <textarea id="monitorInput" placeholder="Cole o conteúdo do monitor aqui..." style="width: 760px; height: 32px;""></textarea>
+      <textarea id="monitorInput" placeholder="Cole o conteúdo do monitor aqui..." style="width: 760px; height: 32px;"></textarea>
     </div>
 
     <div class="input-group">
@@ -38,18 +38,23 @@
         <i class="fas fa-file-csv"></i>
         Arquivo Controle de Peso
       </label>
-      <textarea id="producaoInput" placeholder="Cole o conteúdo do arquivo Controle de peso aqui..." style="width: 760px; height: 32px;""></textarea>
+      <textarea id="producaoInput" placeholder="Cole o conteúdo do arquivo Controle de peso aqui..." style="width: 760px; height: 32px;"></textarea>
     </div>
 
     <button id="calcularBtn">
       <i class="fas fa-calculator"></i>
       Calcular Ranking
     </button>
+    <button id="resetBtn">
+      <i class="fas fa-undo"></i>
+      Resetar Dados
+    </button>
 
     <div id="resultado">
       <!-- Resultados serão inseridos aqui -->
     </div>
   </div>
+
 
   <script src="script.js"></script>
 </body>
