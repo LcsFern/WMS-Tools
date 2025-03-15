@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Monitor de Expedição</title>
+  <!-- Importando Font Awesome para os ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css">
+  <!-- Importando jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fa-solid fa-truck"></i> Monitor de Expedição</h1>
+    
+    <!-- Seção para a Grade (Excel) -->
+    <div class="section" id="gradeSection">
+      <h2><i class="fa-solid fa-file-import"></i> Cole a Grade Limpa (Excel):</h2>
+      <textarea id="excelData" placeholder="Cole a grade aqui..."></textarea>
+      <button id="btnGrade" onclick="processarGrade()">
+        <i class="fa-solid fa-arrow-right"></i> Processar Grade
+      </button>
+    </div>
+    
+    <!-- Seção para o CSV -->
+    <div class="section hidden" id="csvSection">
+      <h2><i class="fa-solid fa-file-csv"></i> Cole o Painel de Expedição (CSV):</h2>
+      <textarea id="csvData" placeholder="Cole o painel aqui..."></textarea>
+      <button id="btnCSV" onclick="processarCSV()">
+        <i class="fa-solid fa-arrow-right"></i> Processar Painel
+      </button>
+    </div>
+    
+    <!-- Botões de ação -->
+    <div class="import-section">
+      <button id="resetBtn" class="hidden" onclick="resetTudo()">
+        <i class="fa-solid fa-arrows-rotate"></i> Resetar Tudo
+      </button>
+      <button id="resetCsvBtn" class="hidden" onclick="resetCSV()">
+        <i class="fa-solid fa-rotate-right"></i> Resetar CSV
+      </button>
+      <button id="exportBtn" class="hidden" onclick="exportarPDF()">
+        <i class="fa-solid fa-file-pdf"></i> Exportar para PDF
+      </button>
+    </div>
+    
+    <!-- Seção para exibir a tabela -->
+    <div class="section hidden" id="tabelaContainer"></div>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
