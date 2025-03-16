@@ -13,7 +13,7 @@ document.getElementById('csvContent').addEventListener('paste', function(e) {
   }, 100);
 });
 
-// Toggle para a seção "TIPO DE CARGA" – alterna apenas a tabela, não o título com o botão
+// Toggle para a seção "TIPO DE CARGA PENDENTE" – alterna apenas a tabela, não o título com o botão
 document.addEventListener('DOMContentLoaded', function() {
   const toggleEmptyBtn = document.getElementById('toggleEmptyLoads');
   toggleEmptyBtn.addEventListener('click', function() {
@@ -76,7 +76,7 @@ function processCSVData(csvData) {
       });
       data.push(rowObject);
       
-      // Se for carga do tipo FIXO ou VARIÁVEL, com progresso < 100, PRIORIDADE definida (<= 50)
+      // Se for carga do tipo FIXO ou VARIÁVEL, com progresso < 100 e prioridade definida (<= 50)
       if (
         (rowObject['TIPO DO PESO'] === 'FIXO' || rowObject['TIPO DO PESO'] === 'VARIÁVEL') &&
         rowObject['PERCENTUAL'] &&
@@ -107,19 +107,12 @@ function detectDelimiter(firstRow) {
   return ',';
 }
 
+// Função atualizada para processar os dados, agora também calculando os totais para "Resumo Geral"
 function processData(data) {
-  // Totais do coletor (usuário = '-') para FIXO e VARIÁVEL
-  const collectorTotals = {
-    boxes: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
-    positions: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
-    loads: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 }
-  };
-
-  // Faltantes calculados apenas para os separadores ativos (vazios)
-  const missingSeparators = {
-    boxes: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
-    positions: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 },
-    loads: { "CONGELADO": 0, "RESFRIADO": 0, Total: 0 }
+  let totals = {
+    boxes: { CONGELADO: 0, RESFRIADO: 0, Total: 0 },
+    positions: { CONGELADO: 0, RESFRIADO: 0, Total: 0 },
+    loads: { CONGELADO: 0, RESFRIADO: 0, Total: 0 }
   };
 
   const activeSeparators = new Map();
@@ -132,15 +125,17 @@ function processData(data) {
     const usuarioAlocacao = row['USUÁRIO DE ALOCAÇÃO'];
     const progress = parseFloat((row['PERCENTUAL'] || '0').replace(',', '.')) || 0;
 
-    // Acumula totais do coletor (usuário = '-') para FIXO e VARIÁVEL
+    // Acumula totais para Resumo Geral (apenas para o coletor, usuário = '-')
     if (usuarioAlocacao === '-' && (tipoPeso === 'FIXO' || tipoPeso === 'VARIÁVEL') && caixas > 0 && posicao > 0) {
       if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
-        collectorTotals.boxes[temp] += caixas;
-        collectorTotals.positions[temp] += posicao;
+        totals.boxes[temp] += caixas;
+        totals.positions[temp] += posicao;
       }
     }
     if (usuarioAlocacao === '-' && tipoPeso === 'FIXO' && caixas > 0 && posicao > 0) {
-      collectorTotals.loads[temp === 'CONGELADO' || temp === 'RESFRIADO' ? temp : 'Total']++;
+      if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
+        totals.loads[temp] += 1;
+      }
     }
 
     // Processa separadores ativos (com progresso < 100 e nome definido)
@@ -155,77 +150,30 @@ function processData(data) {
           oe: oe,
           caixas: caixas,
           posicao: posicao,
-          progresso: progress,
-          caixasFaltando: Math.ceil(caixas * (100 - progress) / 100),
-          posicoesFaltando: Math.ceil(posicao * (100 - progress) / 100),
-          loads: (tipoPeso === 'FIXO' ? 1 : 0)
+          progresso: progress
         });
-        activeSeparators.get(key).loadsFaltando = Math.ceil(activeSeparators.get(key).loads * (100 - progress) / 100);
       } else {
         const existing = activeSeparators.get(key);
         existing.caixas += caixas;
         existing.posicao += posicao;
         existing.progresso = Math.max(existing.progresso, progress);
-        existing.caixasFaltando = Math.ceil(existing.caixas * (100 - existing.progresso) / 100);
-        existing.posicoesFaltando = Math.ceil(existing.posicao * (100 - existing.progresso) / 100);
-        if (tipoPeso === 'FIXO') {
-          existing.loads += 1;
-        }
-        existing.loadsFaltando = Math.ceil(existing.loads * (100 - existing.progresso) / 100);
       }
     }
   });
 
-  // Soma dos faltantes dos separadores ativos
-  activeSeparators.forEach(separator => {
-    const temp = separator.camara;
-    if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
-      missingSeparators.boxes[temp] += separator.caixasFaltando;
-      missingSeparators.positions[temp] += separator.posicoesFaltando;
-      missingSeparators.loads[temp] += separator.loadsFaltando;
-    }
-  });
-  missingSeparators.boxes.Total = missingSeparators.boxes.CONGELADO + missingSeparators.boxes.RESFRIADO;
-  missingSeparators.positions.Total = missingSeparators.positions.CONGELADO + missingSeparators.positions.RESFRIADO;
-  missingSeparators.loads.Total = missingSeparators.loads.CONGELADO + missingSeparators.loads.RESFRIADO;
+  totals.boxes.Total = totals.boxes.CONGELADO + totals.boxes.RESFRIADO;
+  totals.positions.Total = totals.positions.CONGELADO + totals.positions.RESFRIADO;
+  totals.loads.Total = totals.loads.CONGELADO + totals.loads.RESFRIADO;
 
-  // Totais do coletor
-  collectorTotals.boxes.Total = collectorTotals.boxes.CONGELADO + collectorTotals.boxes.RESFRIADO;
-  collectorTotals.positions.Total = collectorTotals.positions.CONGELADO + collectorTotals.positions.RESFRIADO;
-  collectorTotals.loads.Total = collectorTotals.loads.CONGELADO + collectorTotals.loads.RESFRIADO;
-
-  // Versão "incluindo coletor": para caixas e posições somamos os totais do coletor (sem desconto de progresso)
-  const totalsIncludingCollector = {
-    boxes: {
-      CONGELADO: missingSeparators.boxes.CONGELADO + collectorTotals.boxes.CONGELADO,
-      RESFRIADO: missingSeparators.boxes.RESFRIADO + collectorTotals.boxes.RESFRIADO
-    },
-    positions: {
-      CONGELADO: missingSeparators.positions.CONGELADO + collectorTotals.positions.CONGELADO,
-      RESFRIADO: missingSeparators.positions.RESFRIADO + collectorTotals.positions.RESFRIADO
-    },
-    loads: {
-      CONGELADO: missingSeparators.loads.CONGELADO + collectorTotals.loads.CONGELADO,
-      RESFRIADO: missingSeparators.loads.RESFRIADO + collectorTotals.loads.RESFRIADO
-    }
-  };
-  totalsIncludingCollector.boxes.Total = totalsIncludingCollector.boxes.CONGELADO + totalsIncludingCollector.boxes.RESFRIADO;
-  totalsIncludingCollector.positions.Total = totalsIncludingCollector.positions.CONGELADO + totalsIncludingCollector.positions.RESFRIADO;
-  totalsIncludingCollector.loads.Total = totalsIncludingCollector.loads.CONGELADO + totalsIncludingCollector.loads.RESFRIADO;
-
-  // Atualiza as tabelas de resumo:
-  updateSummaryTable('summaryBoxes', missingSeparators.boxes);
-  updateSummaryTable('summaryPositions', missingSeparators.positions);
-  updateSummaryTable('summaryLoads', missingSeparators.loads);
-  updateSummaryTable('summaryBoxesCollector', totalsIncludingCollector.boxes);
-  updateSummaryTable('summaryPositionsCollector', totalsIncludingCollector.positions);
-  updateSummaryTable('summaryLoadsCollector', totalsIncludingCollector.loads);
+  updateSummaryTable('summaryBoxes', totals.boxes);
+  updateSummaryTable('summaryPositions', totals.positions);
+  updateSummaryTable('summaryLoads', totals.loads);
 
   const sortedSeparators = Array.from(activeSeparators.values()).sort((a, b) => b.progresso - a.progresso);
   updateActiveSeparators(sortedSeparators);
 }
 
-// Atualiza as tabelas de resumo gerais
+// Atualiza as tabelas de resumo geral
 function updateSummaryTable(elementId, data) {
   document.getElementById(elementId).innerHTML = `
     <tr><th>Temperatura</th><th>Quantidade</th></tr>
@@ -242,7 +190,7 @@ function updateActiveSeparators(separators) {
       <tr>
         <td>${sep.separador}</td>
         <td>${sep.caixas}</td>
-        <td>${sep.caixasFaltando}</td>
+        <td>${Math.ceil(sep.caixas * (100 - sep.progresso) / 100)}</td>
         <td>${sep.posicao}</td>
         <td>${sep.oe}</td>
         <td>${sep.progresso}%</td>
@@ -257,9 +205,8 @@ function updateActiveSeparators(separators) {
     `<p>Separadores - CONGELADO: ${countCongelado}, RESFRIADO: ${countResfriado}</p>`;
 }
 
-// Atualiza a tabela da seção "TIPO DE CARGA"
-// Agrupa por OE, GRUPO, TIPO DE OPERAÇÃO e TEMPERATURA,
-// ordena por prioridade (ascendente) e aplica os destaques com base na diferença percentual da média.
+// Atualiza a tabela da seção "Tipo de Carga Pendente"
+// Agrupa por OE, GRUPO, TIPO DE OPERAÇÃO e TEMPERATURA, ordena por prioridade (ascendente) e aplica destaques
 function updateEmptyLoads(emptyLoads) {
   const tbody = document.querySelector('#emptyLoadsTable tbody');
   tbody.innerHTML = '';
@@ -303,10 +250,6 @@ function updateEmptyLoads(emptyLoads) {
   const mediaPosicao = totalPosicao / groups.length;
   
   groups.forEach(group => {
-    // Para "Caixas": 
-    // - se acima da média (muitas caixas) -> vermelho proporcional à % acima;
-    // - se abaixo da média (poucas caixas) -> verde proporcional à % abaixo;
-    // - se próximo, sem cor.
     let caixasStyle = '';
     if (group.caixas > mediaCaixas) {
       let diffPercent = (group.caixas - mediaCaixas) / mediaCaixas;      
@@ -316,10 +259,6 @@ function updateEmptyLoads(emptyLoads) {
       caixasStyle = `background: rgba(0,255,0,${Math.min(diffPercent, 1)})`;
     }
     
-    // Para "Posição": 
-    // - se abaixo da média (poucas posições) -> verde proporcional à % abaixo;
-    // - se acima da média (muitas posições) -> vermelho proporcional à % acima;
-    // - se próximo, sem cor.
     let posicaoStyle = '';
     if (group.posicao < mediaPosicao) {
       let diffPercent = (mediaPosicao - group.posicao) / mediaPosicao;
@@ -329,7 +268,6 @@ function updateEmptyLoads(emptyLoads) {
       posicaoStyle = `background: rgba(255,0,0,${Math.min(diffPercent, 1)})`;
     }
     
-    // Prioridade: se menor que 10, destacar em verde
     let prioridadeStyle = '';
     if (group.prioridade < 10) {
       prioridadeStyle = 'color: green; font-weight: bold;';
@@ -378,11 +316,8 @@ function addResetButton() {
 
 function resetSummaryTables() {
   document.getElementById('summaryBoxes').innerHTML = '';
-  document.getElementById('summaryBoxesCollector').innerHTML = '';
   document.getElementById('summaryPositions').innerHTML = '';
-  document.getElementById('summaryPositionsCollector').innerHTML = '';
   document.getElementById('summaryLoads').innerHTML = '';
-  document.getElementById('summaryLoadsCollector').innerHTML = '';
   document.getElementById('separatorCount').innerHTML = '';
   document.getElementById('activeSeparatorsBody').innerHTML = '';
   document.querySelector('#emptyLoadsTable tbody').innerHTML = '';

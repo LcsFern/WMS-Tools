@@ -78,6 +78,13 @@ h2 {
   gap: 0.8rem;
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -137,7 +144,7 @@ tr:hover {
 }
 
 button {
-  padding: 1.2rem 2.4rem;
+  padding: 0.6rem 0.6rem;
   background: linear-gradient(45deg, var(--primary), var(--secondary));
   color: white;
   border: none;
@@ -153,13 +160,6 @@ button {
 button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin: 2rem 0;
 }
 
 #results {

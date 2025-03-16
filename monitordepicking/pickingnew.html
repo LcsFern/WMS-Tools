@@ -23,38 +23,39 @@
     </div>
 
     <div id="results">
-      <div class="section">
+      <!-- Seção: Resumo Geral -->
+      <div class="section" id="resumoGeralSection">
         <h2>
           <i class="fas fa-chart-pie"></i>
           Resumo Geral
         </h2>
         <div class="summary-grid">
           <div>
-            <h3><i class="fas fa-box-open"></i> Caixas Faltando</h3>
+            <h3>
+              <i class="fas fa-boxes"></i>
+              Caixas Faltando</h3>
             <table id="summaryBoxes"></table>
-            <h3><i class="fas fa-box-open"></i> Caixas Faltando (incluindo coletor)</h3>
-            <table id="summaryBoxesCollector"></table>
           </div>
           <div>
-            <h3><i class="fas fa-map-marker-alt"></i> Posições Faltando</h3>
+            <h3>
+              <i class="fas fa-map-marker-alt"></i>
+              Posições Faltando</h3>
             <table id="summaryPositions"></table>
-            <h3><i class="fas fa-map-marker-alt"></i> Posições Faltando (incluindo coletor)</h3>
-            <table id="summaryPositionsCollector"></table>
           </div>
           <div>
-            <h3><i class="fas fa-pallet"></i> Cargas Faltando</h3>
+            <h3>
+              <i class="fas fa-pallet"></i>
+              Cargas Faltando</h3>
             <table id="summaryLoads"></table>
-            <h3><i class="fas fa-pallet"></i> Cargas Faltando (incluindo coletor)</h3>
-            <table id="summaryLoadsCollector"></table>
           </div>
         </div>
       </div>
 
-      <!-- NOVA SEÇÃO: TIPO DE CARGA -->
+      <!-- Seção: Tipo de Carga Pendente -->
       <div class="section" id="emptyLoadsSection">
         <h2>
           <i class="fas fa-truck-loading"></i>
-          TIPO DE CARGA
+          Tipo de Carga Pendente
           <button id="toggleEmptyLoads" style="margin-left:1rem;">Ocultar Seção</button>
         </h2>
         <table id="emptyLoadsTable">
@@ -72,7 +73,7 @@
         </table>
       </div>
 
-      <!-- SEÇÃO: Separadores Ativos com botão de ocultar/exibir -->
+      <!-- Seção: Separadores Ativos -->
       <div class="section" id="activeSeparatorsSection">
         <h2>
           <i class="fas fa-users-cog"></i>
