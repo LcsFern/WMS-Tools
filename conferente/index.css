@@ -63,8 +63,8 @@
   /* Caixa modernizada para colar dados */
   textarea {
     display: block;
-    width: 100%;
-    max-width: 100%;
+    width: 90%;
+    max-width: 90%;
     margin: 1.5rem auto;
     padding: 1.2rem;
     border-radius: 12px;

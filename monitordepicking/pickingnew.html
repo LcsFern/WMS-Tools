@@ -19,10 +19,7 @@
         id="csvContent" 
         placeholder="📋 Cole aqui o conteúdo do CSV copiado do Excel"
       ></textarea>
-      <button id="importContentBtn">
-        <i class="fas fa-file-import"></i>
-        Importar via Conteúdo
-      </button>
+      <!-- Botão "Importar via Conteúdo" removido -->
     </div>
 
     <div id="results">
@@ -35,22 +32,52 @@
           <div>
             <h3><i class="fas fa-box-open"></i> Caixas Faltando</h3>
             <table id="summaryBoxes"></table>
+            <h3><i class="fas fa-box-open"></i> Caixas Faltando (incluindo coletor)</h3>
+            <table id="summaryBoxesCollector"></table>
           </div>
           <div>
             <h3><i class="fas fa-map-marker-alt"></i> Posições Faltando</h3>
             <table id="summaryPositions"></table>
+            <h3><i class="fas fa-map-marker-alt"></i> Posições Faltando (incluindo coletor)</h3>
+            <table id="summaryPositionsCollector"></table>
           </div>
           <div>
             <h3><i class="fas fa-pallet"></i> Cargas Faltando</h3>
             <table id="summaryLoads"></table>
+            <h3><i class="fas fa-pallet"></i> Cargas Faltando (incluindo coletor)</h3>
+            <table id="summaryLoadsCollector"></table>
           </div>
         </div>
       </div>
 
-      <div class="section">
+      <!-- NOVA SEÇÃO: TIPO DE CARGA -->
+      <div class="section" id="emptyLoadsSection">
+        <h2>
+          <i class="fas fa-truck-loading"></i>
+          TIPO DE CARGA
+          <button id="toggleEmptyLoads" style="margin-left:1rem;">Ocultar Seção</button>
+        </h2>
+        <table id="emptyLoadsTable">
+          <thead>
+            <tr>
+              <th>OE / VIAGEM</th>
+              <th>Prioridade</th>
+              <th>Tipo de Operação</th>
+              <th>Temperatura</th>
+              <th>Caixas</th>
+              <th>Posição</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- SEÇÃO: Separadores Ativos com botão de ocultar/exibir -->
+      <div class="section" id="activeSeparatorsSection">
         <h2>
           <i class="fas fa-users-cog"></i>
           Separadores Ativos
+          <button id="toggleActiveSeparators" style="margin-left:1rem;">Ocultar Seção</button>
         </h2>
         <div id="separatorCount"></div>
         <table id="activeSeparators">
@@ -71,5 +98,6 @@
     </div>
   </div>
   <script src="script.js"></script>
+  <script src="aut.js"></script>
 </body>
 </html>

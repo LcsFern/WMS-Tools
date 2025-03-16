@@ -17,8 +17,8 @@
     <div class="section" id="gradeSection">
       <h2><i class="fa-solid fa-file-import"></i> Cole a Grade Limpa (Excel):</h2>
       <textarea id="excelData" placeholder="Cole a grade aqui..."></textarea>
-      <button id="btnGrade" onclick="processarGrade()">
-        <i class="fa-solid fa-arrow-right"></i> Processar Grade
+      <button id="btnGrade" style="display: none;" onclick="processarGrade()"></button>
+        <i class="fa-solid fa-arrow-right"></i> 
       </button>
     </div>
     
@@ -26,8 +26,8 @@
     <div class="section hidden" id="csvSection">
       <h2><i class="fa-solid fa-file-csv"></i> Cole o Painel de Expedição (CSV):</h2>
       <textarea id="csvData" placeholder="Cole o painel aqui..."></textarea>
-      <button id="btnCSV" onclick="processarCSV()">
-        <i class="fa-solid fa-arrow-right"></i> Processar Painel
+      <button id="btnCSV" style="display: none;"" onclick="processarCSV()">
+        <i class="fa-solid fa-arrow-right"></i>
       </button>
     </div>
     
@@ -49,5 +49,6 @@
   </div>
 
   <script src="index.js"></script>
+  <script src="aut.js"></script>
 </body>
 </html>
