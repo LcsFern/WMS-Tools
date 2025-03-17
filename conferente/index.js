@@ -248,7 +248,7 @@ function atualizarTabela() {
                 </tr>`;
   // Para cada OE, cria uma linha na tabela com os dados correspondentes
   dadosGrade.forEach(oe => {
-    const destaque = oe.PORCENTAGEM === 100 ? 'destacado' : '';
+    const destaque = oe.PORCENTAGEM >= 97 ? 'destacado' : '';
     const placas = Array.from(oe.PLACAS).map(placa => {
       const placaAntiga = placaAntigaMap.get(placa);
       return placaAntiga ? `${placa} (Nova: ${placaAntiga})` : placa;
@@ -272,10 +272,10 @@ function atualizarTabela() {
               </tr>`;
   });
   html += `</table>`;
-  // Atualiza o conteúdo da div 'tabelaContainer' e a torna visível
   document.getElementById('tabelaContainer').innerHTML = html;
   document.getElementById('tabelaContainer').classList.remove('hidden');
 }
+
 
 /**
  * Exporta os dados da grade para um arquivo PDF.
@@ -283,41 +283,55 @@ function atualizarTabela() {
  */
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
+  // Cria o documento em orientação "portrait" (vertical)
   const doc = new jsPDF({
-    orientation: 'landscape',
+    orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
     compress: true
   });
 
+  const pageWidth = doc.internal.pageSize.getWidth();   // ~210 mm
+  const pageHeight = doc.internal.pageSize.getHeight(); // ~297 mm
   const margin = 10;
+  const availableWidth = pageWidth - 2 * margin; // 190 mm disponível
   const startX = margin;
-  const startY = 20;
-  const colWidths = [20, 40, 40, 20, 20, 30, 20, 20];
-  const lineHeight = 7;
+  const startY = margin + 12; // Espaço para o título
+
+  // Definindo larguras para 8 colunas, totalizando 190 mm
+  const colWidths = [23, 42, 37, 14, 14, 28, 19, 13];
+  const headerHeight = 10;
   const cellPadding = 2;
-  
-  // Define o título do relatório
+  const lineHeight = 7;
+
+  // Título do relatório
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
   const title = `RELATÓRIO DE SEPARAÇÃO - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
-  doc.text(title, startX, startY - 5);
-  
-  // Cria os cabeçalhos da tabela no PDF
-  const headers = ["OE", "PLACAS", "DESTINO", "ENT", "CX", "PESO KG", "%", "PEGO"];
-  doc.setFontSize(10);
-  let currentX = startX;
-  const headerHeight = 10;
-  for (let i = 0; i < headers.length; i++) {
-    doc.rect(currentX, startY, colWidths[i], headerHeight);
-    doc.text(headers[i], currentX + cellPadding, startY + headerHeight / 2 + 3);
-    currentX += colWidths[i];
-  }
-  
-  // Adiciona as linhas de conteúdo para cada OE
+  doc.text(title, startX, margin + 5);
+
+// Cabeçalhos da tabela
+const headers = ["OE", "PLACAS", "DESTINO", "ENT", "CX", "PESO KG", "%", "PEGO"];
+doc.setFontSize(10);
+let currentX = startX;
+for (let i = 0; i < headers.length; i++) {
+  // Reconfigura o fundo para cada célula de cabeçalho
+  doc.setFillColor(200, 200, 200); // Cinza médio
+  doc.rect(currentX, startY, colWidths[i], headerHeight, 'F');
+  // Garante que o texto será renderizado em preto
+  doc.setTextColor(0, 0, 0);
+  // Texto centralizado na célula
+  doc.text(headers[i], currentX + colWidths[i] / 2, startY + headerHeight / 2 + 3, { align: 'center' });
+  currentX += colWidths[i];
+}
+
+
   let y = startY + headerHeight;
   doc.setFontSize(9);
+
   dadosGrade.forEach((oe) => {
+    // Conteúdo de cada coluna
     const content = [
       oe.OE,
       Array.from(oe.PLACAS).join(', '),
@@ -326,37 +340,62 @@ function exportarPDF() {
       oe.QTDE_CAIXAS,
       oe.PESO_PREVISTO.toLocaleString('pt-BR', { maximumFractionDigits: 2 }),
       oe.PORCENTAGEM.toFixed(1) + "%",
-      " " // Espaço reservado para um checkbox
+      " " // Espaço para a checkbox
     ];
+
+    // Calcula a altura da linha baseada no maior número de linhas necessárias
     let maxLines = 1;
-    // Determina a altura da linha com base na quantidade máxima de linhas necessárias para o texto
     for (let i = 0; i < content.length; i++) {
       const textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
       maxLines = Math.max(maxLines, textLines.length);
     }
     const rowHeight = maxLines * lineHeight + 2 * cellPadding;
-    // Adiciona nova página se a altura atual ultrapassar o limite
-    if (y + rowHeight > 200) {
+
+    // Se a linha ultrapassar a altura disponível, adiciona nova página com cabeçalho
+    if (y + rowHeight > pageHeight - margin) {
       doc.addPage();
-      y = startY;
+      y = margin;
       currentX = startX;
+      doc.setFillColor(200, 200, 200);
       for (let i = 0; i < headers.length; i++) {
-        doc.rect(currentX, y, colWidths[i], headerHeight);
-        doc.text(headers[i], currentX + cellPadding, y + headerHeight / 2 + 3);
+        doc.rect(currentX, y, colWidths[i], headerHeight, 'F');
+        doc.setTextColor(0, 0, 0);
+        doc.text(headers[i], currentX + colWidths[i] / 2, y + headerHeight / 2 + 3, { align: 'center' });
         currentX += colWidths[i];
       }
       y += headerHeight;
     }
     currentX = startX;
-    // Desenha cada célula com seu conteúdo
+    // Fundo branco para a linha
+    doc.setFillColor(255, 255, 255);
+    doc.rect(currentX, y, availableWidth, rowHeight, 'F');
+
+    // Desenha cada célula
     for (let i = 0; i < content.length; i++) {
+      // Para as colunas destacadas (OE, PLACAS e %), aplica fundo cinza claro
+      if (i === 0 || i === 1 || i === 6) {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(currentX, y, colWidths[i], rowHeight, 'F');
+        doc.setFont('helvetica', 'bold');
+      } else {
+        doc.setFont('helvetica', 'normal');
+      }
+      // Desenha a borda da célula
       doc.rect(currentX, y, colWidths[i], rowHeight);
+      // Força o texto a ser renderizado em preto
+      doc.setTextColor(0, 0, 0);
+      // Divide o conteúdo em linhas para caber na célula
       let textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
       for (let j = 0; j < textLines.length; j++) {
         let textY = y + cellPadding + (j + 1) * lineHeight - (lineHeight / 2);
-        doc.text(textLines[j], currentX + cellPadding, textY);
+        // Se for coluna destacada, centraliza; caso contrário, alinha à esquerda
+        if (i === 0 || i === 1 || i === 6) {
+          doc.text(textLines[j], currentX + colWidths[i] / 2, textY, { align: 'center' });
+        } else {
+          doc.text(textLines[j], currentX + cellPadding, textY);
+        }
       }
-      // Adiciona uma caixa de seleção na última coluna
+      // Na última coluna, desenha uma caixa para checkbox
       if (i === content.length - 1) {
         let boxSize = 6;
         let boxX = currentX + (colWidths[i] - boxSize) / 2;
@@ -367,18 +406,20 @@ function exportarPDF() {
     }
     y += rowHeight;
   });
-  
-  // Adiciona numeração de páginas
+
+  // Numeração de páginas no rodapé
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
-    doc.text(`Página ${i} de ${pageCount}`, margin, 205);
+    doc.text(`Página ${i} de ${pageCount}`, margin, pageHeight - 5);
   }
-  
+
   // Salva o PDF com um nome baseado na data/hora atual
   doc.save(`Separacao_${new Date().toISOString().slice(0, 16).replace(/[-T:]/g, '')}.pdf`);
 }
+
+
 
 /**
  * Copia o valor da OE para a área de transferência.

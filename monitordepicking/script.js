@@ -76,13 +76,15 @@ function processCSVData(csvData) {
       });
       data.push(rowObject);
       
-      // Se for carga do tipo FIXO ou VARIÁVEL, com progresso < 100 e prioridade definida (<= 50)
+      // Se for carga do tipo FIXO ou VARIÁVEL, com progresso < 100, prioridade definida (<= 50)
+      // e sem separador associado (campo "SEPARADOR" vazio), então inclui na lista de cargas pendentes.
       if (
         (rowObject['TIPO DO PESO'] === 'FIXO' || rowObject['TIPO DO PESO'] === 'VARIÁVEL') &&
         rowObject['PERCENTUAL'] &&
         parseFloat(rowObject['PERCENTUAL'].replace(',', '.')) < 100 &&
         rowObject['PRIORIDADE'] &&
-        parseInt(rowObject['PRIORIDADE']) <= 50
+        parseInt(rowObject['PRIORIDADE']) <= 50 &&
+        (!rowObject['SEPARADOR'] || rowObject['SEPARADOR'].trim() === '')
       ) {
         emptyLoads.push({
           oe: rowObject['OE / VIAGEM'] || 'N/A',
@@ -185,8 +187,30 @@ function updateSummaryTable(elementId, data) {
 
 function updateActiveSeparators(separators) {
   const tbody = document.getElementById('activeSeparatorsBody');
+  
+  // Carrega gradeExpedicao do localStorage para obter informações extras
+  let gradeExpedicao = localStorage.getItem('gradeExpedicao');
+  let gradeMap = {};
+  if (gradeExpedicao) {
+    try {
+      let gradeData = JSON.parse(gradeExpedicao);
+      if(gradeData && gradeData.dadosGrade) {
+        gradeData.dadosGrade.forEach(item => {
+          gradeMap[item.OE] = item;
+        });
+      }
+    } catch(e) {
+      console.error("Erro ao parsear gradeExpedicao", e);
+    }
+  }
+  
   tbody.innerHTML = separators.length > 0 ? 
-    separators.map(sep => `
+    separators.map(sep => {
+      let placa = '';
+      if(gradeMap[sep.oe]) {
+        placa = gradeMap[sep.oe].PLACAS && gradeMap[sep.oe].PLACAS.length > 0 ? gradeMap[sep.oe].PLACAS[0] : '';
+      }
+      return `
       <tr>
         <td>${sep.separador}</td>
         <td>${sep.caixas}</td>
@@ -195,9 +219,11 @@ function updateActiveSeparators(separators) {
         <td>${sep.oe}</td>
         <td>${sep.progresso}%</td>
         <td>${sep.camara}</td>
+        <td>${placa}</td>
       </tr>
-    `).join('') : 
-    `<tr><td colspan="7">Nenhum separador ativo no momento</td></tr>`;
+    `;
+    }).join('') : 
+    `<tr><td colspan="8">Nenhum separador ativo no momento</td></tr>`;
 
   const countCongelado = separators.filter(sep => sep.camara === 'CONGELADO').length;
   const countResfriado = separators.filter(sep => sep.camara === 'RESFRIADO').length;
@@ -212,8 +238,24 @@ function updateEmptyLoads(emptyLoads) {
   tbody.innerHTML = '';
 
   if(emptyLoads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">Nenhuma carga vazia encontrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Nenhuma carga vazia encontrada</td></tr>';
     return;
+  }
+
+  // Carrega gradeExpedicao do localStorage para obter informações extras
+  let gradeExpedicao = localStorage.getItem('gradeExpedicao');
+  let gradeMap = {};
+  if (gradeExpedicao) {
+    try {
+      let gradeData = JSON.parse(gradeExpedicao);
+      if(gradeData && gradeData.dadosGrade) {
+        gradeData.dadosGrade.forEach(item => {
+          gradeMap[item.OE] = item;
+        });
+      }
+    } catch(e) {
+      console.error('Erro ao parsear gradeExpedicao', e);
+    }
   }
 
   // Agrupa cargas por OE, GRUPO, TIPO DE OPERAÇÃO e TEMPERATURA
@@ -272,9 +314,18 @@ function updateEmptyLoads(emptyLoads) {
     if (group.prioridade < 10) {
       prioridadeStyle = 'color: green; font-weight: bold;';
     }
+
+    // Recupera informações extras do gradeMap com base no OE
+    let placa = '';
+    let destino = '';
+    if(gradeMap[group.oe]) {
+      placa = gradeMap[group.oe].PLACAS && gradeMap[group.oe].PLACAS.length > 0 ? gradeMap[group.oe].PLACAS[0] : '';
+      destino = gradeMap[group.oe].DESTINO || '';
+    }
     
     tbody.innerHTML += `
       <tr>
+        <td>${placa}</td>
         <td>
           ${group.oe} 
           <button onclick="copyToClipboard('${group.oe}')" title="Copiar OE" style="font-size:0.6rem; padding:0.2rem;">
@@ -286,6 +337,7 @@ function updateEmptyLoads(emptyLoads) {
         <td>${group.temperatura}</td>
         <td style="${caixasStyle}">${group.caixas}</td>
         <td style="${posicaoStyle}">${group.posicao}</td>
+        <td>${destino}</td>
       </tr>
     `;
   });
