@@ -194,8 +194,9 @@ function processarCSV() {
     const oeCSV = partes[3]?.trim();
     const pesoBruto = parsePeso(partes[9] || '0');
 
-    // Ignora linhas com status "CONFERIDO" ou com dados incompletos
+    // Ignora linhas com status "CONFERIDO ou ESPERANDO ERP FATURAR" ou com dados incompletos
     if (status === "CONFERIDO" || !placaCSV || !oeCSV) return;
+    if (status === "ESPERANDO ERP FATURAR" || !placaCSV || !oeCSV) return;
 
     // Verifica se há uma placa antiga registrada, caso contrário usa a placa atual
     const placaAntiga = placaAntigaMap.get(placaCSV) || placaCSV;
