@@ -2,23 +2,22 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<meta name="apple-mobile-web-app-title" content="WYMS Tools" />
-<link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="site.webmanifest" />  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WYMS TOOLS</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
    <!-- Top Bar com informações do usuário -->
    <div class="top-bar">
     <div class="user-info">
-      <i class="fas fa-user-circle fa-2x"></i>
+      <i class="fa-solid fa-address-card"></i>
       <span class="welcome-message">Olá, <span id="userNameDisplay"></span></span>
     </div>
     <button class="logout-btn">
@@ -30,6 +29,10 @@
   <div class="container">
     <!-- Sidebar de Navegação -->
     <div class="sidebar">
+      <button class="nav-btn" data-page="grade/grade.html">
+        <i class="fa-solid fa-table-cells"></i>
+        Grade
+      </button>
       <button class="nav-btn" data-page="conferente/index.html">
         <i class="fa-solid fa-truck"></i>
         Monitor de Expedição

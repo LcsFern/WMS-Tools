@@ -162,65 +162,27 @@
       font-size: 2rem;
     }
   }
-  .home-container {
+  /* Estilização adicional para a exibição moderna dos totais */
+  .grade-totals, .pallet-info {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    padding: 2rem;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-    margin: 2rem 0;
-  }
-  
-  .home-container h2 {
-    font-size: 2rem;
-    background: linear-gradient(45deg, #00a65a, #008d4c);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    flex-wrap: wrap;
+    gap: 1rem;
     margin-bottom: 1rem;
   }
-  
-  .home-container p {
-    font-size: 1.2rem;
-    color: var(--text);
-    max-width: 800px;
-    line-height: 1.6;
-    margin-bottom: 2rem;
+  .total-item {
+    flex: 1 1 30%;
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.1rem;
   }
-  
-  .home-container ul {
-    list-style-type: none;
-    padding: 0;
-    width: 100%;
-    max-width: 600px;
+  .pallet-info p {
+    flex: 1 1 30%;
+    background: rgba(0,0,0,0.2);
+    padding: 0.8rem;
+    border-radius: 8px;
+    text-align: center;
+    margin: 0;
+    font-size: 1rem;
   }
-  
-  .home-container li {
-    margin: 1.5rem 0;
-    padding: 1.5rem;
-    background: var(--glass);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  .home-container li:hover {
-    transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-    .home-container li strong {
-      color: var(--accent);
-      font-size: 1.2em;
-      display: block;
-      margin-bottom: 0.5rem;
-    }
-  
-  
-  

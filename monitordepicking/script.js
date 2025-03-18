@@ -187,29 +187,43 @@ function updateSummaryTable(elementId, data) {
 
 function updateActiveSeparators(separators) {
   const tbody = document.getElementById('activeSeparatorsBody');
-  
-  // Carrega gradeExpedicao do localStorage para obter informações extras
-  let gradeExpedicao = localStorage.getItem('gradeExpedicao');
+
+  // Carrega os dados do localStorage
+  let gradeCompleta = localStorage.getItem('gradeCompleta');
+  console.log('gradeCompleta:', gradeCompleta); // Para depuração
+
   let gradeMap = {};
-  if (gradeExpedicao) {
+  if (gradeCompleta) {
     try {
-      let gradeData = JSON.parse(gradeExpedicao);
-      if(gradeData && gradeData.dadosGrade) {
-        gradeData.dadosGrade.forEach(item => {
-          gradeMap[item.OE] = item;
-        });
+      let gradeData = JSON.parse(gradeCompleta);
+      console.log('gradeData:', gradeData); // Para depuração
+
+      let dados;
+      if (Array.isArray(gradeData)) {
+        dados = gradeData;
+      } else if (gradeData && gradeData.dadosGrade) {
+        dados = gradeData.dadosGrade;
+      } else {
+        console.error('Estrutura inesperada em gradeCompleta');
+        return;
       }
-    } catch(e) {
-      console.error("Erro ao parsear gradeExpedicao", e);
+
+      dados.forEach(item => {
+        let mappedItem = {
+          OE: item.OE || item['OE / VIAGEM'] || 'N/A',
+          PLACAS: item.PLACAS || (item['PLACA ROTEIRIZADA'] ? [item['PLACA ROTEIRIZADA']] : []),
+          DESTINO: item.DESTINO || 'N/A'
+        };
+        gradeMap[mappedItem.OE] = mappedItem;
+      });
+    } catch (e) {
+      console.error('Erro ao parsear gradeCompleta', e);
     }
   }
-  
-  tbody.innerHTML = separators.length > 0 ? 
+
+  tbody.innerHTML = separators.length > 0 ?
     separators.map(sep => {
-      let placa = '';
-      if(gradeMap[sep.oe]) {
-        placa = gradeMap[sep.oe].PLACAS && gradeMap[sep.oe].PLACAS.length > 0 ? gradeMap[sep.oe].PLACAS[0] : '';
-      }
+      let placa = gradeMap[sep.oe]?.PLACAS?.[0] || '';
       return `
       <tr>
         <td>${sep.separador}</td>
@@ -222,12 +236,12 @@ function updateActiveSeparators(separators) {
         <td>${placa}</td>
       </tr>
     `;
-    }).join('') : 
+    }).join('') :
     `<tr><td colspan="8">Nenhum separador ativo no momento</td></tr>`;
 
   const countCongelado = separators.filter(sep => sep.camara === 'CONGELADO').length;
   const countResfriado = separators.filter(sep => sep.camara === 'RESFRIADO').length;
-  document.getElementById('separatorCount').innerHTML = 
+  document.getElementById('separatorCount').innerHTML =
     `<p>Separadores - CONGELADO: ${countCongelado}, RESFRIADO: ${countResfriado}</p>`;
 }
 
@@ -237,33 +251,51 @@ function updateEmptyLoads(emptyLoads) {
   const tbody = document.querySelector('#emptyLoadsTable tbody');
   tbody.innerHTML = '';
 
-  if(emptyLoads.length === 0) {
+  if (emptyLoads.length === 0) {
     tbody.innerHTML = '<tr><td colspan="8">Nenhuma carga vazia encontrada</td></tr>';
     return;
   }
 
-  // Carrega gradeExpedicao do localStorage para obter informações extras
-  let gradeExpedicao = localStorage.getItem('gradeExpedicao');
+  // Carrega os dados do localStorage
+  let gradeCompleta = localStorage.getItem('gradeCompleta');
+  console.log('gradeCompleta:', gradeCompleta); // Para depuração
+
   let gradeMap = {};
-  if (gradeExpedicao) {
+  if (gradeCompleta) {
     try {
-      let gradeData = JSON.parse(gradeExpedicao);
-      if(gradeData && gradeData.dadosGrade) {
-        gradeData.dadosGrade.forEach(item => {
-          gradeMap[item.OE] = item;
-        });
+      let gradeData = JSON.parse(gradeCompleta);
+      console.log('gradeData:', gradeData); // Para depuração
+
+      let dados;
+      if (Array.isArray(gradeData)) {
+        dados = gradeData; // Se for um array, usa diretamente
+      } else if (gradeData && gradeData.dadosGrade) {
+        dados = gradeData.dadosGrade; // Se tiver dadosGrade, usa essa propriedade
+      } else {
+        console.error('Estrutura inesperada em gradeCompleta');
+        return;
       }
-    } catch(e) {
-      console.error('Erro ao parsear gradeExpedicao', e);
+
+      // Mapeia os dados para o formato esperado
+      dados.forEach(item => {
+        let mappedItem = {
+          OE: item.OE || item['OE / VIAGEM'] || 'N/A',
+          PLACAS: item.PLACAS || (item['PLACA ROTEIRIZADA'] ? [item['PLACA ROTEIRIZADA']] : []),
+          DESTINO: item.DESTINO || 'N/A'
+        };
+        gradeMap[mappedItem.OE] = mappedItem;
+      });
+    } catch (e) {
+      console.error('Erro ao parsear gradeCompleta', e);
     }
   }
 
-  // Agrupa cargas por OE, GRUPO, TIPO DE OPERAÇÃO e TEMPERATURA
+  // Resto da lógica da função permanece igual
   const grouped = {};
   emptyLoads.forEach(load => {
     const key = `${load.oe}|${load.grupo}|${load.tipoOperacao}|${load.temperatura}`;
-    if(!grouped[key]) {
-      grouped[key] = { 
+    if (!grouped[key]) {
+      grouped[key] = {
         oe: load.oe,
         grupo: load.grupo,
         tipoOperacao: load.tipoOperacao,
@@ -275,63 +307,38 @@ function updateEmptyLoads(emptyLoads) {
     } else {
       grouped[key].caixas += load.caixas;
       grouped[key].posicao += load.posicao;
-      // Mantém a menor prioridade do grupo
       grouped[key].prioridade = Math.min(grouped[key].prioridade, load.prioridade);
     }
   });
-  
+
   let groups = Object.values(grouped);
-  
-  // Ordena os grupos por prioridade (ascendente)
   groups.sort((a, b) => a.prioridade - b.prioridade);
-  
-  // Calcula as médias de CAIXAS e POSIÇÃO entre os grupos
+
   const totalCaixas = groups.reduce((sum, g) => sum + g.caixas, 0);
   const totalPosicao = groups.reduce((sum, g) => sum + g.posicao, 0);
-  const mediaCaixas = totalCaixas / groups.length;
-  const mediaPosicao = totalPosicao / groups.length;
-  
-  groups.forEach(group => {
-    let caixasStyle = '';
-    if (group.caixas > mediaCaixas) {
-      let diffPercent = (group.caixas - mediaCaixas) / mediaCaixas;      
-      caixasStyle = `background: rgba(255,0,0,${Math.min(diffPercent, 1)})`;
-    } else if (group.caixas < mediaCaixas) {
-      let diffPercent = (mediaCaixas - group.caixas) / mediaCaixas;      
-      caixasStyle = `background: rgba(0,255,0,${Math.min(diffPercent, 1)})`;
-    }
-    
-    let posicaoStyle = '';
-    if (group.posicao < mediaPosicao) {
-      let diffPercent = (mediaPosicao - group.posicao) / mediaPosicao;
-      posicaoStyle = `background: rgba(0,255,0,${Math.min(diffPercent, 1)})`;
-    } else if (group.posicao > mediaPosicao) {
-      let diffPercent = (group.posicao - mediaPosicao) / mediaPosicao;
-      posicaoStyle = `background: rgba(255,0,0,${Math.min(diffPercent, 1)})`;
-    }
-    
-    let prioridadeStyle = '';
-    if (group.prioridade < 10) {
-      prioridadeStyle = 'color: green; font-weight: bold;';
-    }
+  const mediaCaixas = groups.length > 0 ? totalCaixas / groups.length : 0;
+  const mediaPosicao = groups.length > 0 ? totalPosicao / groups.length : 0;
 
-    // Recupera informações extras do gradeMap com base no OE
-    let placa = '';
-    let destino = '';
-    if(gradeMap[group.oe]) {
-      placa = gradeMap[group.oe].PLACAS && gradeMap[group.oe].PLACAS.length > 0 ? gradeMap[group.oe].PLACAS[0] : '';
-      destino = gradeMap[group.oe].DESTINO || '';
-    }
+  groups.forEach(group => {
+    let caixasStyle = group.caixas > mediaCaixas ? 
+      `background: rgba(255,0,0,${Math.min((group.caixas - mediaCaixas) / mediaCaixas, 1)})` : 
+      group.caixas < mediaCaixas ? 
+      `background: rgba(0,255,0,${Math.min((mediaCaixas - group.caixas) / mediaCaixas, 1)})` : '';
     
+    let posicaoStyle = group.posicao < mediaPosicao ? 
+      `background: rgba(0,255,0,${Math.min((mediaPosicao - group.posicao) / mediaPosicao, 1)})` : 
+      group.posicao > mediaPosicao ? 
+      `background: rgba(255,0,0,${Math.min((group.posicao - mediaPosicao) / mediaPosicao, 1)})` : '';
+
+    let prioridadeStyle = group.prioridade < 10 ? 'color: green; font-weight: bold;' : '';
+
+    let placa = gradeMap[group.oe]?.PLACAS?.[0] || '';
+    let destino = gradeMap[group.oe]?.DESTINO || '';
+
     tbody.innerHTML += `
       <tr>
         <td>${placa}</td>
-        <td>
-          ${group.oe} 
-          <button onclick="copyToClipboard('${group.oe}')" title="Copiar OE" style="font-size:0.6rem; padding:0.2rem;">
-            <i class="fas fa-copy"></i>
-          </button>
-        </td>
+        <td>${group.oe} <button onclick="copyToClipboard('${group.oe}')" title="Copiar OE" style="font-size:0.6rem; padding:0.2rem;"><i class="fas fa-copy"></i></button></td>
         <td style="${prioridadeStyle}">${group.prioridade}</td>
         <td>${group.tipoOperacao}</td>
         <td>${group.temperatura}</td>

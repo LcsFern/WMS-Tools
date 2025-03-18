@@ -1,15 +1,12 @@
-// Variáveis globais para armazenar os dados e mapeamentos da grade
-let dadosGrade = [];              // Array que armazena os dados processados da grade
+// Variáveis globais para armazenar os dados e mapeamentos da grade  
+let dadosGrade = [];              // Dados processados (formato gradeExpedicao)
 let placaToOE = new Map();          // Mapeia cada placa à sua OE correspondente
 let placaAntigaMap = new Map();     // Mapeia a placa original para a placa modificada (caso haja atualização)
-let gradeOriginal = [];             // Armazena uma cópia da grade original processada para possibilitar reset
+let gradeOriginal = [];             // Cópia da grade original para possibilitar reset (reset CSV)
 
 /**
  * Converte um valor de peso em string para float.
  * Remove pontos de milhar e substitui a vírgula decimal por ponto.
- *
- * @param {any} valor - O valor a ser convertido.
- * @returns {number} Peso convertido para float.
  */
 function parsePeso(valor) {
   return parseFloat(
@@ -18,7 +15,7 @@ function parsePeso(valor) {
 }
 
 /**
- * Salva o estado atual da grade no localStorage.
+ * Salva o estado atual da grade no localStorage (na chave "gradeExpedicao").
  * Os Sets são convertidos para Arrays para garantir a serialização correta.
  */
 function salvarEstado() {
@@ -34,56 +31,102 @@ function salvarEstado() {
 }
 
 /**
- * Carrega a grade salva no localStorage e atualiza os elementos do DOM.
- * Converte arrays salvos de volta para Sets e Maps.
- * Caso ocorra algum erro na leitura do cache, executa resetTudo().
+ * Converte a grade salva em "gradeCompleta" para o formato utilizado pelo sistema (gradeExpedicao).
+ * 
+ * A conversão agrupa os registros por OE, criando para cada grupo um objeto contendo:
+ *   - OE
+ *   - PLACAS: conjunto (Set) com as placas únicas (usando "PLACA ROTEIRIZADA")
+ *   - DESTINO, QUANT. ENTREGAS e QTDE CXS: do primeiro registro do grupo
+ *   - PESO PREVISTO: obtido a partir da coluna "PESO ENTREGAS"
+ *   - PESO_ATUAL: 0 e PORCENTAGEM: 0 (ainda não processados)
+ * 
+ * Durante a conversão, o mapa placaToOE é atualizado.
  */
-function carregarGradeCache() {
-  const cache = localStorage.getItem('gradeExpedicao');
-  if (cache) {
-    try {
-      const { dadosGrade: dg, placaMap, placaAntigaMap: pam, gradeOriginal: go } = JSON.parse(cache);
-      // Converte arrays de placas de volta para Set
-      dadosGrade = dg.map(oe => ({
-        ...oe,
-        PLACAS: new Set(oe.PLACAS)
-      }));
-      gradeOriginal = go.map(oe => ({
-        ...oe,
-        PLACAS: new Set(oe.PLACAS)
-      }));
-      placaToOE = new Map(placaMap);
-      placaAntigaMap = new Map(pam);
-
-      // Atualiza a visibilidade dos elementos da interface
-      document.getElementById('gradeSection').classList.add('hidden');
-      document.getElementById('csvSection').classList.remove('hidden');
-      document.getElementById('resetBtn').classList.remove('hidden');
-      document.getElementById('resetCsvBtn').classList.remove('hidden');
-
-      if (dadosGrade.length > 0) {
-        document.getElementById('exportBtn').classList.remove('hidden');
-        atualizarTabela();
-      }
-    } catch (e) {
-      console.error('Erro ao carregar cache:', e);
-      resetTudo();
+function converterGradeCompletaParaExpedicao(gradeCompleta) {
+  const agrupados = {};
+  gradeCompleta.forEach(registro => {
+    const oe = registro["OE"]?.trim();
+    const placa = registro["PLACA ROTEIRIZADA"]?.trim();
+    if (!oe || !placa) return;
+    if (!agrupados[oe]) {
+      agrupados[oe] = {
+        OE: oe,
+        PLACAS: new Set(),
+        DESTINO: registro["DESTINO"]?.trim() || "",
+        QUANT_ENTREGAS: registro["QUANT. ENTREGAS"]?.trim() || "",
+        QTDE_CAIXAS: registro["QTDE CXS"]?.trim() || "",
+        PESO_PREVISTO: parsePeso(registro["PESO ENTREGAS"] || '0'),
+        PESO_ATUAL: 0,
+        PORCENTAGEM: 0
+      };
     }
-  }
+    agrupados[oe].PLACAS.add(placa);
+    placaToOE.set(placa, oe);
+  });
+  return Object.values(agrupados);
 }
 
 /**
- * Reseta todos os dados e a interface para o estado inicial.
- * Limpa o localStorage e redefine as variáveis e elementos DOM.
+ * Carrega os dados salvos em "gradeCompleta", converte-os para "gradeExpedicao" e atualiza a interface.
+ * Esta função NÃO modifica o conteúdo de "gradeCompleta", apenas cria uma cópia no formato necessário.
+ */
+function loadExpedicaoFromCompleta() {
+  const gradeRaw = localStorage.getItem("gradeCompleta");
+  if (!gradeRaw) {
+    // Se não houver dados, exibe uma mensagem moderna
+    document.getElementById('gradeSection').innerHTML = `
+      <div class="home-container">
+        <h2><i class="fas fa-exclamation-circle"></i> Nenhuma GRADE Encontrada</h2>
+        <p>Para visualizar os veículos e acompanhar o progresso, carregue a GRADE principal da operação.</p>
+      </div>
+    `;
+    // Esconde os botões de ação, pois não há grade carregada
+    document.getElementById('resetCsvBtn').classList.add('hidden');
+    document.getElementById('csvSection').classList.add('hidden');
+    document.getElementById('exportBtn').classList.add('hidden');
+    document.getElementById('tabelaContainer').classList.add('hidden');
+    return;
+  }
+
+  let gradeCompleta;
+  try {
+    gradeCompleta = JSON.parse(gradeRaw);
+  } catch (e) {
+    console.error("Erro ao ler gradeCompleta:", e);
+    return;
+  }
+
+  dadosGrade = converterGradeCompletaParaExpedicao(gradeCompleta);
+  gradeOriginal = dadosGrade.map(oe => ({ ...oe, PLACAS: new Set(oe.PLACAS) }));
+  placaAntigaMap = new Map();
+
+  salvarEstado();
+
+  // Esconde a mensagem e exibe a seção da grade carregada
+  document.getElementById('gradeSection').classList.add('hidden');
+  document.getElementById('csvSection').classList.remove('hidden');
+  document.getElementById('resetCsvBtn').classList.remove('hidden');
+
+  if (dadosGrade.length > 0) {
+    document.getElementById('exportBtn').classList.remove('hidden');
+    atualizarTabela();
+  }
+}
+
+
+/**
+ * Reseta os dados de "gradeExpedicao" (usado no site) e a interface.
+ * NOTA: Esta função NÃO remove os dados originais em "gradeCompleta".
  */
 function resetTudo() {
-  localStorage.clear();
+  // Aqui não removemos gradeCompleta; apenas removemos os dados da grade utilizada no site.
+  localStorage.removeItem('gradeExpedicao');
   dadosGrade = [];
   gradeOriginal = [];
   placaToOE = new Map();
   placaAntigaMap = new Map();
 
-  // Ajusta a visibilidade dos elementos na interface
+  // Atualiza a interface para indicar que a grade não foi carregada
   document.getElementById('gradeSection').classList.remove('hidden');
   document.getElementById('csvSection').classList.add('hidden');
   document.getElementById('resetBtn').classList.add('hidden');
@@ -91,23 +134,18 @@ function resetTudo() {
   document.getElementById('exportBtn').classList.add('hidden');
   document.getElementById('tabelaContainer').classList.add('hidden');
 
-  // Limpa os campos de entrada
-  document.getElementById('excelData').value = '';
-  document.getElementById('csvData').value = '';
+  document.getElementById('excelData').value = "";
+  document.getElementById('csvData').value = "";
+  // Exibe a mensagem para importar a grade novamente
+  document.getElementById('gradeSection').innerHTML = "<h2>GRADE NÃO CARREGADA, FAVOR CARREGAR A GRADE</h2>";
 }
 
 /**
  * Restaura a grade original (reset do CSV).
- * Recarrega os dados originais e atualiza a interface.
  */
 function resetCSV() {
-  // Restaura os dados da grade original convertendo os Sets novamente
-  dadosGrade = gradeOriginal.map(oe => ({
-    ...oe,
-    PLACAS: new Set(oe.PLACAS)
-  }));
+  dadosGrade = gradeOriginal.map(oe => ({ ...oe, PLACAS: new Set(oe.PLACAS) }));
 
-  // Atualiza a interface para mostrar a seção CSV e esconder a tabela
   document.getElementById('csvSection').classList.remove('hidden');
   document.getElementById('csvData').value = '';
   document.getElementById('tabelaContainer').classList.add('hidden');
@@ -119,13 +157,12 @@ function resetCSV() {
 
 /**
  * Processa os dados da grade a partir do conteúdo colado no campo 'excelData'.
- * Agrupa as informações por OE e calcula o peso previsto.
+ * Essa função é usada para importar uma nova grade.
  */
 function processarGrade() {
   const data = document.getElementById('excelData').value.trim();
   if (!data) return;
 
-  // Ignora a primeira linha (cabeçalho) e processa cada linha do arquivo colado
   const oesAgrupados = data.split('\n').slice(1).reduce((acc, linha) => {
     const partes = linha.split('\t');
     const oe = partes[2]?.trim();
@@ -133,10 +170,8 @@ function processarGrade() {
 
     if (!oe || !placa) return acc;
 
-    // Mapeia a placa para a OE
     placaToOE.set(placa, oe);
 
-    // Se a OE ainda não foi adicionada, inicializa o objeto
     if (!acc[oe]) {
       acc[oe] = {
         OE: oe,
@@ -149,7 +184,6 @@ function processarGrade() {
         PORCENTAGEM: 0
       };
     }
-    // Adiciona a placa ao conjunto e acumula o peso previsto
     acc[oe].PLACAS.add(placa);
     acc[oe].PESO_PREVISTO += parsePeso(partes[20] || '0');
 
@@ -157,36 +191,35 @@ function processarGrade() {
   }, {});
 
   dadosGrade = Object.values(oesAgrupados);
-  // Salva uma cópia da grade para possibilitar reset
-  gradeOriginal = dadosGrade.map(oe => ({
-    ...oe,
-    PLACAS: new Set(oe.PLACAS)
-  }));
+  gradeOriginal = dadosGrade.map(oe => ({ ...oe, PLACAS: new Set(oe.PLACAS) }));
 
   salvarEstado();
 
-  // Atualiza a interface para passar da seção de grade para CSV
   document.getElementById('gradeSection').classList.add('hidden');
   document.getElementById('csvSection').classList.remove('hidden');
-  document.getElementById('resetBtn').classList.remove('hidden');
+  // Exibe somente o botão Resetar CSV
+  document.getElementById('resetBtn').classList.add('hidden');
   document.getElementById('resetCsvBtn').classList.remove('hidden');
+
+  if (dadosGrade.length > 0) {
+    document.getElementById('exportBtn').classList.remove('hidden');
+    atualizarTabela();
+  }
 }
 
 /**
  * Processa os dados do CSV a partir do conteúdo colado no campo 'csvData'.
- * Atualiza o peso atual e o percentual de progresso com base no peso informado.
+ * Atualiza o peso atual e a porcentagem de cada OE com base no CSV.
  */
 function processarCSV() {
   const data = document.getElementById('csvData').value.trim();
   if (!data) return;
 
-  // Reinicia os valores de peso atual e porcentagem para cada OE
   dadosGrade.forEach(oe => {
     oe.PESO_ATUAL = 0;
     oe.PORCENTAGEM = 0;
   });
 
-  // Processa cada linha ignorando o cabeçalho
   data.split('\n').slice(1).forEach(linha => {
     const partes = linha.split('\t');
     const status = partes[0]?.trim().toUpperCase();
@@ -194,37 +227,29 @@ function processarCSV() {
     const oeCSV = partes[3]?.trim();
     const pesoBruto = parsePeso(partes[9] || '0');
 
-    // Ignora linhas com status "CONFERIDO ou ESPERANDO ERP FATURAR ou FINALIZADO" ou com dados incompletos
     if (status === "CONFERIDO" || !placaCSV || !oeCSV) return;
     if (status === "ESPERANDO ERP FATURAR" || !placaCSV || !oeCSV) return;
     if (status === "FINALIZADO" || !placaCSV || !oeCSV) return;
 
-    // Verifica se há uma placa antiga registrada, caso contrário usa a placa atual
     const placaAntiga = placaAntigaMap.get(placaCSV) || placaCSV;
     if (!placaToOE.has(placaCSV)) {
       placaToOE.set(placaCSV, oeCSV);
       placaAntigaMap.set(placaCSV, placaAntiga);
     }
 
-    // Define a OE correta baseada no mapeamento
     const oeKey = placaToOE.get(placaCSV) || oeCSV;
     const oe = dadosGrade.find(e => e.OE === oeKey);
     if (oe) {
-      // Atualiza o peso atual e calcula a porcentagem (limitado a 100%)
       oe.PESO_ATUAL += pesoBruto;
       oe.PORCENTAGEM = Math.min((oe.PESO_ATUAL / oe.PESO_PREVISTO * 100), 100);
-
-      // Adiciona as placas (atual e antiga) ao conjunto
       oe.PLACAS.add(placaCSV);
       oe.PLACAS.add(placaAntiga);
     }
   });
 
-  // Filtra as OEs com progresso de 10% ou mais e ordena por porcentagem decrescente
   dadosGrade = dadosGrade.filter(oe => oe.PORCENTAGEM >= 10)
                          .sort((a, b) => b.PORCENTAGEM - a.PORCENTAGEM);
 
-  // Atualiza a interface, salvando o estado e escondendo a seção CSV
   document.getElementById('exportBtn').classList.remove('hidden');
   atualizarTabela();
   salvarEstado();
@@ -232,11 +257,10 @@ function processarCSV() {
 }
 
 /**
- * Atualiza a tabela exibida na interface com o status atual da separação.
- * Cria o HTML da tabela com informações de cada OE e suas respectivas placas.
+ * Atualiza a tabela exibida na interface com o status atual.
  */
 function atualizarTabela() {
-  let html = `<h2><i class="fa-solid fa-table-list"></i> Status da Separação (${new Date().toLocaleTimeString()})</h2>
+  let html = `<h2>Status da Separação (${new Date().toLocaleTimeString()})</h2>
               <table>
                 <tr>
                   <th>OE</th>
@@ -247,17 +271,10 @@ function atualizarTabela() {
                   <th>Peso Previsto</th>
                   <th>Progresso</th>
                 </tr>`;
-  // Para cada OE, cria uma linha na tabela com os dados correspondentes
   dadosGrade.forEach(oe => {
-    const destaque = oe.PORCENTAGEM >= 97 ? 'destacado' : '';
-    const placas = Array.from(oe.PLACAS).map(placa => {
-      const placaAntiga = placaAntigaMap.get(placa);
-      return placaAntiga ? `${placa} (Nova: ${placaAntiga})` : placa;
-    }).join(', ');
-    html += `<tr class="${destaque}">
-                <td style="white-space: nowrap;">
-                  ${oe.OE} <button class="btn-icon" onclick="copiarOE('${oe.OE}')"><i class="fa-regular fa-copy"></i></button>
-                </td>
+    const placas = Array.from(oe.PLACAS).join(', ');
+    html += `<tr>
+                <td>${oe.OE} <button class="btn-icon" onclick="copiarOE('${oe.OE}')"><i class="fa-regular fa-copy"></i></button></td>
                 <td>${placas}</td>
                 <td>${oe.DESTINO}</td>
                 <td>${oe.QUANT_ENTREGAS}</td>
@@ -277,14 +294,11 @@ function atualizarTabela() {
   document.getElementById('tabelaContainer').classList.remove('hidden');
 }
 
-
 /**
- * Exporta os dados da grade para um arquivo PDF.
- * Utiliza a biblioteca jsPDF para gerar o PDF com layout, bordas e numeração de páginas.
+ * Exporta os dados da grade para PDF.
  */
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
-  // Cria o documento em orientação "portrait" (vertical)
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -292,47 +306,39 @@ function exportarPDF() {
     compress: true
   });
 
-  const pageWidth = doc.internal.pageSize.getWidth();   // ~210 mm
-  const pageHeight = doc.internal.pageSize.getHeight(); // ~297 mm
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
-  const availableWidth = pageWidth - 2 * margin; // 190 mm disponível
+  const availableWidth = pageWidth - 2 * margin;
   const startX = margin;
-  const startY = margin + 12; // Espaço para o título
+  const startY = margin + 12;
 
-  // Definindo larguras para 8 colunas, totalizando 190 mm
   const colWidths = [23, 42, 37, 14, 14, 28, 19, 13];
   const headerHeight = 10;
   const cellPadding = 2;
   const lineHeight = 7;
 
-  // Título do relatório
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   const title = `RELATÓRIO DE SEPARAÇÃO - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
   doc.text(title, startX, margin + 5);
 
-// Cabeçalhos da tabela
-const headers = ["OE", "PLACAS", "DESTINO", "ENT", "CX", "PESO KG", "%", "PEGO"];
-doc.setFontSize(10);
-let currentX = startX;
-for (let i = 0; i < headers.length; i++) {
-  // Reconfigura o fundo para cada célula de cabeçalho
-  doc.setFillColor(200, 200, 200); // Cinza médio
-  doc.rect(currentX, startY, colWidths[i], headerHeight, 'F');
-  // Garante que o texto será renderizado em preto
-  doc.setTextColor(0, 0, 0);
-  // Texto centralizado na célula
-  doc.text(headers[i], currentX + colWidths[i] / 2, startY + headerHeight / 2 + 3, { align: 'center' });
-  currentX += colWidths[i];
-}
-
+  const headers = ["OE", "PLACAS", "DESTINO", "ENT", "CX", "PESO KG", "%", "PEGO"];
+  doc.setFontSize(10);
+  let currentX = startX;
+  for (let i = 0; i < headers.length; i++) {
+    doc.setFillColor(200, 200, 200);
+    doc.rect(currentX, startY, colWidths[i], headerHeight, 'F');
+    doc.setTextColor(0, 0, 0);
+    doc.text(headers[i], currentX + colWidths[i] / 2, startY + headerHeight / 2 + 3, { align: 'center' });
+    currentX += colWidths[i];
+  }
 
   let y = startY + headerHeight;
   doc.setFontSize(9);
 
   dadosGrade.forEach((oe) => {
-    // Conteúdo de cada coluna
     const content = [
       oe.OE,
       Array.from(oe.PLACAS).join(', '),
@@ -341,10 +347,9 @@ for (let i = 0; i < headers.length; i++) {
       oe.QTDE_CAIXAS,
       oe.PESO_PREVISTO.toLocaleString('pt-BR', { maximumFractionDigits: 2 }),
       oe.PORCENTAGEM.toFixed(1) + "%",
-      " " // Espaço para a checkbox
+      " "
     ];
 
-    // Calcula a altura da linha baseada no maior número de linhas necessárias
     let maxLines = 1;
     for (let i = 0; i < content.length; i++) {
       const textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
@@ -352,7 +357,6 @@ for (let i = 0; i < headers.length; i++) {
     }
     const rowHeight = maxLines * lineHeight + 2 * cellPadding;
 
-    // Se a linha ultrapassar a altura disponível, adiciona nova página com cabeçalho
     if (y + rowHeight > pageHeight - margin) {
       doc.addPage();
       y = margin;
@@ -367,13 +371,10 @@ for (let i = 0; i < headers.length; i++) {
       y += headerHeight;
     }
     currentX = startX;
-    // Fundo branco para a linha
     doc.setFillColor(255, 255, 255);
     doc.rect(currentX, y, availableWidth, rowHeight, 'F');
 
-    // Desenha cada célula
     for (let i = 0; i < content.length; i++) {
-      // Para as colunas destacadas (OE, PLACAS e %), aplica fundo cinza claro
       if (i === 0 || i === 1 || i === 6) {
         doc.setFillColor(240, 240, 240);
         doc.rect(currentX, y, colWidths[i], rowHeight, 'F');
@@ -381,22 +382,17 @@ for (let i = 0; i < headers.length; i++) {
       } else {
         doc.setFont('helvetica', 'normal');
       }
-      // Desenha a borda da célula
       doc.rect(currentX, y, colWidths[i], rowHeight);
-      // Força o texto a ser renderizado em preto
       doc.setTextColor(0, 0, 0);
-      // Divide o conteúdo em linhas para caber na célula
       let textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
       for (let j = 0; j < textLines.length; j++) {
         let textY = y + cellPadding + (j + 1) * lineHeight - (lineHeight / 2);
-        // Se for coluna destacada, centraliza; caso contrário, alinha à esquerda
         if (i === 0 || i === 1 || i === 6) {
           doc.text(textLines[j], currentX + colWidths[i] / 2, textY, { align: 'center' });
         } else {
           doc.text(textLines[j], currentX + cellPadding, textY);
         }
       }
-      // Na última coluna, desenha uma caixa para checkbox
       if (i === content.length - 1) {
         let boxSize = 6;
         let boxX = currentX + (colWidths[i] - boxSize) / 2;
@@ -408,7 +404,6 @@ for (let i = 0; i < headers.length; i++) {
     y += rowHeight;
   });
 
-  // Numeração de páginas no rodapé
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -416,23 +411,17 @@ for (let i = 0; i < headers.length; i++) {
     doc.text(`Página ${i} de ${pageCount}`, margin, pageHeight - 5);
   }
 
-  // Salva o PDF com um nome baseado na data/hora atual
   doc.save(`Separacao_${new Date().toISOString().slice(0, 16).replace(/[-T:]/g, '')}.pdf`);
 }
 
-
-
 /**
  * Copia o valor da OE para a área de transferência.
- *
- * @param {string} texto - Texto a ser copiado.
  */
 function copiarOE(texto) {
   navigator.clipboard.writeText(texto);
 }
 
-// Configura o evento de paste para o campo 'excelData'
-// Quando dados são colados, processa a grade e limpa o campo
+// Eventos de paste para processar a grade e o CSV
 document.getElementById('excelData').addEventListener('paste', (e) => {
   setTimeout(() => {
     processarGrade();
@@ -440,8 +429,6 @@ document.getElementById('excelData').addEventListener('paste', (e) => {
   }, 100);
 });
 
-// Configura o evento de paste para o campo 'csvData'
-// Quando dados são colados, processa o CSV e limpa o campo
 document.getElementById('csvData').addEventListener('paste', (e) => {
   setTimeout(() => {
     processarCSV();
@@ -449,5 +436,5 @@ document.getElementById('csvData').addEventListener('paste', (e) => {
   }, 100);
 });
 
-// Ao carregar a página, tenta carregar os dados salvos da grade
-window.onload = carregarGradeCache;
+// Ao carregar a página, carrega a grade a partir de "gradeCompleta" convertida para "gradeExpedicao"
+window.onload = loadExpedicaoFromCompleta;
