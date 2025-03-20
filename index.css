@@ -202,3 +202,115 @@
     height: calc(100vh - 80px);
   }
 }
+/* Estilos para a Sidebar Colapsável */
+.sidebar-collapsible {
+  width: 70px; /* Largura mínima quando colapsado */
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+/* Exibe os ícones centralizados quando colapsado */
+.sidebar-collapsible .nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Oculta o texto dos botões quando colapsado */
+.sidebar-collapsible .nav-text {
+  display: none;
+}
+
+/* Expande a sidebar ao passar o mouse */
+.sidebar-collapsible:hover {
+  width: 260px;
+}
+
+/* Quando expandida, exibe os botões com ícone e texto */
+.sidebar-collapsible:hover .nav-btn {
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+/* Exibe o texto dos botões ao expandir */
+.sidebar-collapsible:hover .nav-text {
+  display: inline;
+  margin-left: 10px;
+}
+
+/* Opcional: Ajustar a transição para os botões */
+.nav-btn {
+  transition: all 0.3s ease;
+}
+@media (max-width: 768px) {
+  .sidebar-collapsible {
+    width: 100%;
+  }
+  .sidebar-collapsible .nav-text {
+    display: inline;
+  }
+  .sidebar-collapsible .nav-btn {
+    justify-content: center;
+  }
+}
+/* Bloco do usuário na Sidebar */
+.sidebar-user {
+  display: none;
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Quando a sidebar for expandida (hover) exibe o nome */
+.sidebar-collapsible:hover .sidebar-user {
+  display: block;
+}
+
+/* Caso queira ajustar o posicionamento */
+.sidebar-collapsible {
+  position: relative;
+}
+/* Estilo padrão para a área do usuário na sidebar */
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Estilo para o ícone, garantindo que ele fique centralizado */
+.sidebar-user i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* Estilo para o grupo com nome e botão */
+.user-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Estado colapsado: quando o mouse NÃO está sobre a sidebar */
+.sidebar-collapsible:not(:hover) .user-details {
+  display: none;
+}
+
+/* Estado colapsado: centraliza o conteúdo (só o ícone) */
+.sidebar-collapsible:not(:hover) .sidebar-user {
+  justify-content: center;
+  text-align: center;
+  padding: 10px; /* ajuste se necessário */
+}
+
+/* Ao passar o mouse, a sidebar expande e os detalhes reaparecem */
+.sidebar-collapsible:hover .user-details {
+  display: flex;
+}
+

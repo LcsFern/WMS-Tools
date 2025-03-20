@@ -14,42 +14,47 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-   <!-- Top Bar com informações do usuário -->
-   <div class="top-bar">
-    <div class="user-info">
-      <i class="fa-solid fa-address-card"></i>
-      <span class="welcome-message">Olá, <span id="userNameDisplay"></span></span>
-    </div>
-    <button class="logout-btn">
-      <i class="fas fa-sign-out-alt"></i> Sair
-    </button>
-  </div>
-
   <!-- Container Principal com Sidebar e Iframe -->
   <div class="container">
     <!-- Sidebar de Navegação -->
-    <div class="sidebar">
-      <button class="nav-btn" data-page="grade/grade.html">
-        <i class="fa-solid fa-table-cells"></i>
-        Grade
-      </button>
-      <button class="nav-btn" data-page="conferente/index.html">
-        <i class="fa-solid fa-truck"></i>
-        Monitor de Expedição
-      </button>
-      <button class="nav-btn" data-page="monitordepicking/pickingnew.html">
-        <i class="fas fa-tasks"></i>
-        Pendências de Picking
-      </button>
-      <button class="nav-btn" data-page="produtividade/produtividade.html">
-        <i class="fas fa-chart-line"></i>
-        Produtividade
-      </button>
-      <button class="nav-btn" data-page="shelflife/shelf.html">
-        <i class="fas fa-box-open"></i>
-        Consulta de Shelf
+<!-- Sidebar de Navegação -->
+<div class="sidebar sidebar-collapsible">
+  <div class="sidebar-user">
+    <i class="fa-solid fa-address-card"></i>
+    <div class="user-details">
+      <span class="welcome-message">Olá, <span id="sidebarUserName"></span></span>
+      <button class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Sair
       </button>
     </div>
+</div>
+
+  <button class="nav-btn" data-page="grade/grade.html">
+    <i class="fa-solid fa-table-cells"></i>
+    <span class="nav-text">Grade</span>
+  </button>
+  <button class="nav-btn" data-page="conferente/index.html">
+    <i class="fa-solid fa-truck"></i>
+    <span class="nav-text">Monitor de Expedição</span>
+  </button>
+  <button class="nav-btn" data-page="monitordeseparacao/index.html">
+    <i class="fa-solid fa-chart-bar"></i>
+    <span class="nav-text">Porcentagem de Carros por Picking</span>
+  </button>
+  <button class="nav-btn" data-page="monitordepicking/pickingnew.html">
+    <i class="fas fa-tasks"></i>
+    <span class="nav-text">Pendências de Picking</span>
+  </button>
+  <button class="nav-btn" data-page="produtividade/produtividade.html">
+    <i class="fas fa-chart-line"></i>
+    <span class="nav-text">Produtividade</span>
+  </button>
+  <button class="nav-btn" data-page="shelflife/shelf.html">
+    <i class="fas fa-box-open"></i>
+    <span class="nav-text">Consulta de Shelf</span>
+  </button>
+</div>
+
 
     <!-- Área do Iframe -->
     <div class="iframe-container">

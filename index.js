@@ -1,10 +1,20 @@
   // Verifica autenticação do usuário
-    const username = localStorage.getItem('username');
-    if (!username) {
-      window.location.href = 'login.html';
-    } else {
-      document.getElementById('userNameDisplay').textContent = username;
+  const username = localStorage.getItem('username');
+  if (!username) {
+    window.location.href = 'login.html';
+  } else {
+    // Preenche o avatar (se já estiver usando outro) e o nome na sidebar
+    // Exibe o nome completo ou, se preferir, as iniciais
+    document.getElementById('sidebarUserName').textContent = username;
+    
+    // Caso continue usando o avatar flutuante ou em outra área:
+    const initials = username.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
+    const userInitialsElement = document.getElementById('userInitials');
+    if(userInitialsElement) {
+      userInitialsElement.textContent = initials;
     }
+  }
+  
 
     // Seleciona todos os botões de navegação
     const navButtons = document.querySelectorAll('.nav-btn');
