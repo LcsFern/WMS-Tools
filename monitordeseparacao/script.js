@@ -50,13 +50,13 @@ function exibirBotaoReset() {
 function processarCSV(csvText) {
   const resultDiv = document.getElementById("result");
   if (!csvText.trim()) { resultDiv.innerHTML = ""; return; }
-  
+
   const delimitador = csvText.indexOf("\t") > -1 ? "\t" : ",";
   const linhas = csvText.trim().split("\n");
   if (linhas.length < 2) return;
-  
+
   const cabecalho = linhas[0].split(delimitador).map(h => h.trim().toLowerCase());
-  
+
   let idxOE = cabecalho.findIndex(col => col === "oe");
   if (idxOE === -1) { idxOE = cabecalho.findIndex(col => col.includes("oe /")); }
   const idxTemperatura = cabecalho.findIndex(col => col.includes("temperatura"));
@@ -64,7 +64,7 @@ function processarCSV(csvText) {
   const idxPercentual = cabecalho.findIndex(col => col.includes("percentual"));
   const idxCaixas = cabecalho.findIndex(col => col === "caixas");
   const idxPosicao = cabecalho.findIndex(col => col === "posição");
-  
+
   let csvPorOE = {};
   linhas.slice(1).forEach(linha => {
     let cols = linha.split(delimitador);
@@ -77,25 +77,29 @@ function processarCSV(csvText) {
     let posicao = cols[idxPosicao] ? parseFloat(cols[idxPosicao].replace(",", ".")) : 0;
     let peso = caixas * posicao;
     let entregue = peso * (percentual / 100);
+
     if (!csvPorOE[oe]) {
       csvPorOE[oe] = {
-        congelado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0 },
-        resfriado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0 }
+        congelado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresPercentuais: {} },
+        resfriado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresPercentuais: {} }
       };
     }
+
     if (temperatura === "CONGELADO") {
       csvPorOE[oe].congelado.separadores.push(separador);
       csvPorOE[oe].congelado.totalPeso += peso;
       csvPorOE[oe].congelado.totalEntregue += entregue;
       csvPorOE[oe].congelado.totalCaixas += caixas;
+      csvPorOE[oe].congelado.separadoresPercentuais[separador] = percentual; // Armazena o percentual do separador
     } else if (temperatura === "RESFRIADO") {
       csvPorOE[oe].resfriado.separadores.push(separador);
       csvPorOE[oe].resfriado.totalPeso += peso;
       csvPorOE[oe].resfriado.totalEntregue += entregue;
       csvPorOE[oe].resfriado.totalCaixas += caixas;
+      csvPorOE[oe].resfriado.separadoresPercentuais[separador] = percentual; // Armazena o percentual do separador
     }
   });
-  
+
   for (let oe in csvPorOE) {
     let grupo = csvPorOE[oe];
     let totalPeso = grupo.congelado.totalPeso + grupo.resfriado.totalPeso;
@@ -103,7 +107,7 @@ function processarCSV(csvText) {
     grupo.finalPercentual = totalPeso > 0 ? Math.min(100, (totalEntregue / totalPeso) * 100) : 0;
     grupo.totalCaixas = grupo.congelado.totalCaixas + grupo.resfriado.totalCaixas;
   }
-  
+
   let gradeDataStr = lerGradeCompleta();
   if (!gradeDataStr) return;
   let gradeData;
@@ -112,7 +116,7 @@ function processarCSV(csvText) {
     resultDiv.innerHTML = "<p class='alert'><i class='fa-solid fa-exclamation-triangle'></i> Erro ao processar gradeCompleta.</p>";
     return;
   }
-  
+
   let novosRegistros = gradeData.map(reg => {
     let oeGrade = reg.OE ? reg.OE.trim().toLowerCase() : "";
     if (!csvPorOE[oeGrade]) return null;
@@ -128,6 +132,7 @@ function processarCSV(csvText) {
     let displayResfriado = fullResfriado.map(nome => nome.split(" ")[0]).join(", ");
     let percentual = grupo.finalPercentual;
     let totalCaixas = grupo.totalCaixas;
+
     return {
       placa,
       oe: reg.OE ? reg.OE.trim() : "",
@@ -138,16 +143,18 @@ function processarCSV(csvText) {
       sepResfriadoDisplay: displayResfriado,
       caixasSeparacao: totalCaixas,
       percentual,
-      emConferencia: getCheckboxState(reg.OE ? reg.OE.trim() : "")
+      emConferencia: getCheckboxState(reg.OE ? reg.OE.trim() : ""),
+      congeladoPercentuais: grupo.congelado.separadoresPercentuais, // Adiciona os percentuais dos separadores congelados
+      resfriadoPercentuais: grupo.resfriado.separadoresPercentuais  // Adiciona os percentuais dos separadores resfriados
     };
   }).filter(item => item !== null);
-  
+
   novosRegistros.forEach(novo => {
     let existente = registrosCombinados.find(r => r.oe === novo.oe);
     if (existente) { novo.emConferencia = existente.emConferencia; }
   });
   registrosCombinados = novosRegistros;
-  
+
   renderizarTabela();
 }
 
@@ -168,7 +175,7 @@ function renderizarTabela() {
   naoConferencia.sort((a, b) => b.percentual - a.percentual);
   let emConferencia = registrosCombinados.filter(r => r.emConferencia);
   let registrosOrdenados = naoConferencia.concat(emConferencia);
-  
+
   let html = '<table><thead><tr>' +
              '<th><i class="fa-solid fa-car"></i> Placa</th>' +
              '<th><i class="fa-solid fa-hashtag"></i> OE</th>' +
@@ -179,21 +186,43 @@ function renderizarTabela() {
              '<th><i class="fa-solid fa-percent"></i> %</th>' +
              '<th><i class="fa-solid fa-check"></i> EM CONFERÊNCIA</th>' +
              '</tr></thead><tbody>';
+
   registrosOrdenados.forEach(item => {
-    let congeladoHTML = item.sepCongeladoDisplay ? `<span title="${item.sepCongeladoFull}">${item.sepCongeladoDisplay}</span>` : "";
-    let resfriadoHTML = item.sepResfriadoDisplay ? `<span title="${item.sepResfriadoFull}">${item.sepResfriadoDisplay}</span>` : "";
+    // Separadores Congelados com barra de progresso
+    let congeladoHTML = "";
+    if (item.sepCongeladoFull) {
+      let separadores = item.sepCongeladoFull.split(", ");
+      congeladoHTML = separadores.map(sep => {
+        let nomeAbreviado = sep.split(" ")[0]; // Exibe apenas o primeiro nome na tabela
+        let percentual = item.congeladoPercentuais[sep] || 0; // Pega a porcentagem
+        let progressoStyle = `background: linear-gradient(to right, var(--primary) ${percentual.toFixed(2)}%, transparent ${percentual.toFixed(2)}%)`;
+        return `<span class="separador" style="${progressoStyle}" title="${sep} - ${percentual.toFixed(2)}%">${nomeAbreviado}</span>`;
+      }).join(", ");
+    }
+    // Separadores Resfriados com barra de progresso
+    let resfriadoHTML = "";
+    if (item.sepResfriadoFull) {
+      let separadores = item.sepResfriadoFull.split(", ");
+      resfriadoHTML = separadores.map(sep => {
+        let nomeAbreviado = sep.split(" ")[0]; // Exibe apenas o primeiro nome na tabela
+        let percentual = item.resfriadoPercentuais[sep] || 0; // Pega a porcentagem
+        let progressoStyle = `background: linear-gradient(to right, var(--primary) ${percentual.toFixed(2)}%, transparent ${percentual.toFixed(2)}%)`;
+        return `<span class="separador" style="${progressoStyle}" title="${sep} - ${percentual.toFixed(2)}%">${nomeAbreviado}</span>`;
+      }).join(", ");
+    }
     let progresso = `<div class="progress-container">
                        <div class="progress-bar" style="width: ${item.percentual.toFixed(2)}%; min-width: 2rem;">
                          ${item.percentual.toFixed(2)}%
                        </div>
                      </div>`;
     let linhaStyle = item.percentual >= 100 ? ' class="completo"' : "";
+
     html += `<tr${linhaStyle}>
               <td>${item.placa}</td>
-             <td class="oe-cell">
-    <span class="oe-text">${item.oe}</span>
-    <button class="copy-button" data-oe="${item.oe}"><i class="fa-solid fa-copy"></i></button>
-</td>
+              <td class="oe-cell">
+                <span class="oe-text">${item.oe}</span>
+                <button class="copy-button" data-oe="${item.oe}"><i class="fa-solid fa-copy"></i></button>
+              </td>
               <td>${item.destino}</td>
               <td>${congeladoHTML}</td>
               <td>${resfriadoHTML}</td>
@@ -209,7 +238,7 @@ function renderizarTabela() {
   });
   html += '</tbody></table>';
   resultDiv.innerHTML = html;
-  
+
   const checkboxes = resultDiv.querySelectorAll("input[type='checkbox']");
   checkboxes.forEach(checkbox => {
     checkbox.addEventListener("change", function() {

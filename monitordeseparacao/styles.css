@@ -1,200 +1,307 @@
 :root {
-      --primary: #008d4c;
-      --secondary: #00a65a;
-      --accent: #00f7ff;
-      --background: #0f172a;
-      --glass: rgba(255, 255, 255, 0.05);
-      --text: #f8fafc;
-    body {
-      font-family: 'Segoe UI', system-ui;
-      background: linear-gradient(45deg, #0f172a, #1e293b);
-      color: var(--text);
-      margin: 0;
-      padding: 2rem;
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: var(--glass);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
-      padding: 2rem;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    }
-    h1 {
-      text-align: center;
-      font-size: 2.5rem;
-      margin-bottom: 2rem;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    .alert {
-      text-align: center;
-      font-size: 1.2rem;
-      color: var(--accent);
-      margin-bottom: 2rem;
-    }
-    .import-section {
-      text-align: center;
-      margin: 2rem 0;
-    }
-    .import-section textarea {
-      display: block;
-      width: 100%;
-      max-width: 600px;
-      max-height: 150px;
-      margin: 1.5rem auto;
-      padding: 1.2rem;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--text);
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
-    .import-section textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(64, 237, 58, 0.2);
-    }
-    button {
-      padding: 0.6rem 1rem;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: all 0.3s ease;
-      display: block;
-      margin: 1rem auto;
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5rem 0;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 1.2rem 1.5rem;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    th {
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    tr:nth-child(even) {
-      background-color: rgba(255, 255, 255, 0.02);
-    }
-    tr:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-    /* Destaque verde para linhas 100% */
-    .completo {
-      background-color: rgba(0, 255, 0, 0.2) !important;
-    }
-    /* Barra de progresso */
-    .progress-container {
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-      height: 24px;
-      width: 100%;
-      max-width: 150px;
-      margin: 0 auto;
-    }
-    .progress-bar {
-      background: var(--primary);
-      height: 100%;
-      text-align: center;
-      line-height: 24px;
-      color: white;
-      white-space: nowrap;
-    }
-    /* Checkbox customizado */
-    input[type="checkbox"] {
-      -webkit-appearance: none;
-      appearance: none;
-      background-color: #fff;
-      border: 2px solid var(--primary);
-      padding: 10px;
-      border-radius: 4px;
-      display: inline-block;
-      position: relative;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-right: 8px;
-    }
-    input[type="checkbox"]:checked {
-      background-color: var(--primary);
-      border-color: var(--secondary);
-    }
-    input[type="checkbox"]:checked:after {
-      content: "\f00c";
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      position: absolute;
-      top: 0;
-      left: 2px;
-      color: white;
-      font-size: 16px;
-    }
-    .conferencia-label {
-      font-weight: bold;
-      color: var(--secondary);
-    }
-    /* Botão Exportar PDF ficará acima da área de resultados */
-    #btnPDF {
-      margin-bottom: 1rem;
-    }
-    @media (max-width: 768px) {
-      .container {
-        padding: 1.5rem;
-      }
-      h1 {
-        font-size: 2rem;
-      }
-    }
-    .oe-cell {
-      display: flex;
-      align-items: center;
+  --primary: #008d4c;
+  --secondary: #00a65a;
+  --accent: #00a65a;
+  --background: #0f172a;
+  --glass: rgba(255, 255, 255, 0.05);
+  --text: #f8fafc;
+}
+
+/* Estilos gerais */
+body {
+  font-family: 'Segoe UI', system-ui;
+  background: linear-gradient(45deg, #0f172a, #1e293b);
+  color: var(--text);
+  margin: 0;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.alert {
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--accent);
+  margin-bottom: 2rem;
+}
+
+.import-section {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.import-section textarea {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  max-height: 150px;
+  margin: 1.5rem auto;
+  padding: 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.import-section textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(64, 237, 58, 0.2);
+}
+
+button {
+  padding: 0.6rem 1rem;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 1rem auto;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 1.2rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+th {
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Destaque verde para linhas 100% */
+.completo {
+  background-color: rgba(0, 255, 0, 0.2) !important;
+}
+
+/* --- Barra de Progresso Principal --- */
+.progress-container {
+  position: relative;
+  height: 30px; /* Aumentado de 24px para 30px */
+  width: 100%;
+  max-width: 150px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  width: 0%;
+  border-radius: 15px 0 0 15px;
+  position: relative;
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg, 
+    rgba(255,255,255,0.15) 25%, 
+    transparent 25%, 
+    transparent 50%, 
+    rgba(255,255,255,0.15) 50%, 
+    rgba(255,255,255,0.15) 75%, 
+    transparent 75%, 
+    transparent
+  );
+  background-size: 20px 20px;
+  animation: progressStripe 2s linear infinite;
+  border-radius: inherit;
+}
+
+@keyframes progressStripe {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 20px; }
+}
+
+/* --- Separadores com Progresso Moderno --- */
+.separador-progress {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 8px 12px; /* Aumentado para dar mais destaque */
+  color: black;
+  cursor: pointer;
+  min-width: 80px;
+  text-align: center;
+  transition: background 0.3s ease;
+}
+
+.separador-progress::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--progress, 0%);
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  z-index: -1;
+  transition: width 0.5s ease-in-out;
+}
+
+/* Caso queira que o texto fique sempre acima */
+.separador-progress span {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Checkbox customizado --- */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  border: 2px solid var(--primary);
+  padding: 10px;
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 8px;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--secondary);
+}
+
+input[type="checkbox"]:checked:after {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  top: 0;
+  left: 2px;
+  color: white;
+  font-size: 16px;
+}
+
+.conferencia-label {
+  font-weight: bold;
+  color: var(--secondary);
+}
+
+/* Botão Exportar PDF ficará acima da área de resultados */
+#btnPDF {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
   }
-  
-  .oe-text {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100px; /* Ajuste conforme necessário */
+  h1 {
+    font-size: 2rem;
   }
-  
-  .copy-button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      margin-left: 5px;
-      font-size: 12px;
-  }
-  
-  .copy-button i {
-      color: #008d4c; /* Ajuste para combinar com o tema do site */
-  }
+}
+
+.oe-cell {
+  display: flex;
+  align-items: center;
+}
+
+.oe-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 5px;
+  font-size: 12px;
+}
+
+.copy-button i {
+  color: #008d4c;
+}
+
+.small-progress {
+  display: inline-block;
+  width: 60px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.small-progress .progress-bar {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  background: var(--primary);
+  color: white;
+  white-space: nowrap;
+}
