@@ -1,4 +1,5 @@
 const STORAGE_KEY = "checkbox_state_monitor";
+const RESULT_STORAGE_KEY = "result_state_monitor";
 let registrosCombinados = [];
 let resetCriado = false;
 
@@ -12,7 +13,6 @@ function exibirMensagemAlerta() {
 }
 
 function exibirAreaCSV() {
-  // Remove o botão RESET se existir
   let btnReset = document.getElementById("btnReset");
   if (btnReset) { btnReset.remove(); resetCriado = false; }
   document.getElementById("mainContent").innerHTML = `
@@ -34,14 +34,19 @@ function exibirAreaCSV() {
       }
     }
   });
+  carregarResultadosSalvos();
 }
 
 function exibirBotaoReset() {
   let btn = document.createElement("button");
   btn.id = "btnReset";
   btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> RESET';
+  btn.style.display = 'block'; // Garante que o botão seja um bloco
+  btn.style.margin = '1rem auto'; // Centraliza horizontalmente e adiciona margem
   btn.addEventListener("click", () => {
     document.getElementById("result").innerHTML = "";
+    localStorage.removeItem(RESULT_STORAGE_KEY);
+    registrosCombinados = [];
     exibirAreaCSV();
   });
   document.getElementById("mainContent").appendChild(btn);
@@ -80,23 +85,31 @@ function processarCSV(csvText) {
 
     if (!csvPorOE[oe]) {
       csvPorOE[oe] = {
-        congelado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresPercentuais: {} },
-        resfriado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresPercentuais: {} }
+        congelado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresDados: {}, cargasMenores100: 0 },
+        resfriado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresDados: {}, cargasMenores100: 0 }
       };
     }
 
-    if (temperatura === "CONGELADO") {
-      csvPorOE[oe].congelado.separadores.push(separador);
-      csvPorOE[oe].congelado.totalPeso += peso;
-      csvPorOE[oe].congelado.totalEntregue += entregue;
-      csvPorOE[oe].congelado.totalCaixas += caixas;
-      csvPorOE[oe].congelado.separadoresPercentuais[separador] = percentual; // Armazena o percentual do separador
-    } else if (temperatura === "RESFRIADO") {
-      csvPorOE[oe].resfriado.separadores.push(separador);
-      csvPorOE[oe].resfriado.totalPeso += peso;
-      csvPorOE[oe].resfriado.totalEntregue += entregue;
-      csvPorOE[oe].resfriado.totalCaixas += caixas;
-      csvPorOE[oe].resfriado.separadoresPercentuais[separador] = percentual; // Armazena o percentual do separador
+    let grupo = temperatura === "CONGELADO" ? csvPorOE[oe].congelado : csvPorOE[oe].resfriado;
+    if (temperatura === "CONGELADO" || temperatura === "RESFRIADO") {
+      if (!grupo.separadores.includes(separador)) {
+        grupo.separadores.push(separador);
+      }
+      grupo.totalPeso += peso;
+      grupo.totalEntregue += entregue;
+      grupo.totalCaixas += caixas;
+
+      if (!grupo.separadoresDados[separador]) {
+        grupo.separadoresDados[separador] = { peso: 0, entregue: 0, caixas: 0, percentuais: [] };
+      }
+      grupo.separadoresDados[separador].peso += peso;
+      grupo.separadoresDados[separador].entregue += entregue;
+      grupo.separadoresDados[separador].caixas += caixas;
+      grupo.separadoresDados[separador].percentuais.push(percentual);
+
+      if (percentual < 100) {
+        grupo.cargasMenores100 += 1;
+      }
     }
   });
 
@@ -104,8 +117,27 @@ function processarCSV(csvText) {
     let grupo = csvPorOE[oe];
     let totalPeso = grupo.congelado.totalPeso + grupo.resfriado.totalPeso;
     let totalEntregue = grupo.congelado.totalEntregue + grupo.resfriado.totalEntregue;
-    grupo.finalPercentual = totalPeso > 0 ? Math.min(100, (totalEntregue / totalPeso) * 100) : 0;
+    grupo.finalPercentual = totalPeso > 0 ? Math.min(100, Math.round((totalEntregue / totalPeso) * 100)) : 0;
     grupo.totalCaixas = grupo.congelado.totalCaixas + grupo.resfriado.totalCaixas;
+
+    ['congelado', 'resfriado'].forEach(temp => {
+      let tempGrupo = grupo[temp];
+      if (tempGrupo.cargasMenores100 >= 2) {
+        for (let sep in tempGrupo.separadoresDados) {
+          let dados = tempGrupo.separadoresDados[sep];
+          dados.percentual = tempGrupo.totalPeso > 0 ? Math.round((dados.entregue / tempGrupo.totalPeso) * 100) : 0;
+        }
+      } else {
+        for (let sep in tempGrupo.separadoresDados) {
+          let dados = tempGrupo.separadoresDados[sep];
+          if (dados.percentuais.length > 0) {
+            dados.percentual = Math.round(Math.min(...dados.percentuais));
+          } else {
+            dados.percentual = 0;
+          }
+        }
+      }
+    });
   }
 
   let gradeDataStr = lerGradeCompleta();
@@ -132,6 +164,8 @@ function processarCSV(csvText) {
     let displayResfriado = fullResfriado.map(nome => nome.split(" ")[0]).join(", ");
     let percentual = grupo.finalPercentual;
     let totalCaixas = grupo.totalCaixas;
+    let qtdeCxs = reg["QTDE CXS"] ? reg["QTDE CXS"].trim() : "0";
+    let pesoTotal = reg["PESO ENTREGAS"] ? reg["PESO ENTREGAS"].trim() : "0";
 
     return {
       placa,
@@ -142,10 +176,16 @@ function processarCSV(csvText) {
       sepCongeladoDisplay: displayCongelado,
       sepResfriadoDisplay: displayResfriado,
       caixasSeparacao: totalCaixas,
+      qtdeCxs,
+      pesoTotal,
       percentual,
       emConferencia: getCheckboxState(reg.OE ? reg.OE.trim() : ""),
-      congeladoPercentuais: grupo.congelado.separadoresPercentuais, // Adiciona os percentuais dos separadores congelados
-      resfriadoPercentuais: grupo.resfriado.separadoresPercentuais  // Adiciona os percentuais dos separadores resfriados
+      congeladoPercentuais: Object.fromEntries(
+        Object.entries(grupo.congelado.separadoresDados).map(([sep, dados]) => [sep, dados.percentual])
+      ),
+      resfriadoPercentuais: Object.fromEntries(
+        Object.entries(grupo.resfriado.separadoresDados).map(([sep, dados]) => [sep, dados.percentual])
+      )
     };
   }).filter(item => item !== null);
 
@@ -154,8 +194,24 @@ function processarCSV(csvText) {
     if (existente) { novo.emConferencia = existente.emConferencia; }
   });
   registrosCombinados = novosRegistros;
-
+  salvarResultados();
   renderizarTabela();
+}
+
+function salvarResultados() {
+  localStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(registrosCombinados));
+}
+
+function carregarResultadosSalvos() {
+  const savedResults = localStorage.getItem(RESULT_STORAGE_KEY);
+  if (savedResults) {
+    registrosCombinados = JSON.parse(savedResults);
+    renderizarTabela();
+    if (!resetCriado) {
+      exibirBotaoReset();
+      resetCriado = true;
+    }
+  }
 }
 
 function setCheckboxState(oe, state) {
@@ -182,39 +238,44 @@ function renderizarTabela() {
              '<th><i class="fa-solid fa-location-dot"></i> Destino</th>' +
              '<th><i class="fa-solid fa-snowflake"></i> Separador Congelado</th>' +
              '<th><i class="fa-solid fa-temperature-low"></i> Separador Resfriado</th>' +
-             '<th><i class="fa-solid fa-box"></i> Caixas Separação</th>' +
+             '<th><i class="fa-solid fa-box"></i> CXS Separação</th>' +
+             '<th><i class="fa-solid fa-boxes"></i> QTDE CXS</th>' +
+             '<th><i class="fa-solid fa-weight"></i> Peso Total</th>' +
              '<th><i class="fa-solid fa-percent"></i> %</th>' +
              '<th><i class="fa-solid fa-check"></i> EM CONFERÊNCIA</th>' +
              '</tr></thead><tbody>';
 
   registrosOrdenados.forEach(item => {
-    // Separadores Congelados com barra de progresso
     let congeladoHTML = "";
-    if (item.sepCongeladoFull) {
+    if (item.sepCongeladoDisplay) {
       let separadores = item.sepCongeladoFull.split(", ");
-      congeladoHTML = separadores.map(sep => {
-        let nomeAbreviado = sep.split(" ")[0]; // Exibe apenas o primeiro nome na tabela
-        let percentual = item.congeladoPercentuais[sep] || 0; // Pega a porcentagem
-        let progressoStyle = `background: linear-gradient(to right, var(--primary) ${percentual.toFixed(2)}%, transparent ${percentual.toFixed(2)}%)`;
-        return `<span class="separador" style="${progressoStyle}" title="${sep} - ${percentual.toFixed(2)}%">${nomeAbreviado}</span>`;
+      let displaySeparadores = item.sepCongeladoDisplay.split(", ");
+      congeladoHTML = separadores.map((sep, index) => {
+        let percentual = item.congeladoPercentuais[sep] || 0;
+        let progresso = `<div class="progress-container small-progress">
+                           <div class="progress-bar" style="width: ${percentual}%; --progress-width: ${percentual}%;" data-percent="${percentual}%"></div>
+                         </div>`;
+        return `<span title="${sep} (${percentual}%)">${displaySeparadores[index]} ${progresso}</span>`;
       }).join(", ");
     }
-    // Separadores Resfriados com barra de progresso
+
     let resfriadoHTML = "";
-    if (item.sepResfriadoFull) {
+    if (item.sepResfriadoDisplay) {
       let separadores = item.sepResfriadoFull.split(", ");
-      resfriadoHTML = separadores.map(sep => {
-        let nomeAbreviado = sep.split(" ")[0]; // Exibe apenas o primeiro nome na tabela
-        let percentual = item.resfriadoPercentuais[sep] || 0; // Pega a porcentagem
-        let progressoStyle = `background: linear-gradient(to right, var(--primary) ${percentual.toFixed(2)}%, transparent ${percentual.toFixed(2)}%)`;
-        return `<span class="separador" style="${progressoStyle}" title="${sep} - ${percentual.toFixed(2)}%">${nomeAbreviado}</span>`;
+      let displaySeparadores = item.sepResfriadoDisplay.split(", ");
+      resfriadoHTML = separadores.map((sep, index) => {
+        let percentual = item.resfriadoPercentuais[sep] || 0;
+        let progresso = `<div class="progress-container small-progress">
+                           <div class="progress-bar" style="width: ${percentual}%; --progress-width: ${percentual}%;" data-percent="${percentual}%"></div>
+                         </div>`;
+        return `<span title="${sep} (${percentual}%)">${displaySeparadores[index]} ${progresso}</span>`;
       }).join(", ");
     }
-    let progresso = `<div class="progress-container">
-                       <div class="progress-bar" style="width: ${item.percentual.toFixed(2)}%; min-width: 2rem;">
-                         ${item.percentual.toFixed(2)}%
-                       </div>
-                     </div>`;
+
+    let progresso = `<div class="progress-container main-progress">
+      <div class="progress-bar" style="width: ${item.percentual}%; --progress-width: ${item.percentual}%;" data-percent="${item.percentual}%"></div>
+    </div>`;
+
     let linhaStyle = item.percentual >= 100 ? ' class="completo"' : "";
 
     html += `<tr${linhaStyle}>
@@ -227,6 +288,8 @@ function renderizarTabela() {
               <td>${congeladoHTML}</td>
               <td>${resfriadoHTML}</td>
               <td>${item.caixasSeparacao}</td>
+              <td>${item.qtdeCxs}</td>
+              <td>${item.pesoTotal}</td>
               <td>${progresso}</td>
               <td>
                 <label>
@@ -249,6 +312,7 @@ function renderizarTabela() {
           setCheckboxState(oe, this.checked);
         }
       });
+      salvarResultados();
       renderizarTabela();
     });
   });
@@ -262,7 +326,6 @@ function exibirBotaoPDF() {
     btnPDF.id = "btnPDF";
     btnPDF.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Exportar PDF';
     btnPDF.addEventListener("click", exportarPDF);
-    // Posiciona o botão PDF acima da área de resultados
     document.getElementById("pdfExportArea").appendChild(btnPDF);
   }
 }
@@ -270,27 +333,26 @@ function exibirBotaoPDF() {
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-  
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 10;
   const availableWidth = pageWidth - 2 * margin;
   const startX = margin;
   const startY = margin + 12;
-  
-  // Definindo as colunas para o PDF (omitindo a coluna EM CONFERÊNCIA)
-  const colWidths = [20, 20, 30, 30, 30, 20, 20]; // colunas: OE, Placa, Destino, Sep Congelado, Sep Resfriado, Caixas, %
-  const headers = ["OE", "Placa", "Destino", "Sep Congelado", "Sep Resfriado", "Caixas", "%"];
+
+  const colWidths = [20, 20, 25, 30, 30, 15, 20, 20];
+  const headers = ["Placa", "OE", "Destino", "Sep Congelado", "Sep Resfriado", "CXS", "Peso Total", "%"];
   const headerHeight = 10;
   const cellPadding = 2;
   const lineHeight = 7;
-  
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
   const title = `RELATÓRIO DE PICKING - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
   doc.text(title, startX, margin + 5);
-  
+
   doc.setFontSize(10);
   let currentX = startX;
   for (let i = 0; i < headers.length; i++) {
@@ -300,33 +362,43 @@ function exportarPDF() {
     doc.text(headers[i], currentX + colWidths[i] / 2, startY + headerHeight / 2 + 3, { align: 'center' });
     currentX += colWidths[i];
   }
-  
+
   let y = startY + headerHeight;
   doc.setFontSize(9);
-  
-  // Filtra e ordena os dados para o PDF (excluindo os em conferência, ordenados por % decrescente)
+
   const dadosPDF = registrosCombinados
                     .filter(reg => !reg.emConferencia)
                     .sort((a, b) => b.percentual - a.percentual);
-  
+
   dadosPDF.forEach((reg) => {
+    const sepCongeladoPDF = reg.sepCongeladoFull.split(", ").map(sep => {
+      let percentual = reg.congeladoPercentuais[sep] || 0;
+      return `${sep.split(" ")[0]} (${percentual}%)`;
+    }).join(", ");
+
+    const sepResfriadoPDF = reg.sepResfriadoFull.split(", ").map(sep => {
+      let percentual = reg.resfriadoPercentuais[sep] || 0;
+      return `${sep.split(" ")[0]} (${percentual}%)`;
+    }).join(", ");
+
     const content = [
-      reg.oe,
       reg.placa,
+      reg.oe,
       reg.destino,
-      reg.sepCongeladoDisplay,
-      reg.sepResfriadoDisplay,
-      reg.caixasSeparacao.toString(),
-      reg.percentual.toFixed(1) + "%"
+      sepCongeladoPDF,
+      sepResfriadoPDF,
+      reg.qtdeCxs,
+      reg.pesoTotal,
+      `${reg.percentual}%`
     ];
-    
+
     let maxLines = 1;
     for (let i = 0; i < content.length; i++) {
       const textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
       maxLines = Math.max(maxLines, textLines.length);
     }
     const rowHeight = maxLines * lineHeight + 2 * cellPadding;
-    
+
     if (y + rowHeight > pageHeight - margin) {
       doc.addPage();
       y = margin;
@@ -343,9 +415,9 @@ function exportarPDF() {
     currentX = startX;
     doc.setFillColor(255, 255, 255);
     doc.rect(currentX, y, availableWidth, rowHeight, 'F');
-    
+
     for (let i = 0; i < content.length; i++) {
-      if (i === 0 || i === 1 || i === 6) {
+      if (i === 0 || i === 1 || i === 7) {
         doc.setFillColor(240, 240, 240);
         doc.rect(currentX, y, colWidths[i], rowHeight, 'F');
         doc.setFont('helvetica', 'bold');
@@ -357,7 +429,7 @@ function exportarPDF() {
       let textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
       for (let j = 0; j < textLines.length; j++) {
         let textY = y + cellPadding + (j + 1) * lineHeight - (lineHeight / 2);
-        if (i === 0 || i === 1 || i === 6) {
+        if (i === 0 || i === 1 || i === 7) {
           doc.text(textLines[j], currentX + colWidths[i] / 2, textY, { align: 'center' });
         } else {
           doc.text(textLines[j], currentX + cellPadding, textY);
@@ -367,14 +439,14 @@ function exportarPDF() {
     }
     y += rowHeight;
   });
-  
+
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.text(`Página ${i} de ${pageCount}`, margin, pageHeight - 5);
   }
-  
+
   doc.save(`Picking_${new Date().toISOString().slice(0, 16).replace(/[-T:]/g, '')}.pdf`);
 }
 
@@ -385,7 +457,9 @@ function init() {
     exibirAreaCSV();
   }
 }
+
 init();
+
 document.getElementById('result').addEventListener('click', function(event) {
   if (event.target.closest('.copy-button')) {
     const button = event.target.closest('.copy-button');
