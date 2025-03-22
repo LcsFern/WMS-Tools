@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesos Variáveis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-weight-scale"></i> Pesos Variáveis</h1>
+        
+        <div class="section">
+            <h2><i class="fas fa-paste"></i> Importar Dados</h2>
+            <div id="inputContainer">
+                <textarea id="inputData" placeholder="Cole os dados do Excel aqui..."></textarea>
+            </div>
+        </div>
+
+        <div class="section hidden" id="results">
+            <h2><i class="fas fa-table"></i> Resultados</h2>
+            <div id="filterResults"></div>
+            <div class="qr-container" id="qrCodes"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

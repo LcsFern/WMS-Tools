@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Grade</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fa-solid fa-table"></i> Dashboard da Grade</h1>
+    
+    <div class="section" id="gradeSection">
+      <h2><i class="fa-solid fa-file-import"></i> Cole a Grade Limpa (Excel):</h2>
+      <textarea id="excelData" placeholder="Cole a grade aqui..."></textarea>
+    </div>
+    
+    <div class="section hidden" id="dashboard">
+      <div class="header">
+        <h2>Data da Grade: <span id="dataGrade"></span></h2>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Pesquisar placa ou transportadora...">
+          <div id="suggestions" class="suggestions"></div>
+          <button onclick="searchGrade()"><i class="fa-solid fa-search"></i></button>
+        </div>
+      </div>
+      <div class="totals">
+        <div class="total-card">
+          <i class="fa-solid fa-truck"></i>
+          <h3>Total de Veículos</h3>
+          <p id="totalVeiculos"></p>
+        </div>
+        <div class="total-card">
+          <i class="fa-solid fa-weight-hanging"></i>
+          <h3>Peso Total (kg)</h3>
+          <p id="pesoTotal"></p>
+        </div>
+        <div class="total-card">
+          <i class="fa-solid fa-box"></i>
+          <h3>Total de Caixas</h3>
+          <p id="totalCaixas"></p>
+        </div>
+        <div class="total-card">
+          <i class="fa-solid fa-truck-ramp-box"></i>
+          <h3>Paletizados (P)</h3>
+          <p id="paletizados"></p>
+        </div>
+        <div class="total-card">
+          <i class="fa-solid fa-truck"></i>
+          <h3>Gradiados (G)</h3>
+          <p id="gradiados"></p>
+        </div>
+        <div class="total-card">
+          <i class="fa-solid fa-truck-droplet"></i>
+          <h3>Batidos (B)</h3>
+          <p id="batidos"></p>
+        </div>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+      <div class="map-container">
+        <h2><i class="fa-solid fa-map"></i> Mapa de Destinos</h2>
+        <div id="map" style="height: 400px;"></div>
+      </div>
+    </div>
+    
+    <div class="import-section">
+      <button id="resetBtn" class="hidden" onclick="resetGrade()">
+        <i class="fa-solid fa-arrows-rotate"></i> Resetar Grade
+      </button>
+    </div>
+  </div>
+  
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>
