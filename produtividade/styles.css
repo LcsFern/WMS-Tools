@@ -6,16 +6,23 @@
   --text: #f8fafc;
   --glass: rgba(255, 255, 255, 0.05);
 }
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  font-family: 'Segoe UI', system-ui;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   background: linear-gradient(45deg, #0f172a, #1e293b);
   color: var(--text);
-  margin: 0;
-  padding: 2rem;
   min-height: 100vh;
+  padding: 2rem;
 }
+
 .container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   background: var(--glass);
   backdrop-filter: blur(12px);
@@ -24,6 +31,7 @@ body {
   padding: 2rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
+
 h1 {
   text-align: center;
   font-size: 2.5rem;
@@ -37,38 +45,56 @@ h1 {
   justify-content: center;
   gap: 1rem;
 }
+
+.instruction-text {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
 label {
-  display: block;
-  margin: 1.5rem 0 1rem;
-  color: var(--accent);
-  font-weight: 500;
-  font-size: 1.1rem;
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
+
 textarea {
   width: 100%;
-  padding: 0.4rem 1.2rem;
+  padding: 1rem;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: var(--text);
-  font-family: system-ui;
+  font-family: system-ui, sans-serif;
   font-size: 0.9rem;
   line-height: 1.6;
-  height: 30px;
+  min-height: 80px;
+  max-height: 150px;
+  resize: vertical;
   transition: all 0.3s ease;
-  cursor: pointer;
 }
+
 textarea:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(58, 237, 97, 0.2);
 }
-#calcularBtn, #exportarBtn, #resetBtn {
-  width: 100%;
-  padding: 1.4rem;
+
+.button-container {
+  display: flex;
+  justify-content: center;
+}
+
+button {
+  padding: 1rem 2rem;
   background: linear-gradient(45deg, var(--primary), var(--secondary));
   border: none;
   border-radius: 12px;
@@ -76,17 +102,104 @@ textarea:focus {
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin: 2rem 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
 }
-#calcularBtn:hover, #exportarBtn:hover, #resetBtn:hover {
+
+button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-table {
+
+.dashboard-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-controls button {
+  flex: 1;
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin: 2rem 0;
+  position: relative;
+  z-index: 10;
+}
+
+.highlight-card {
+  position: relative;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.3s ease, background 0.3s ease;
+  cursor: pointer;
+}
+
+.highlight-card:hover {
+  transform: scale(1.05);
+  background: rgba(0, 166, 90, 0.2);
+}
+
+.highlight-card:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.highlight-card i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+
+.highlight-card h3 {
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+}
+
+.highlight-card p {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.highlight-card span {
+  display: block;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--text);
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: opacity 0.3s ease;
+  z-index: 11;
+  min-width: 200px;
+  max-width: 250px;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.tooltip p {
+  margin: 0.5rem 0;
+}
+
+.modern-table {
   width: 100%;
   border-collapse: collapse;
   background: rgba(0, 0, 0, 0.3);
@@ -94,32 +207,101 @@ table {
   overflow: hidden;
   margin: 2rem 0;
   backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 1;
 }
+
 th, td {
   padding: 1.2rem;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 th {
   background: linear-gradient(45deg, var(--primary), var(--secondary));
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.02);
 }
+
 tr:hover td {
   background: rgba(255, 255, 255, 0.05);
 }
-.alert {
-  color: #ff4444;
-  padding: 1.5rem;
-  border-radius: 8px;
-  background: rgba(255, 68, 68, 0.1);
-  border: 1px solid #ff4444;
-  margin: 2rem 0;
+
+.separador-cell {
+  position: relative;
+  cursor: pointer;
 }
+
+.separador-cell:hover .stats-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.stats-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(0, 166, 90, 0.9), rgba(0, 141, 76, 0.9));
+  color: var(--text);
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 12;
+  min-width: 220px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform-origin: center bottom;
+}
+
+/* Posicionamento dinâmico: acima para os últimos 2 colocados, abaixo para os outros */
+.separador-cell[data-index="0"] .stats-tooltip,
+.separador-cell[data-index="1"] .stats-tooltip {
+  top: 100%;
+  transform: translateX(-50%) translateY(5px);
+}
+
+.separador-cell:not([data-index="0"]):not([data-index="1"]) .stats-tooltip {
+  bottom: 100%;
+  transform: translateX(-50%) translateY(-5px);
+  transform-origin: center top;
+}
+
+.separador-cell:hover .stats-tooltip {
+  transform: translateX(-50%) translateY(5px); /* Para cima */
+}
+
+.separador-cell:not([data-index="0"]):not([data-index="1"]):hover .stats-tooltip {
+  transform: translateX(-50%) translateY(-5px); /* Para baixo */
+}
+
+.stats-tooltip h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: #fff;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.stats-tooltip p {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats-tooltip .stat-label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 @media (max-width: 768px) {
   body {
     padding: 1rem;
@@ -130,8 +312,17 @@ tr:hover td {
   h1 {
     font-size: 2rem;
   }
+  .highlights {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-controls {
+    flex-direction: column;
+  }
   th, td {
     padding: 1rem;
     font-size: 0.9rem;
+  }
+  .stats-tooltip {
+    min-width: 180px;
   }
 }
