@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('qrCodes').innerHTML = `
             <div class="qr-card">
-                allarg<h3>QR Code Zebra</h3>
+                <h3>QR Code Zebra</h3>
                 ${qrZebra.createImgTag(4)}
                 <p>${averageWeight.toFixed(3).replace('.', '')}</p>
             </div>
