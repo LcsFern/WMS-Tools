@@ -89,8 +89,8 @@ function processarCSV(csvText) {
 
     if (!csvPorOE[oe]) {
       csvPorOE[oe] = {
-        congelado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresDados: {} },
-        resfriado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresDados: {} }
+        congelado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresDados: {}, pendentes: 0 },
+        resfriado: { separadores: [], totalPeso: 0, totalEntregue: 0, totalCaixas: 0, separadoresDados: {}, pendentes: 0 }
       };
     }
 
@@ -101,6 +101,8 @@ function processarCSV(csvText) {
         if (separadoresPorOE.has(separador) && separadoresPorOE.get(separador).percentual < 100 && separadoresPorOE.get(separador).oe !== oe) {
           console.warn(`Separador ${separador} duplicado em OE ${oe} e ${separadoresPorOE.get(separador).oe}`);
         }
+      } else if (!separador) {
+        grupo.pendentes += 1;
       }
       grupo.totalPeso += peso;
       grupo.totalEntregue += entregue;
@@ -177,7 +179,9 @@ function processarCSV(csvText) {
       percentual,
       emConferencia: getCheckboxState(reg.OE ? reg.OE.trim() : ""),
       congeladoPercentuais,
-      resfriadoPercentuais
+      resfriadoPercentuais,
+      pendentesCongelado: grupo.congelado.pendentes,
+      pendentesResfriado: grupo.resfriado.pendentes
     };
   }).filter(item => item !== null);
 
@@ -244,7 +248,7 @@ function renderizarTabela() {
       let displaySeparadores = item.sepCongeladoDisplay.split(", ");
       congeladoHTML = separadores.map((sep, index) => {
         let percentual = item.congeladoPercentuais[sep] || 0;
-        let percentualExibicao = Math.round(percentual); // Arredonda apenas para exibição
+        let percentualExibicao = Math.round(percentual);
         let progresso = `<div class="progress-container small-progress">
                            <div class="progress-bar" style="width: ${percentualExibicao}%; --progress-width: ${percentualExibicao}%;" data-percent="${percentualExibicao}%"></div>
                          </div>`;
@@ -258,7 +262,7 @@ function renderizarTabela() {
       let displaySeparadores = item.sepResfriadoDisplay.split(", ");
       resfriadoHTML = separadores.map((sep, index) => {
         let percentual = item.resfriadoPercentuais[sep] || 0;
-        let percentualExibicao = Math.round(percentual); // Arredonda apenas para exibição
+        let percentualExibicao = Math.round(percentual);
         let progresso = `<div class="progress-container small-progress">
                            <div class="progress-bar" style="width: ${percentualExibicao}%; --progress-width: ${percentualExibicao}%;" data-percent="${percentualExibicao}%"></div>
                          </div>`;
@@ -267,12 +271,20 @@ function renderizarTabela() {
     }
 
     let percentualOE = item.percentual;
-    let percentualOEExibicao = percentualOE === 100 ? 100 : Math.floor(percentualOE); // Arredonda para baixo se < 100
+    let percentualOEExibicao = percentualOE === 100 ? 100 : Math.floor(percentualOE);
     let progresso = `<div class="progress-container main-progress">
       <div class="progress-bar" style="width: ${percentualOEExibicao}%; --progress-width: ${percentualOEExibicao}%;" data-percent="${percentualOEExibicao}%"></div>
     </div>`;
 
     let linhaStyle = percentualOE === 100 ? ' class="completo"' : "";
+
+    // Indicador de cargas pendentes com tooltip em maiúsculas
+    let pendentesTotal = item.pendentesCongelado + item.pendentesResfriado;
+    let pendentesHTML = "";
+    if (pendentesTotal > 0) {
+      let tooltip = `CARGAS PENDENTES: ${item.pendentesCongelado > 0 ? `${item.pendentesCongelado} CONGELADO${item.pendentesCongelado > 1 ? 'S' : ''}` : ''}${item.pendentesCongelado > 0 && item.pendentesResfriado > 0 ? ' E ' : ''}${item.pendentesResfriado > 0 ? `${item.pendentesResfriado} RESFRIADO${item.pendentesResfriado > 1 ? 'S' : ''}` : ''}`;
+      pendentesHTML = `<span class="pendentes-column"><span class="pendentes-indicator" title="${tooltip}">P${pendentesTotal}</span></span>`;
+    }
 
     html += `<tr${linhaStyle}>
               <td>${item.placa}</td>
@@ -281,7 +293,7 @@ function renderizarTabela() {
                 <button class="copy-button" data-oe="${item.oe}"><i class="fa-solid fa-copy"></i></button>
               </td>
               <td>${item.destino}</td>
-              <td>${congeladoHTML}</td>
+              <td class="separador-cell">${congeladoHTML}${pendentesHTML}</td>
               <td>${resfriadoHTML}</td>
               <td>${item.caixasSeparacao}</td>
               <td>${item.qtdeCxs}</td>
@@ -369,18 +381,18 @@ function exportarPDF() {
   dadosPDF.forEach((reg) => {
     const sepCongeladoPDF = reg.sepCongeladoFull && Object.keys(reg.congeladoPercentuais).length > 0 ? reg.sepCongeladoFull.split(", ").map(sep => {
       let percentual = reg.congeladoPercentuais[sep] || 0;
-      let percentualExibicao = Math.round(percentual); // Arredonda apenas para exibição
+      let percentualExibicao = Math.round(percentual);
       return `${sep.split(" ")[0]} (${percentualExibicao}%)`;
     }).join(", ") : "";
 
     const sepResfriadoPDF = reg.sepResfriadoFull && Object.keys(reg.resfriadoPercentuais).length > 0 ? reg.sepResfriadoFull.split(", ").map(sep => {
       let percentual = reg.resfriadoPercentuais[sep] || 0;
-      let percentualExibicao = Math.round(percentual); // Arredonda apenas para exibição
+      let percentualExibicao = Math.round(percentual);
       return `${sep.split(" ")[0]} (${percentualExibicao}%)`;
     }).join(", ") : "";
 
     let percentualOE = reg.percentual;
-    let percentualOEExibicao = percentualOE === 100 ? 100 : Math.floor(percentualOE); // Arredonda para baixo se < 100
+    let percentualOEExibicao = percentualOE === 100 ? 100 : Math.floor(percentualOE);
 
     const content = [
       reg.placa,
@@ -390,7 +402,7 @@ function exportarPDF() {
       sepResfriadoPDF,
       reg.qtdeCxs,
       reg.pesoTotal,
-      `${percentualOEExibicao}%` // Usa o valor arredondado para exibição
+      `${percentualOEExibicao}%`
     ];
 
     let maxLines = 1;

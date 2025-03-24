@@ -27,8 +27,23 @@ const destinosCoordenadas = {
   "SEARA": [-27.1486, -52.3186]
 };
 
+const baseItajai = { lat: -26.947144, lon: -48.739698 };
+
 function parsePeso(valor) {
   return parseFloat(valor.toString().replace(/[\.]/g, '').replace(/[,]/g, '.'));
+}
+
+// Calcula a distância haversine entre dois pontos
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Raio da Terra em km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 async function getCoordinates(destino) {
@@ -45,6 +60,27 @@ async function getCoordinates(destino) {
     console.error(`Erro ao buscar coordenadas para ${destino}:`, error);
   }
   return null;
+}
+
+// Gera o SVG da placa no padrão Mercosul
+function getSVGPlaca(placa) {
+  return `
+  <svg width="150" height="50" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fundo branco -->
+    <rect width="150" height="50" fill="white" stroke="#ccc" rx="4"/>
+    <!-- Faixa azul superior -->
+    <rect width="150" height="15" fill="#0033A0"/>
+    <!-- Texto "BRASIL" na faixa -->
+    <text x="5" y="12" font-family="Arial, sans-serif" font-size="10" fill="white">BRASIL</text>
+    <!-- Bandeira do Brasil (simplificada) -->
+    <rect x="110" y="2" width="30" height="10" fill="#009C3B"/>
+    <rect x="110" y="12" width="30" height="3" fill="#FFDF00"/>
+    <!-- Emblema do Mercosul (círculo azul simplificado) -->
+    <circle cx="130" cy="30" r="8" fill="#0033A0"/>
+    <!-- Número da placa -->
+    <text x="10" y="40" font-family="Arial, sans-serif" font-size="20" fill="black">${placa}</text>
+  </svg>
+  `;
 }
 
 async function processarGrade() {
@@ -127,7 +163,9 @@ async function processarGrade() {
   document.getElementById('dashboard').classList.remove('hidden');
   document.getElementById('resetBtn').classList.remove('hidden');
 
+  // Cria o mapa e armazena globalmente para permitir centralização via busca
   const map = L.map('map').setView([-27.5954, -48.5482], 7);
+  window.map = map;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
@@ -135,8 +173,9 @@ async function processarGrade() {
   for (const destino of destinosUnicos) {
     const coord = await getCoordinates(destino);
     if (coord) {
+      const distance = haversineDistance(baseItajai.lat, baseItajai.lon, coord[0], coord[1]).toFixed(1);
       const placas = destinoPlacas[destino].join(', ');
-      L.marker(coord).addTo(map).bindPopup(`<strong>${destino}</strong><br>Placas: ${placas}`);
+      L.marker(coord).addTo(map).bindPopup(`<strong>${destino}</strong><br>Distância do CD MI: ${distance} km<br>Placas: ${placas}`);
     }
   }
 
@@ -207,7 +246,9 @@ async function loadGradeFromStorage() {
   document.getElementById('dashboard').classList.remove('hidden');
   document.getElementById('resetBtn').classList.remove('hidden');
 
+  // Cria o mapa e o torna global
   const map = L.map('map').setView([-27.5954, -48.5482], 7);
+  window.map = map;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
@@ -215,8 +256,9 @@ async function loadGradeFromStorage() {
   for (const destino of destinosUnicos) {
     const coord = await getCoordinates(destino);
     if (coord) {
+      const distance = haversineDistance(baseItajai.lat, baseItajai.lon, coord[0], coord[1]).toFixed(1);
       const placas = destinoPlacas[destino].join(', ');
-      L.marker(coord).addTo(map).bindPopup(`<strong>${destino}</strong><br>Placas: ${placas}`);
+      L.marker(coord).addTo(map).bindPopup(`<strong>${destino}</strong><br>Distância do CD Mi: ${distance} km<br>Placas: ${placas}`);
     }
   }
 
@@ -231,7 +273,13 @@ function resetGrade() {
   document.getElementById('resetBtn').classList.add('hidden');
 }
 
-function searchGrade() {
+// Função para copiar o texto da OE
+function copiarTexto(texto) {
+  navigator.clipboard.writeText(texto);
+}
+
+// Função de busca com ícones e clique no destino para centralizar o mapa
+async function searchGrade() {
   const query = document.getElementById('searchInput').value.trim().toUpperCase();
   if (!query) return;
 
@@ -244,15 +292,77 @@ function searchGrade() {
   const searchResults = document.getElementById('searchResults');
   searchResults.innerHTML = '';
   if (results.length > 0) {
-    results.forEach(registro => {
+    for (const registro of results) {
+      const placa = registro["PLACA ROTEIRIZADA"];
+      const svgPlaca = getSVGPlaca(placa);
+      const oe = registro["OE"] || "";
+      const destino = registro["DESTINO"] || "";
+      // Calcula distância (se possível)
+      let destinoDistance = "N/A";
+      const coord = await getCoordinates(destino);
+      if (coord) {
+        destinoDistance = haversineDistance(baseItajai.lat, baseItajai.lon, coord[0], coord[1]).toFixed(1) + " km";
+      }
+      // Peso: utiliza a coluna disponível
+      const peso = registro["PESO ENTREGAS"] || registro["PESO TOTAL"] || registro["PESO RE-ENTREGA"] || "N/A";
+      const caixas = registro["QTDE CXS"] || "N/A";
+      const entregas = registro["QUANT. ENTREGAS"] || "N/A";
+      // Tipo de carga a partir de "QTD PALLETS"
+      let tipoCarga = "N/A";
+      const qtdPallets = registro["QTD PALLETS"] || "";
+      if (qtdPallets) {
+        const tipo = qtdPallets.split('/')[0].trim().toUpperCase();
+        if (tipo.startsWith("P")) tipoCarga = "Paletizado";
+        else if (tipo.startsWith("G")) tipoCarga = "Gradeado";
+        else if (tipo.startsWith("B")) tipoCarga = "Batido";
+      }
+      const transportadora = registro["TRANSPORTADORA"] || "";
+      // Monta o item de resultado com ícones e destino clicável
       const div = document.createElement('div');
       div.className = 'result-item';
       div.innerHTML = `
-        <span>Placa: ${registro["PLACA ROTEIRIZADA"]} | Destino: ${registro["DESTINO"]} | Peso: ${registro["PESO ENTREGAS"] || 'N/A'} | Caixas: ${registro["QTDE CXS"]}</span>
-        <a href="https://www.google.com/search?q=${encodeURIComponent(registro["TRANSPORTADORA"])}" target="_blank">Buscar Transportadora</a>
+        <div class="result-info">
+          ${svgPlaca}
+          <div class="result-details">
+            <div class="result-oe">
+              <i class="fa-solid fa-hashtag"></i> <span>${oe}</span>
+              <button class="copy-btn" title="Copiar OE" onclick="copiarTexto('${oe}')"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div class="result-destino">
+              <i class="fa-solid fa-location-dot"></i>
+              <strong>Destino:</strong> 
+              <span class="destino-link" data-destino="${destino}">${destino}</span> (${destinoDistance})
+            </div>
+            <div><i class="fa-solid fa-weight-hanging"></i> <strong>Peso:</strong> ${peso}</div>
+            <div><i class="fa-solid fa-box"></i> <strong>Caixas:</strong> ${caixas}</div>
+            <div><i class="fa-solid fa-truck-loading"></i> <strong>Entregas:</strong> ${entregas}</div>
+            <div><i class="fa-solid fa-truck"></i> <strong>Tipo de Carga:</strong> ${tipoCarga}</div>
+          </div>
+        </div>
+        <a class="btn-transportadora" href="https://www.google.com/search?q=${encodeURIComponent(transportadora)}" target="_blank">
+          <i class="fa-solid fa-magnifying-glass"></i> Buscar Transportadora
+        </a>
       `;
       searchResults.appendChild(div);
-    });
+
+      // Adiciona evento para centralizar o mapa ao clicar no destino
+      const destinoLink = div.querySelector('.destino-link');
+      if (destinoLink) {
+        destinoLink.style.cursor = "pointer";
+        destinoLink.addEventListener('click', async () => {
+          const destinoNome = destinoLink.getAttribute('data-destino');
+          const coords = await getCoordinates(destinoNome);
+          if (coords && window.map) {
+            window.map.setView(coords, 12);
+            // Abre o popup do marcador correspondente, se houver
+            L.popup()
+              .setLatLng(coords)
+              .setContent(`<strong>${destinoNome}</strong>`)
+              .openOn(window.map);
+          }
+        });
+      }
+    }
   } else {
     searchResults.innerHTML = '<p>Nenhum resultado encontrado.</p>';
   }
