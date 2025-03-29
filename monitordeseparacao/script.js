@@ -14,28 +14,35 @@ function exibirMensagemAlerta() {
 }
 
 function exibirAreaCSV() {
-  let btnReset = document.getElementById("btnReset");
-  if (btnReset) { btnReset.remove(); resetCriado = false; }
-  document.getElementById("mainContent").innerHTML = `
-    <div class="import-section">
-      <h2><i class="fa-solid fa-file-csv"></i> Cole o CSV do Monitor de Picking</h2>
-      <textarea id="csvInput" placeholder="Cole o CSV aqui..."></textarea>
-    </div>
-  `;
-  document.getElementById("csvInput").value = "";
-  document.getElementById("result").innerHTML = "";
-  document.getElementById("pdfExportArea").innerHTML = "";
-  document.getElementById("csvInput").addEventListener("input", function() {
-    if (this.value.trim() !== "") {
-      processarCSV(this.value);
-      document.querySelector(".import-section").style.display = "none";
-      if (!resetCriado) {
-        exibirBotaoReset();
-        resetCriado = true;
+  let savedResults = localStorage.getItem(RESULT_STORAGE_KEY);
+  if (savedResults) {
+    // Se houver resultados salvos, não exibe a área de importação
+    document.getElementById("mainContent").innerHTML = "";
+    carregarResultadosSalvos();
+  } else {
+    let btnReset = document.getElementById("btnReset");
+    if (btnReset) { btnReset.remove(); resetCriado = false; }
+    document.getElementById("mainContent").innerHTML = `
+      <div class="import-section">
+        <h2><i class="fa-solid fa-file-csv"></i> Cole o CSV do Monitor de Picking</h2>
+        <textarea id="csvInput" placeholder="Cole o CSV aqui..."></textarea>
+      </div>
+    `;
+    document.getElementById("csvInput").value = "";
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("pdfExportArea").innerHTML = "";
+    document.getElementById("csvInput").addEventListener("input", function() {
+      if (this.value.trim() !== "") {
+        processarCSV(this.value);
+        document.querySelector(".import-section").style.display = "none";
+        if (!resetCriado) {
+          exibirBotaoReset();
+          resetCriado = true;
+        }
       }
-    }
-  });
-  carregarResultadosSalvos();
+    });
+    carregarResultadosSalvos();
+  }
 }
 
 function exibirBotaoReset() {
@@ -223,12 +230,22 @@ function getCheckboxState(oe) {
 
 function renderizarTabela() {
   const resultDiv = document.getElementById("result");
+
+  // Insere o sistema de busca (apenas quando CSV já foi carregado)
+  let searchHTML = '<div id="searchSystem" class="search-container">' +
+    '<div class="search-bar">' +
+    '<i class="fa-solid fa-search"></i>' +
+    '<input type="text" id="searchInput" placeholder="Pesquisar OE, Placa, Separador, Destino..."/>' +
+    '</div>' +
+    '</div>';
+
   let naoConferencia = registrosCombinados.filter(r => !r.emConferencia);
   naoConferencia.sort((a, b) => b.percentual - a.percentual);
   let emConferencia = registrosCombinados.filter(r => r.emConferencia);
   let registrosOrdenados = naoConferencia.concat(emConferencia);
 
-  let html = '<table><thead><tr>' +
+  let html = searchHTML;
+  html += '<table><thead><tr>' +
              '<th><i class="fa-solid fa-car"></i> Placa</th>' +
              '<th><i class="fa-solid fa-hashtag"></i> OE</th>' +
              '<th><i class="fa-solid fa-location-dot"></i> Destino</th>' +
@@ -278,7 +295,6 @@ function renderizarTabela() {
 
     let linhaStyle = percentualOE === 100 ? ' class="completo"' : "";
 
-    // Indicador de cargas pendentes com tooltip em maiúsculas
     let pendentesTotal = item.pendentesCongelado + item.pendentesResfriado;
     let pendentesHTML = "";
     if (pendentesTotal > 0) {
@@ -309,6 +325,18 @@ function renderizarTabela() {
   });
   html += '</tbody></table>';
   resultDiv.innerHTML = html;
+
+  // Ativa o filtro de busca (buscando nas linhas da tabela)
+  let searchInputField = document.getElementById("searchInput");
+  if (searchInputField) {
+    searchInputField.addEventListener("input", function() {
+      let filter = this.value.toLowerCase();
+      let rows = document.querySelectorAll("#result table tbody tr");
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? "" : "none";
+      });
+    });
+  }
 
   const checkboxes = resultDiv.querySelectorAll("input[type='checkbox']");
   checkboxes.forEach(checkbox => {
@@ -478,7 +506,7 @@ document.getElementById('result').addEventListener('click', function(event) {
     const button = event.target.closest('.copy-button');
     const oe = button.getAttribute('data-oe');
     navigator.clipboard.writeText(oe).then(() => {
-      // Não faz nada
+      // Copiado com sucesso
     }).catch(err => {
       console.error('Erro ao copiar OE: ', err);
     });

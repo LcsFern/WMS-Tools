@@ -11,13 +11,12 @@
   <div class="container">
     <h1>
       <i class="fas fa-clipboard-list"></i>
-      Monitor de Picking - Pendências
+      Pendências de Picking   
     </h1>
-    
     <div class="import-section">
       <textarea 
         id="csvContent" 
-        placeholder="📋 Cole aqui o conteúdo do CSV copiado do Excel"
+        placeholder="Cole o CSV do Monitor de Picking"
       ></textarea>
       <!-- Botão "Importar via Conteúdo" removido -->
     </div>
@@ -33,19 +32,19 @@
           <div>
             <h3>
               <i class="fas fa-boxes"></i>
-              Caixas Faltando</h3>
+              Caixas Faltando (Não Alocado)</h3>
             <table id="summaryBoxes"></table>
           </div>
           <div>
             <h3>
               <i class="fas fa-map-marker-alt"></i>
-              Posições Faltando</h3>
+              Posições Faltando (Não Alocado)</h3>
             <table id="summaryPositions"></table>
           </div>
           <div>
             <h3>
               <i class="fas fa-pallet"></i>
-              Cargas Faltando</h3>
+              Cargas Faltando (PESO FIXO)</h3>
             <table id="summaryLoads"></table>
           </div>
         </div>
@@ -55,7 +54,8 @@
       <div class="section" id="emptyLoadsSection">
         <h2>
           <i class="fas fa-truck-loading"></i>
-          Tipo de Carga Pendente
+          Cargas Pendentes (Unificadas FIXO + VARIÁVEL)
+          <span id="emptyLoadsCount"></span>
           <button id="toggleEmptyLoads" style="margin-left:1rem;">Ocultar Seção</button>
         </h2>
         <table id="emptyLoadsTable">
@@ -63,6 +63,7 @@
             <tr>
               <th>Placa</th>
               <th>OE / VIAGEM</th>
+              <th>Grupo</th>
               <th>Prioridade</th>
               <th>Tipo de Operação</th>
               <th>Temperatura</th>

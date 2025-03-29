@@ -118,7 +118,7 @@ th {
 
 td {
   vertical-align: middle;
-  position: relative; /* Para posicionamento absoluto do pendentes-column */
+  position: relative;
 }
 
 tr:nth-child(even) {
@@ -287,19 +287,18 @@ input[type="checkbox"]:checked:after {
   color: #008d4c;
 }
 
-/* Estilo para criar a "coluna invisível" entre Separador Congelado e Resfriado */
 .separador-cell {
   position: relative;
   text-align: left;
-  padding-right: 50px; /* Espaço reservado para o pendentes-column */
+  padding-right: 50px;
 }
 
 .pendentes-column {
   position: absolute;
-  right: -25px; /* Metade da largura do pendentes-indicator para centralizar entre colunas */
+  right: -25px;
   top: 50%;
   transform: translateY(-50%);
-  width: 50px; /* Largura fixa para consistência */
+  width: 50px;
   text-align: center;
 }
 
@@ -319,4 +318,42 @@ input[type="checkbox"]:checked:after {
 .pendentes-indicator:hover {
   transform: scale(1.1);
   box-shadow: 0 0 12px rgba(51, 204, 128, 0.8);
+}
+
+/* Search System Styles */
+.search-container {
+  margin: 1.5rem 0;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.search-bar {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.search-bar i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+}
+
+#searchInput {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3rem;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font-size: 1.1rem;
+  backdrop-filter: blur(8px);
+}
+
+#searchInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
+  background: rgba(255, 255, 255, 0.15);
 }
