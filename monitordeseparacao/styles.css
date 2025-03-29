@@ -41,11 +41,23 @@ h1 {
   gap: 0.5rem;
 }
 
-.alert {
+.error-container {
   text-align: center;
-  font-size: 1.2rem;
-  color: var(--accent);
-  margin-bottom: 2rem;
+  padding: 4rem;
+  background: rgba(255, 50, 50, 0.1);
+  border-radius: 24px;
+  border: 2px solid rgba(255, 50, 50, 0.3);
+}
+
+.error-container h2 {
+  color: #ff6b6b;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
 }
 
 .import-section {

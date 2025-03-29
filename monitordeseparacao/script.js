@@ -10,7 +10,10 @@ function lerGradeCompleta() {
 
 function exibirMensagemAlerta() {
   document.getElementById("mainContent").innerHTML =
-    '<p class="alert"><i class="fa-solid fa-exclamation-triangle"></i> Nenhuma GRADE Encontrada, favor carregar a GRADE.</p>';
+    `<div class="error-container">
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO ENCONTRADA</h2>
+        <p>Por favor, carregue a grade completa na pagina GRADE.</p>
+    </div>`;
 }
 
 function exibirAreaCSV() {
