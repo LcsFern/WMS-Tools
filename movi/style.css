@@ -209,3 +209,68 @@ input[type="checkbox"]:checked:after {
     justify-content: space-between;
   }
 }
+
+/* Novos estilos para barra de pesquisa */
+.search-container {
+  margin: 1.5rem 0;
+  padding: 0.5rem;
+}
+
+.search-input-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary);
+}
+
+#searchInput {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 2.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(64, 237, 58, 0.2);
+}
+
+#searchResults {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.process-more-container {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Destaque para resultados da pesquisa */
+.highlight {
+  background-color: rgba(5, 5, 5, 0);
+  padding: 2px;
+  border-radius: 2px;
+}
+
+/* Classe para cartões finalizados */
+.finalized-card {
+  opacity: 0.8;
+  border-left: 4px solid var(--secondary);
+}

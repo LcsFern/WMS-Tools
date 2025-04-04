@@ -22,8 +22,21 @@
       <section class="import-section" id="importSection">
         <h2>Movimentação Palete Completo</h2>
         <textarea id="movimentacaoInput" placeholder="Cole aqui os dados copiados do Excel..."></textarea>
-        <button id="btnProcessar">Processar Movimentação</button>
       </section>
+
+      <!-- Botão para processar mais movimentações (inicialmente oculto) -->
+      <div class="process-more-container hidden" id="processMoreContainer">
+        <button id="btnProcessarMais"><i class="fa-solid fa-plus-circle"></i> Processar Mais Movimentações</button>
+      </div>
+
+      <!-- Barra de pesquisa (inicialmente oculta) -->
+      <div class="search-container hidden" id="searchContainer">
+        <div class="search-input-container">
+          <i class="fa-solid fa-search search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Pesquisar OE, etiqueta, produto...">
+          <span id="searchResults"></span>
+        </div>
+      </div>
 
       <!-- Seção para exibição dos grupos processados -->
       <section id="movimentacoesContainer" class="hidden">

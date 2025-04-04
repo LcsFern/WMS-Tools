@@ -35,8 +35,41 @@ window.addEventListener('load', () => {
   if (movString) {
     movimentacoesProcessadas = JSON.parse(movString);
     exibirMovimentacoes();
+    mostrarBarraPesquisa();
+    ocultarImportacaoExibirMais();
   }
+  
+  // Configurar o processamento automático ao colar no textarea
+  const textarea = document.getElementById('movimentacaoInput');
+  textarea.addEventListener('input', function(e) {
+    // Verificar se o texto foi colado (tem conteúdo significativo)
+    if (this.value.trim().length > 10 && this.value.includes('\t')) {
+      // Dar um pequeno delay para garantir que todo o conteúdo foi colado
+      setTimeout(() => processarMovimentacao(this.value), 200);
+    }
+  });
+  
+  // Configurar botão para processar mais movimentações
+  document.getElementById('btnProcessarMais').addEventListener('click', () => {
+    document.getElementById('processMoreContainer').classList.add('hidden');
+    document.getElementById('importSection').classList.remove('hidden');
+    document.getElementById('movimentacaoInput').value = '';
+  });
+  
+  // Configurar evento de pesquisa
+  document.getElementById('searchInput').addEventListener('input', realizarPesquisa);
 });
+
+// Função para mostrar barra de pesquisa
+function mostrarBarraPesquisa() {
+  document.getElementById('searchContainer').classList.remove('hidden');
+}
+
+// Função para ocultar importação e mostrar botão de "processar mais"
+function ocultarImportacaoExibirMais() {
+  document.getElementById('importSection').classList.add('hidden');
+  document.getElementById('processMoreContainer').classList.remove('hidden');
+}
 
 // Função para extrair chave de ordenação do campo ORIGEM (ex: "C01A" => {camera:1, rua:"A"})
 function extrairChaveOrdenacao(origem) {
@@ -59,8 +92,8 @@ function compararOrigem(a, b) {
 }
 
 // Função para processar os dados colados
-document.getElementById('btnProcessar').addEventListener('click', () => {
-  const rawText = document.getElementById('movimentacaoInput').value.trim();
+function processarMovimentacao(rawText) {
+  rawText = rawText.trim();
   if (!rawText) {
     alert('Cole os dados copiados do Excel.');
     return;
@@ -113,13 +146,34 @@ document.getElementById('btnProcessar').addEventListener('click', () => {
     agrupado[oeKey].registros.sort(compararOrigem);
   });
   
+  // Mesclar com as movimentações já processadas (se houver)
+  Object.keys(agrupado).forEach(oeKey => {
+    if (movimentacoesProcessadas[oeKey]) {
+      // Se a OE já existe, mesclamos os registros (evitando duplicatas)
+      const registrosExistentes = movimentacoesProcessadas[oeKey].registros.map(r => r.etiquetaPalete);
+      agrupado[oeKey].registros.forEach(novoRegistro => {
+        if (!registrosExistentes.includes(novoRegistro.etiquetaPalete)) {
+          movimentacoesProcessadas[oeKey].registros.push(novoRegistro);
+        }
+      });
+      // Reordenar após mesclar
+      movimentacoesProcessadas[oeKey].registros.sort(compararOrigem);
+    } else {
+      // Se é uma nova OE, só adicionamos ao objeto
+      movimentacoesProcessadas[oeKey] = agrupado[oeKey];
+    }
+  });
+  
   // Armazena os dados processados no localStorage
-  movimentacoesProcessadas = agrupado;
   localStorage.setItem('movimentacoesProcessadas', JSON.stringify(movimentacoesProcessadas));
   
   // Exibe os grupos na tela
   exibirMovimentacoes();
-});
+  
+  // Mostrar barra de pesquisa e ocultar importação
+  mostrarBarraPesquisa();
+  ocultarImportacaoExibirMais();
+}
 
 // Função para exibir os grupos processados
 function exibirMovimentacoes() {
@@ -128,7 +182,32 @@ function exibirMovimentacoes() {
   const lista = document.getElementById('movimentacoesList');
   lista.innerHTML = '';
   
-  Object.keys(movimentacoesProcessadas).forEach(oeKey => {
+  // Separar movimentações finalizadas e pendentes
+  const oeKeys = Object.keys(movimentacoesProcessadas);
+  const pendentes = [];
+  const finalizadas = [];
+  
+  oeKeys.forEach(oeKey => {
+    // Verificar se a OE está na grade (caso não esteja, não exibimos)
+    let naGrade = false;
+    if (gradeCompleta) {
+      naGrade = gradeCompleta.some(item => item.OE.trim() === oeKey.trim());
+    }
+    
+    // Se não estiver na grade, ignoramos esta OE
+    if (!naGrade && oeKey !== 'SEM_OE') {
+      return;
+    }
+    
+    if (movimentacoesProcessadas[oeKey].exportado) {
+      finalizadas.push(oeKey);
+    } else {
+      pendentes.push(oeKey);
+    }
+  });
+  
+  // Processar primeiro as pendentes, depois as finalizadas
+  [...pendentes, ...finalizadas].forEach(oeKey => {
     // Buscar na grade os dados referentes à OE (comparação exata)
     let placa = 'N/A', destinoGrade = 'N/A';
     if (gradeCompleta) {
@@ -142,6 +221,12 @@ function exibirMovimentacoes() {
     // Cria o cartão do grupo
     const card = document.createElement('div');
     card.className = 'group-card';
+    card.dataset.oe = oeKey;
+    
+    // Adicionar classe para cartões finalizados
+    if (movimentacoesProcessadas[oeKey].exportado) {
+      card.classList.add('finalized-card');
+    }
     
     // Cabeçalho do cartão
     const header = document.createElement('div');
@@ -185,6 +270,8 @@ function exibirMovimentacoes() {
     const tbody = document.createElement('tbody');
     movimentacoesProcessadas[oeKey].registros.forEach(item => {
       const tr = document.createElement('tr');
+      tr.dataset.etiqueta = item.etiquetaPalete;
+      tr.dataset.produto = item.codProduto + " " + item.produto;
       tr.innerHTML = `
         <td>${item.etiquetaPalete}</td>
         <td>${item.codProduto}</td>
@@ -221,6 +308,9 @@ function exibirMovimentacoes() {
       movimentacoesProcessadas[oeKey].exportado = true;
       localStorage.setItem('movimentacoesProcessadas', JSON.stringify(movimentacoesProcessadas));
       checkbox.checked = true;
+      
+      // Reordenar para mover os finalizados para o final
+      exibirMovimentacoes();
     });
     
     card.appendChild(header);
@@ -229,6 +319,140 @@ function exibirMovimentacoes() {
   });
 }
 
+// Função para realizar pesquisa
+// Função para realizar pesquisa
+function realizarPesquisa() {
+  const termo = document.getElementById('searchInput').value.trim().toLowerCase();
+  const cards = document.querySelectorAll('.group-card');
+  let encontrados = 0;
+  const total = cards.length;
+  
+  if (!termo) {
+    // Se não há termo de busca, remover highlights e mostrar tudo
+    cards.forEach(card => {
+      card.style.display = 'block';
+      removerHighlights(card);
+    });
+    document.getElementById('searchResults').textContent = '';
+    return;
+  }
+  
+  cards.forEach(card => {
+    const textoOE = card.dataset.oe.toLowerCase();
+    const placaElement = card.querySelector('.group-info div:nth-child(2)');
+    const destinoElement = card.querySelector('.group-info div:nth-child(3)');
+    const placa = placaElement ? placaElement.textContent.toLowerCase() : '';
+    const destino = destinoElement ? destinoElement.textContent.toLowerCase() : '';
+    
+    // Estado atual do card (detalhes visíveis ou não)
+    const detalheVisivel = card.querySelector('.group-details').style.display === 'block';
+    
+    // Verificar se encontrou nos campos do cabeçalho
+    let encontrado = textoOE.includes(termo) || placa.includes(termo) || destino.includes(termo);
+    
+    // Verificar nas linhas da tabela mesmo se os detalhes estiverem ocultos
+    const linhas = card.querySelectorAll('tbody tr');
+    linhas.forEach(linha => {
+      const etiqueta = linha.dataset.etiqueta.toLowerCase();
+      const produto = linha.dataset.produto.toLowerCase();
+      
+      // Se encontrou em algum campo da linha
+      if (etiqueta.includes(termo) || produto.includes(termo)) {
+        encontrado = true;
+      }
+    });
+    
+    // Agora aplicar highlights apenas em elementos visíveis
+    if (detalheVisivel) {
+      // Destacar nas linhas da tabela
+      linhas.forEach(linha => {
+        const etiqueta = linha.dataset.etiqueta.toLowerCase();
+        const produto = linha.dataset.produto.toLowerCase();
+        
+        if (etiqueta.includes(termo) || produto.includes(termo)) {
+          destacarTexto(linha, termo);
+        } else {
+          removerHighlights(linha);
+        }
+      });
+    }
+    
+    // Destacar no cabeçalho se necessário
+    if (textoOE.includes(termo)) {
+      destacarTexto(card.querySelector('.group-info div:nth-child(1)'), termo);
+    } else {
+      removerHighlights(card.querySelector('.group-info div:nth-child(1)'));
+    }
+    
+    if (placa.includes(termo)) {
+      destacarTexto(placaElement, termo);
+    } else {
+      removerHighlights(placaElement);
+    }
+    
+    if (destino.includes(termo)) {
+      destacarTexto(destinoElement, termo);
+    } else {
+      removerHighlights(destinoElement);
+    }
+    
+    // Mostra ou oculta o card
+    if (encontrado) {
+      card.style.display = 'block';
+      encontrados++;
+      
+      // Se encontrou em linhas ocultas, abrir automaticamente os detalhes
+      if (!detalheVisivel && 
+          !textoOE.includes(termo) && 
+          !placa.includes(termo) && 
+          !destino.includes(termo)) {
+        const btnMostrar = card.querySelector('.btnMostrar');
+        btnMostrar.click(); // Abre os detalhes do card
+      }
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  
+  // Atualizar contador de resultados
+  document.getElementById('searchResults').textContent = `${encontrados} de ${total}`;
+}
+
+// Função para destacar o texto encontrado
+function destacarTexto(elemento, termo) {
+  // Não destacar novamente se já tem highlights
+  if (elemento.querySelector('.highlight')) return;
+  
+  const regex = new RegExp(`(${termo})`, 'gi');
+  const textoNodes = Array.from(elemento.childNodes).filter(n => n.nodeType === 3);
+  
+  textoNodes.forEach(node => {
+    const parent = node.parentNode;
+    const content = node.textContent;
+    if (content.toLowerCase().includes(termo.toLowerCase())) {
+      const highlighted = content.replace(regex, '<span class="highlight">$1</span>');
+      const temp = document.createElement('div');
+      temp.innerHTML = highlighted;
+      
+      // Substituir o nó de texto por seu conteúdo destacado
+      while (temp.firstChild) {
+        parent.insertBefore(temp.firstChild, node);
+      }
+      parent.removeChild(node);
+    }
+  });
+}
+
+// Função para remover highlights
+function removerHighlights(elemento) {
+  const highlights = elemento.querySelectorAll('.highlight');
+  highlights.forEach(h => {
+    const parent = h.parentNode;
+    const texto = document.createTextNode(h.textContent);
+    parent.replaceChild(texto, h);
+    parent.normalize(); // Junta nós de texto adjacentes
+  });
+}
 
 function exportarPDF(oeKey, placa, destinoGrade, registros) {
   const { jsPDF } = window.jspdf;

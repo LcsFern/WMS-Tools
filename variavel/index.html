@@ -6,6 +6,8 @@
     <title>Pesos Variáveis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,7 +24,13 @@
         <div class="section hidden" id="results">
             <h2><i class="fas fa-table"></i> Resultados</h2>
             <div id="filterResults"></div>
-            <div class="qr-container" id="qrCodes"></div>
+            <div class="button-container">
+                <button id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Exportar para PDF</button>
+            </div>
+        </div>
+        
+        <div id="pdfPreview" class="hidden">
+            <div id="pdfContent"></div>
         </div>
     </div>
 
