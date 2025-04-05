@@ -266,15 +266,62 @@ async function loadGradeFromStorage() {
 }
 
 function resetGrade() {
-  localStorage.removeItem("gradeCompleta");
-  localStorage.removeItem("movimentacoesProcessadas")
-  localStorage.removeItem("ondas");
-  localStorage.removeItem("result_state_monitor");
-  document.getElementById('excelData').value = '';
-  document.getElementById('gradeSection').classList.remove('hidden');
-  document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('resetBtn').classList.add('hidden');
+  askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
+    if (confirmarOndas) localStorage.removeItem("ondas");
+
+    askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
+      if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
+
+      // Zera os demais dados
+      localStorage.removeItem("gradeCompleta");
+      localStorage.removeItem("result_state_monitor");
+      document.getElementById('excelData').value = '';
+      document.getElementById('gradeSection').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('resetBtn').classList.add('hidden');
+    });
+  });
 }
+
+function askConfirmation(msg, callback) {
+  const popup = document.getElementById('customResetPopup');
+  const message = document.getElementById('resetMessage');
+  const btnYes = document.getElementById('confirmReset');
+  const btnNo = document.getElementById('cancelReset');
+
+  message.textContent = msg;
+  popup.classList.remove('hidden');
+
+  // animação suave
+  setTimeout(() => popup.classList.add('show'), 10);
+
+  const handleYes = () => {
+    closePopup(popup);
+    cleanup();
+    callback(true);
+  };
+
+  const handleNo = () => {
+    closePopup(popup);
+    cleanup();
+    callback(false);
+  };
+
+  function cleanup() {
+    btnYes.removeEventListener('click', handleYes);
+    btnNo.removeEventListener('click', handleNo);
+  }
+
+  btnYes.addEventListener('click', handleYes);
+  btnNo.addEventListener('click', handleNo);
+}
+
+function closePopup(popup) {
+  popup.classList.remove('show');
+  setTimeout(() => popup.classList.add('hidden'), 300);
+}
+
+
 
 // Função para copiar o texto da OE
 function copiarTexto(texto) {

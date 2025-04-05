@@ -9,7 +9,7 @@
 </head>
 <body>
   <div class="container">
-    <h1><i class="fa-solid fa-table"></i> Dashboard da Grade</h1>
+    <h1><i class="fa-solid fa-table"></i> Resumo da Grade</h1>
     
     <div class="section" id="gradeSection">
       <h2><i class="fa-solid fa-file-import"></i> Cole a Grade Limpa (Excel):</h2>
@@ -74,5 +74,17 @@
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="scripts.js"></script>
   <script src="aut.js"></script>
+  <!-- POPUP CUSTOMIZADO -->
+<div id="customResetPopup" class="popup-overlay hidden">
+  <div class="popup-box">
+    <h2><i class="fas fa-exclamation-triangle"></i> Confirmar Reset</h2>
+    <p id="resetMessage">Você deseja apagar os dados?</p>
+    <div class="popup-actions">
+      <button id="confirmReset" class="btn-yes"><i class="fas fa-check"></i> Sim</button>
+      <button id="cancelReset" class="btn-no"><i class="fas fa-times"></i> Não</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
