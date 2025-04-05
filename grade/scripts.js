@@ -267,6 +267,9 @@ async function loadGradeFromStorage() {
 
 function resetGrade() {
   localStorage.removeItem("gradeCompleta");
+  localStorage.removeItem("movimentacoesProcessadas")
+  localStorage.removeItem("ondas");
+  localStorage.removeItem("result_state_monitor");
   document.getElementById('excelData').value = '';
   document.getElementById('gradeSection').classList.remove('hidden');
   document.getElementById('dashboard').classList.add('hidden');

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Picking Dinâmico</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1><i class="fa-solid fa-pallet-boxes"></i> Picking Dinâmico</h1>
+      <section class="import-section" id="importSection">
+        <h2>EXPEDIÇÃO PICKING DINÂMICO</h2>
+        <textarea id="movimentacaoInput" placeholder="Cole aqui os dados copiados do Excel..."></textarea>
+      </section>
+      <div class="process-more-container hidden" id="processMoreContainer">
+        <button id="btnProcessarMais"><i class="fa-solid fa-plus-circle"></i> Processar Mais Dinâmicos</button>
+      </div>
+      <div class="search-container hidden" id="searchContainer">
+        <div class="search-input-container">
+          <i class="fa-solid fa-search search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Pesquisar etiqueta, produto...">
+          <span id="searchResults"></span>
+        </div>
+      </div>
+      <section id="movimentacoesContainer" class="hidden">
+        <h2>Dinâmicos Processados</h2>
+        <div id="movimentacoesList"></div>
+      </section>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
