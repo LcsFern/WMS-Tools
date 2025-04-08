@@ -13,8 +13,16 @@ function exibirMensagem(mensagem) {
   document.getElementById('importSection').classList.add('hidden');
 }
 
+// Garantir que o modal esteja oculto logo que o DOM esteja disponível
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('modalGrupos').classList.add('hidden');
+});
+
 // Carrega a gradeCompleta e os dados processados (se houver) ao iniciar
 window.addEventListener('load', () => {
+  // Reforçar que o modal comece oculto
+  document.getElementById('modalGrupos').classList.add('hidden');
+  
   // Carregar grade (key "gradeCompleta")
   const gradeString = localStorage.getItem('gradeCompleta');
   if (!gradeString) {
@@ -34,8 +42,9 @@ window.addEventListener('load', () => {
   const movString = localStorage.getItem('movimentacoesProcessadas');
   if (movString) {
     movimentacoesProcessadas = JSON.parse(movString);
-    exibirMovimentacoes();
-    mostrarBarraPesquisa();
+    exibirMovimentacoes(); // Exibe as movimentações salvas
+    mostrarBarraPesquisa(); // Mostra a barra de pesquisa
+    // Esconder a área de importação e exibir os botões de ação
     ocultarImportacaoExibirMais();
   }
   
@@ -56,6 +65,78 @@ window.addEventListener('load', () => {
     document.getElementById('movimentacaoInput').value = '';
   });
   
+  // Configurar botão para adicionar grupos (somente mostra o modal quando o usuário clicar)
+  document.getElementById('btnAdicionarGrupos').addEventListener('click', () => {
+    document.getElementById('modalGrupos').classList.remove('hidden');
+  });
+
+  // Configurar botão para fechar o modal
+  document.getElementById('btnFecharModal').addEventListener('click', () => {
+    document.getElementById('modalGrupos').classList.add('hidden');
+  });
+
+  // Configurar botão para processar grupos
+  document.getElementById('btnProcessarGrupos').addEventListener('click', () => {
+    const rawText = document.getElementById('gruposInput').value.trim();
+    if (!rawText) {
+      alert('Cole os dados copiados do Excel.');
+      return;
+    }
+    
+    const linhas = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
+    if (linhas.length < 2) {
+      alert('O texto deve conter o cabeçalho e ao menos uma linha de dados.');
+      return;
+    }
+    
+    const cabecalho = linhas[0].split('\t');
+    // Se o cabeçalho não tiver o número esperado de colunas (17), avisa o usuário
+    if (cabecalho.length < 17) {
+      alert('Formato do cabeçalho inválido. Por favor, verifique os dados copiados do Excel.');
+      return;
+    }
+    
+    const dadosLinhas = linhas.slice(1);
+    
+    const mapaGrupos = {};
+    dadosLinhas.forEach(linha => {
+      const cols = linha.split('\t');
+      if (cols.length < 14) { // mínima verificação para evitar erros
+        console.warn('Linha ignorada por não ter colunas suficientes:', linha);
+        return;
+      }
+      const oe = cols[1] || ''; // OE / VIAGEM
+      const etiqueta = cols[2] || ''; // ETIQUETA PALETE
+      const grupo = cols[13] || ''; // GRUPO (coluna 13)
+      if (oe && etiqueta && grupo) {
+        const chave = `${oe}-${etiqueta}`;
+        if (!mapaGrupos[chave]) {
+          mapaGrupos[chave] = grupo; // Apenas a primeira ocorrência
+        }
+      }
+    });
+    
+    // Associar grupos às movimentações processadas
+    Object.keys(movimentacoesProcessadas).forEach(oeKey => {
+      movimentacoesProcessadas[oeKey].registros.forEach(item => {
+        const chave = `${oeKey}-${item.etiquetaPalete}`;
+        if (mapaGrupos[chave]) {
+          item.grupo = mapaGrupos[chave];
+        }
+      });
+    });
+    
+    // Salvar os dados atualizados no localStorage
+    localStorage.setItem('movimentacoesProcessadas', JSON.stringify(movimentacoesProcessadas));
+    
+    // Atualizar a exibição
+    exibirMovimentacoes();
+    
+    // Fechar o modal e limpar o textarea
+    document.getElementById('modalGrupos').classList.add('hidden');
+    document.getElementById('gruposInput').value = '';
+  });
+  
   // Configurar evento de pesquisa
   document.getElementById('searchInput').addEventListener('input', realizarPesquisa);
 });
@@ -65,7 +146,7 @@ function mostrarBarraPesquisa() {
   document.getElementById('searchContainer').classList.remove('hidden');
 }
 
-// Função para ocultar importação e mostrar botão de "processar mais"
+// Função para ocultar importação e mostrar botão de "processar mais" e "adicionar grupos"
 function ocultarImportacaoExibirMais() {
   document.getElementById('importSection').classList.add('hidden');
   document.getElementById('processMoreContainer').classList.remove('hidden');
@@ -106,11 +187,21 @@ function processarMovimentacao(rawText) {
   }
   
   const cabecalho = linhas[0].split('\t');
-  const dadosLinhas = linhas.slice(1);
+  // Validação adicional para garantir que os dados têm o formato esperado
+  if (cabecalho.length < 17) {
+    alert('Formato de dados inválido. O cabeçalho não possui o número esperado de colunas.');
+    return;
+  }
   
-  const movimentacoes = dadosLinhas.map(linha => {
+  const dadosLinhas = linhas.slice(1);
+  const movimentacoes = dadosLinhas.reduce((acc, linha) => {
     const cols = linha.split('\t');
-    return {
+    // Ignora linhas que não tenham todas as colunas necessárias
+    if (cols.length < 17) {
+      console.warn('Linha ignorada por não ter colunas suficientes:', linha);
+      return acc;
+    }
+    acc.push({
       etiquetaPalete: cols[0] || '',
       prioridade: cols[1] || '',
       rgCaixa: cols[2] || '',
@@ -128,8 +219,9 @@ function processarMovimentacao(rawText) {
       criadoPor: cols[14] || '',
       dataCriacao: cols[15] || '',
       dataModificacao: cols[16] || ''
-    };
-  });
+    });
+    return acc;
+  }, []);
   
   // Agrupar por OE/VIAGEM
   const agrupado = {};
@@ -170,7 +262,7 @@ function processarMovimentacao(rawText) {
   // Exibe os grupos na tela
   exibirMovimentacoes();
   
-  // Mostrar barra de pesquisa e ocultar importação
+  // Mostra a barra de pesquisa e exibe os botões
   mostrarBarraPesquisa();
   ocultarImportacaoExibirMais();
 }
@@ -263,6 +355,7 @@ function exibirMovimentacoes() {
         <th>PESO</th>
         <th>ORIGEM</th>
         <th>DESTINO</th>
+        <th>GRUPO</th>
       </tr>
     `;
     table.appendChild(thead);
@@ -280,6 +373,7 @@ function exibirMovimentacoes() {
         <td>${item.peso}</td>
         <td>${item.origem}</td>
         <td>${item.destino}</td>
+        <td>${item.grupo || ''}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -320,146 +414,58 @@ function exibirMovimentacoes() {
 }
 
 // Função para realizar pesquisa
-// Função para realizar pesquisa
 function realizarPesquisa() {
-  const termo = document.getElementById('searchInput').value.trim().toLowerCase();
-  const cards = document.querySelectorAll('.group-card');
+  const termo = document.getElementById('searchInput').value.toLowerCase().trim();
+  const grupos = document.querySelectorAll('#movimentacoesList .group-card');
   let encontrados = 0;
-  const total = cards.length;
-  
-  if (!termo) {
-    // Se não há termo de busca, remover highlights e mostrar tudo
-    cards.forEach(card => {
-      card.style.display = 'block';
-      removerHighlights(card);
+
+  if (termo === '') {
+    grupos.forEach(grupo => {
+      const details = grupo.querySelector('.group-details');
+      details.style.display = 'block'; // Mostrar todos os grupos
+      const linhas = details.querySelectorAll('tbody tr');
+      linhas.forEach(linha => {
+        linha.style.display = '';
+      });
     });
     document.getElementById('searchResults').textContent = '';
     return;
   }
-  
-  cards.forEach(card => {
-    const textoOE = card.dataset.oe.toLowerCase();
-    const placaElement = card.querySelector('.group-info div:nth-child(2)');
-    const destinoElement = card.querySelector('.group-info div:nth-child(3)');
-    const placa = placaElement ? placaElement.textContent.toLowerCase() : '';
-    const destino = destinoElement ? destinoElement.textContent.toLowerCase() : '';
-    
-    // Estado atual do card (detalhes visíveis ou não)
-    const detalheVisivel = card.querySelector('.group-details').style.display === 'block';
-    
-    // Verificar se encontrou nos campos do cabeçalho
-    let encontrado = textoOE.includes(termo) || placa.includes(termo) || destino.includes(termo);
-    
-    // Verificar nas linhas da tabela mesmo se os detalhes estiverem ocultos
-    const linhas = card.querySelectorAll('tbody tr');
+
+  grupos.forEach(grupo => {
+    const details = grupo.querySelector('.group-details');
+    const linhas = details.querySelectorAll('tbody tr');
+    let correspondentesNoGrupo = 0;
+
     linhas.forEach(linha => {
       const etiqueta = linha.dataset.etiqueta.toLowerCase();
       const produto = linha.dataset.produto.toLowerCase();
-      
-      // Se encontrou em algum campo da linha
       if (etiqueta.includes(termo) || produto.includes(termo)) {
-        encontrado = true;
+        linha.style.display = '';
+        correspondentesNoGrupo++;
+      } else {
+        linha.style.display = 'none';
       }
     });
-    
-    // Agora aplicar highlights apenas em elementos visíveis
-    if (detalheVisivel) {
-      // Destacar nas linhas da tabela
-      linhas.forEach(linha => {
-        const etiqueta = linha.dataset.etiqueta.toLowerCase();
-        const produto = linha.dataset.produto.toLowerCase();
-        
-        if (etiqueta.includes(termo) || produto.includes(termo)) {
-          destacarTexto(linha, termo);
-        } else {
-          removerHighlights(linha);
-        }
-      });
-    }
-    
-    // Destacar no cabeçalho se necessário
-    if (textoOE.includes(termo)) {
-      destacarTexto(card.querySelector('.group-info div:nth-child(1)'), termo);
+
+    if (correspondentesNoGrupo > 0) {
+      details.style.display = 'block';
+      encontrados += correspondentesNoGrupo;
     } else {
-      removerHighlights(card.querySelector('.group-info div:nth-child(1)'));
-    }
-    
-    if (placa.includes(termo)) {
-      destacarTexto(placaElement, termo);
-    } else {
-      removerHighlights(placaElement);
-    }
-    
-    if (destino.includes(termo)) {
-      destacarTexto(destinoElement, termo);
-    } else {
-      removerHighlights(destinoElement);
-    }
-    
-    // Mostra ou oculta o card
-    if (encontrado) {
-      card.style.display = 'block';
-      encontrados++;
-      
-      // Se encontrou em linhas ocultas, abrir automaticamente os detalhes
-      if (!detalheVisivel && 
-          !textoOE.includes(termo) && 
-          !placa.includes(termo) && 
-          !destino.includes(termo)) {
-        const btnMostrar = card.querySelector('.btnMostrar');
-        btnMostrar.click(); // Abre os detalhes do card
-      }
-    } else {
-      card.style.display = 'none';
+      details.style.display = 'none';
     }
   });
-  
-  // Atualizar contador de resultados
-  document.getElementById('searchResults').textContent = `${encontrados} de ${total}`;
+
+  document.getElementById('searchResults').textContent = `${encontrados} encontrados`;
 }
 
-// Função para destacar o texto encontrado
-function destacarTexto(elemento, termo) {
-  // Não destacar novamente se já tem highlights
-  if (elemento.querySelector('.highlight')) return;
-  
-  const regex = new RegExp(`(${termo})`, 'gi');
-  const textoNodes = Array.from(elemento.childNodes).filter(n => n.nodeType === 3);
-  
-  textoNodes.forEach(node => {
-    const parent = node.parentNode;
-    const content = node.textContent;
-    if (content.toLowerCase().includes(termo.toLowerCase())) {
-      const highlighted = content.replace(regex, '<span class="highlight">$1</span>');
-      const temp = document.createElement('div');
-      temp.innerHTML = highlighted;
-      
-      // Substituir o nó de texto por seu conteúdo destacado
-      while (temp.firstChild) {
-        parent.insertBefore(temp.firstChild, node);
-      }
-      parent.removeChild(node);
-    }
-  });
-}
-
-// Função para remover highlights
-function removerHighlights(elemento) {
-  const highlights = elemento.querySelectorAll('.highlight');
-  highlights.forEach(h => {
-    const parent = h.parentNode;
-    const texto = document.createTextNode(h.textContent);
-    parent.replaceChild(texto, h);
-    parent.normalize(); // Junta nós de texto adjacentes
-  });
-}
-
+// Função para exportar PDF
 function exportarPDF(oeKey, placa, destinoGrade, registros) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'pt', 'a4');
   
   // Configurar fonte para todo o documento
-  doc.setFont('helvetica', 'bold'); // Usando helvetica que tem melhor suporte a negrito no jsPDF
+  doc.setFont('helvetica', 'bold');
   
   // Obter doca do primeiro registro, se disponível
   const docaNum = registros.length > 0 && registros[0].destino 
@@ -482,7 +488,7 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   doc.setFillColor(...corCinza);
   doc.rect(40, 40, 515, 40, 'F');
   
-  // Título - garantindo que seja negrito e com boa visibilidade
+  // Título
   doc.setFontSize(22);
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
@@ -495,16 +501,14 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   doc.setLineWidth(1);
   doc.rect(430, 45, 120, 30);
   
-  // Centralizar OE dentro do quadrado - com ênfase no negrito
-  doc.setFontSize(11); // Aumentado um pouco para melhor legibilidade
+  // Centralizar OE dentro do quadrado
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  
-  // Medir largura do texto da OE para centralização
   const oeWidth = doc.getTextWidth(oeKey);
   doc.text(oeKey, 430 + (120 - oeWidth) / 2, 60);
   
   // Data/hora centralizada na parte inferior do quadrado
-  doc.setFontSize(9); // Aumentado um pouco para melhor legibilidade
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   const dataWidth = doc.getTextWidth(dataHoraFormatada);
   doc.text(dataHoraFormatada, 430 + (120 - dataWidth) / 2, 72);
@@ -513,7 +517,7 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   doc.setFillColor(...corAmarela);
   doc.rect(40, 100, 515, 30, 'F');
   
-  doc.setFontSize(11); // Aumentado um pouco para melhor legibilidade
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('Nome Operador:', 50, 118);
   doc.text('___________________________', 140, 118);
@@ -532,11 +536,11 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   // PLACA - substituída pelo valor real e centralizada
   doc.rect(40, 140, 60, 20);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11); // Aumentado para melhor legibilidade
+  doc.setFontSize(11);
   const placaWidth = doc.getTextWidth(placa || 'N/A');
   doc.text(placa || 'N/A', 40 + (60 - placaWidth) / 2, 153);
   
-  // DESTINO - substituído pelo valor real e centralizado
+  // DESTINO - substituída pelo valor real e centralizada
   doc.rect(100, 140, 180, 20);
   const destinoWidth = doc.getTextWidth(destinoGrade || 'N/A');
   doc.text(destinoGrade || 'N/A', 100 + (180 - destinoWidth) / 2, 153);
@@ -571,10 +575,10 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   
   // Desenhar as células do cabeçalho das colunas
   let posX = 40;
-  cols.forEach((col, i) => {
+  cols.forEach((col) => {
     doc.rect(posX, 160, col.width, 20);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8); // Aumentado de 7 para 8
+    doc.setFontSize(8);
     doc.text(col.text, posX + (col.width/2 - doc.getTextWidth(col.text)/2), 173);
     posX += col.width;
   });
@@ -582,16 +586,10 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   // Conteúdo da tabela - dados
   let posY = 180;
   
-  // Preencher a tabela com os dados existentes
-  registros.forEach((item, index) => {
+  registros.forEach((item) => {
     posX = 40;
-    
-    // Para cada linha, iterar pelas colunas
     cols.forEach((col, i) => {
-      // Desenhar a célula
       doc.rect(posX, posY, col.width, 20);
-      
-      // Definir o conteúdo de cada célula
       let conteudo = '';
       switch(i) {
         case 0: conteudo = item.etiquetaPalete || ''; break;
@@ -602,33 +600,24 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
         case 5: conteudo = oeKey || ''; break;
         case 6: conteudo = item.origem || ''; break;
         case 7: conteudo = item.destino || ''; break;
-        case 8: conteudo = '-'; break;
+        case 8: conteudo = item.grupo || ''; break;
       }
-      
-      // Texto nas células - com garantia de negrito
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7); // Aumentado de 6 para 7
-      
-      // Truncar texto longo, mas NUNCA truncar a etiqueta do palete (coluna 0)
+      doc.setFontSize(7);
       if (i === 2 && conteudo.length > 35) {
         conteudo = conteudo.substring(0, 35) + '...';
       } else if (i !== 0 && i !== 2 && conteudo.length > 12) {
-        // Truncar outras colunas, exceto PALETE e PRODUTO
         conteudo = conteudo.substring(0, 12) + '...';
       }
-      
-      // Posicionamento do texto dentro da célula - ajustado para evitar sobreposição
-      if (i === 0) { // Para coluna de PALETE (etiqueta)
+      if (i === 0) {
         doc.text(conteudo, posX + 2, posY + 12, { maxWidth: col.width - 4 });
-      } else if (i === 2) { // Para coluna de produtos
+      } else if (i === 2) {
         doc.text(conteudo, posX + 2, posY + 12, { maxWidth: col.width - 4 });
-      } else { // Para outras colunas
+      } else {
         doc.text(conteudo, posX + (col.width/2 - doc.getTextWidth(conteudo)/2), posY + 12);
       }
-      
       posX += col.width;
     });
-    
     posY += 20;
   });
   

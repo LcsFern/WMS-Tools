@@ -24,9 +24,22 @@
         <textarea id="movimentacaoInput" placeholder="Cole aqui os dados copiados do Excel..."></textarea>
       </section>
 
-      <!-- Botão para processar mais movimentações (inicialmente oculto) -->
+      <!-- Botões para processar mais movimentações e adicionar grupos (inicialmente ocultos) -->
       <div class="process-more-container hidden" id="processMoreContainer">
         <button id="btnProcessarMais"><i class="fa-solid fa-plus-circle"></i> Processar Mais Movimentações</button>
+        <button id="btnAdicionarGrupos"><i class="fa-solid fa-layer-group"></i> Adicionar Grupos</button>
+      </div>
+
+      <!-- Modal para adicionar grupos -->
+      <div id="modalGrupos" class="modal hidden">
+        <div class="modal-content">
+          <h2>Adicionar Grupos</h2>
+          <textarea id="gruposInput" placeholder="Cole aqui conteudo dos pallets da expedição..." style="width: 568px; height: 185px;""></textarea>
+          <div class="modal-actions">
+            <button id="btnProcessarGrupos">Processar Grupos</button>
+            <button id="btnFecharModal">Fechar</button>
+          </div>
+        </div>
       </div>
 
       <!-- Barra de pesquisa (inicialmente oculta) -->
