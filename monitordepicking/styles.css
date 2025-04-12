@@ -245,7 +245,7 @@ button:hover {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  color: #2f00ff; /* Texto em laranja */
+  color: #2f00ff; 
   font-size: 0.8rem;
   line-height: 20px;
 }
