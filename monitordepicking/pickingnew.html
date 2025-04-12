@@ -89,17 +89,40 @@
             <tr>
               <th><i class="fas fa-user"></i> Separador</th>
               <th><i class="fas fa-boxes"></i> Caixas (Total)</th>
-              <th><i class="fas fa-exclamation-triangle"></i> Caixas Faltando</th>
               <th><i class="fas fa-map-marked-alt"></i> Posições (Total)</th>
               <th><i class="fas fa-barcode"></i> OE</th>
               <th><i class="fas fa-tachometer-alt"></i> Progresso</th>
               <th><i class="fas fa-thermometer-half"></i> Temperatura</th>
               <th>Placa</th>
+              <th>Tempo no Veículo</th>
             </tr>
           </thead>
           <tbody id="activeSeparatorsBody"></tbody>
         </table>
       </div>
+
+      <!-- Seção: Separadores Inativos -->
+      <div class="section" id="inactiveSeparatorsSection">
+        <h2>
+          <i class="fas fa-user-slash"></i>
+          Separadores Inativos
+          <button id="toggleInactiveSeparators" style="margin-left:1rem;">Ocultar Seção</button>
+        </h2>
+        <div id="inactiveSeparatorCount"></div>
+        <table id="inactiveSeparators">
+          <thead>
+            <tr>
+              <th><i class="fas fa-user"></i> Separador</th>
+              <th><i class="fas fa-barcode"></i> Última OE</th>
+              <th><i class="fas fa-thermometer-half"></i> Temperatura</th>
+              <th>Última Placa</th>
+              <th><i class="fas fa-clock"></i> Visto pela última vez</th>
+            </tr>
+          </thead>
+          <tbody id="inactiveSeparatorsBody"></tbody>
+        </table>
+      </div>
+      
     </div>
   </div>
   <script src="script.js"></script>

@@ -273,6 +273,8 @@ function resetGrade() {
       if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
 
       // Zera os demais dados
+      localStorage.removeItem("activeSeparatorsSaved");
+      localStorage.removeItem("historicalInactiveSeparators");
       localStorage.removeItem("gradeCompleta");
       localStorage.removeItem("result_state_monitor");
       document.getElementById('excelData').value = '';
