@@ -31,6 +31,7 @@ window.addEventListener('load', () => {
 });
 
 // Função para processar os dados colados do Excel
+// Função para processar os dados colados do Excel
 function processarMovimentacao(rawText) {
   rawText = rawText.trim();
   if (!rawText) {
@@ -47,7 +48,8 @@ function processarMovimentacao(rawText) {
   const cabecalho = linhas[0].split('\t');
   const dadosLinhas = linhas.slice(1);
 
-  const movimentacoes = dadosLinhas.map(linha => {
+  // Array temporário para armazenar movimentações antes do agrupamento
+  let movimentacoesTemp = dadosLinhas.map(linha => {
     const cols = linha.split('\t');
     return {
       etiquetaPalete: cols[0] || '',
@@ -69,6 +71,9 @@ function processarMovimentacao(rawText) {
       dataModificacao: cols[16] || ''
     };
   });
+
+  // Agrupamento por etiqueta, código, origem e destino
+  const movimentacoes = agruparMovimentacoes(movimentacoesTemp);
 
   ondaAtual++;
   const dataCriacao = new Date().toLocaleString('pt-BR');
@@ -103,6 +108,33 @@ function processarMovimentacao(rawText) {
   exibirMovimentacoes();
   mostrarBarraPesquisa();
   ocultarImportacaoExibirMais();
+}
+
+// Função auxiliar para agrupar movimentações
+function agruparMovimentacoes(movimentacoes) {
+  const grupos = {};
+  
+  movimentacoes.forEach(item => {
+    // Criamos uma chave única baseada nos critérios de agrupamento
+    const chave = `${item.etiquetaPalete}|${item.codProduto}|${item.origem}|${item.destino}`;
+    
+    if (!grupos[chave]) {
+      grupos[chave] = { ...item };
+    } else {
+      // Convertemos as strings de quantidade e peso para números, lidando com diferentes formatos
+      // Substituímos vírgula por ponto para tratar valores decimais no formato brasileiro
+      const qtdeAtual = parseFloat(grupos[chave].qtde.replace(',', '.')) || 0;
+      const qtdeNova = parseFloat(item.qtde.replace(',', '.')) || 0;
+      grupos[chave].qtde = (qtdeAtual + qtdeNova).toString().replace('.', ',');
+      
+      const pesoAtual = parseFloat(grupos[chave].peso.replace(',', '.')) || 0;
+      const pesoNovo = parseFloat(item.peso.replace(',', '.')) || 0;
+      grupos[chave].peso = (pesoAtual + pesoNovo).toString().replace('.', ',');
+    }
+  });
+  
+  // Convertemos o objeto de volta para array
+  return Object.values(grupos);
 }
 
 // Função auxiliar para extrair chave de ordenação
@@ -400,10 +432,12 @@ function exportarPDF(ondaNum, tipo, registros) {
           case 6: conteudo = item.destino || ''; break;
         }
 
-        // Formatação especial para a etiqueta - MANTÉM ETIQUETA COMPLETA
+        // TODOS os valores agora são em negrito
+        doc.setFont('helvetica', 'bold');
+        
+        // Etiqueta (como já estava)
         if (index === 0) {
           doc.setFontSize(8);
-          doc.setFont('helvetica', 'bold'); // Negrito para as etiquetas
           
           // Se a etiqueta for muito longa, ajusta o tamanho da fonte
           if (conteudo.length > 14) {
@@ -416,14 +450,12 @@ function exportarPDF(ondaNum, tipo, registros) {
         // Produto (texto mais longo)
         else if (index === 2) {
           doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
           // Truncar texto se for muito longo para evitar overflow
           doc.text(conteudo.length > 40 ? conteudo.substring(0, 40) + '...' : conteudo, posX + 3, posY + 12);
         } 
         // Demais colunas
         else {
           doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
           const textWidth = doc.getTextWidth(conteudo);
           doc.text(conteudo, posX + (col.largura/2) - (textWidth/2), posY + 12);
         }

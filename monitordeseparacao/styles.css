@@ -369,3 +369,34 @@ input[type="checkbox"]:checked:after {
   box-shadow: 0 0 0 2px var(--primary);
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* Tooltip customizado para o separador */
+.separador-tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.custom-tooltip {
+  position: absolute;
+  bottom: 100%; /* posiciona acima */
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  padding: 8px;
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.separador-tooltip-wrapper:hover .custom-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}

@@ -2,21 +2,23 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <title>Monitor de Picking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitor de Picking - Pendências</title>
+  <!-- Font Awesome para ícones -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <h1>
       <i class="fas fa-clipboard-list"></i>
-      Pendências de Picking   
+      Pendências de Picking
     </h1>
     <div class="import-section">
-      <textarea 
+      <i class="fa-solid fa-file-csv"></i><textarea 
         id="csvContent" 
-        placeholder="Cole o CSV do Monitor de Picking"
+        placeholder=" Cole o CSV do Monitor de Picking"
       ></textarea>
       <!-- Botão "Importar via Conteúdo" removido -->
     </div>
@@ -32,30 +34,39 @@
           <div>
             <h3>
               <i class="fas fa-boxes"></i>
-              Caixas Faltando (Não Alocado)</h3>
+              Caixas Faltando (Não Alocado)
+            </h3>
             <table id="summaryBoxes"></table>
           </div>
           <div>
             <h3>
               <i class="fas fa-map-marker-alt"></i>
-              Posições Faltando (Não Alocado)</h3>
+              Posições Faltando (Não Alocado)
+            </h3>
             <table id="summaryPositions"></table>
           </div>
           <div>
             <h3>
               <i class="fas fa-pallet"></i>
-              Cargas Faltando (PESO FIXO)</h3>
+              Cargas Faltando (PESO FIXO)
+            </h3>
             <table id="summaryLoads"></table>
           </div>
         </div>
       </div>
 
-      <!-- Seção: Separadores Ativos -->
+      <!-- Seção: Separadores Ativos (com filtro de temperatura e container para inativos) -->
       <div class="section" id="activeSeparatorsSection">
         <h2>
           <i class="fas fa-users-cog"></i>
           Separadores Ativos
-          <button id="toggleActiveSeparators" style="margin-left:1rem;">Ocultar Seção</button>
+          <!-- Filtro para temperatura -->
+          <select id="activeFilterTemp" class="filter-select">
+            <option value="Todos">TODOS</option>
+            <option value="CONGELADO">CONGELADO</option>
+            <option value="RESFRIADO">RESFRIADO</option>
+          </select>
+          <button id="toggleActiveSeparators" style="margin-left:1rem;"><i class="fa-solid fa-eye-slash"></i></button>
         </h2>
         <div id="separatorCount"></div>
         <table id="activeSeparators">
@@ -67,63 +78,50 @@
               <th><i class="fas fa-barcode"></i> OE</th>
               <th><i class="fas fa-tachometer-alt"></i> Progresso</th>
               <th><i class="fas fa-thermometer-half"></i> Temperatura</th>
-              <th>Placa</th>
-              <th>Tempo no Veículo</th>
+              <th><i class="fa-solid fa-truck"></i> Placa</th>
+              <th><i class="fa-solid fa-truck-clock"></i> Tempo no Veículo</th>
             </tr>
           </thead>
           <tbody id="activeSeparatorsBody"></tbody>
         </table>
+        <!-- Container para os separadores inativos (apresentados somente quando existirem resultados) -->
+        <div id="inactiveSeparatorsContainer"></div>
       </div>
 
-      <!-- Seção: Separadores Inativos -->
-      <div class="section" id="inactiveSeparatorsSection">
+      <!-- Seção: Cargas Pendentes com filtro de temperatura -->
+      <div class="section" id="emptyLoadsSection">
         <h2>
-          <i class="fas fa-user-slash"></i>
-          Separadores Inativos
-          <button id="toggleInactiveSeparators" style="margin-left:1rem;">Ocultar Seção</button>
+          <i class="fas fa-truck-loading"></i>
+          Cargas Pendentes (Unificadas FIXO + VARIÁVEL)
+          <!-- Filtro para temperatura -->
+          <select id="loadFilterTemp" class="filter-select">
+            <option value="Todos">TODOS</option>
+            <option value="CONGELADO">CONGELADO</option>
+            <option value="RESFRIADO">RESFRIADO</option>
+          </select>
+          <span id="emptyLoadsCount"></span>
+          <button id="toggleEmptyLoads" style="margin-left:1rem;"><i class="fa-solid fa-eye-slash"></i></button>
         </h2>
-        <div id="inactiveSeparatorCount"></div>
-        <table id="inactiveSeparators">
+        <table id="emptyLoadsTable">
           <thead>
             <tr>
-              <th><i class="fas fa-user"></i> Separador</th>
-              <th><i class="fas fa-barcode"></i> Última OE</th>
+              <th><i class="fa-solid fa-truck"></i> Placa</th>
+              <th><i class="fas fa-barcode"></i> OE</th>
+              <th><i class="fa-solid fa-user-group"></i> Grupo</th>
+              <th><i class="fa-solid fa-shield-exclamation"></i> Prioridade</th>
+              <th><i class="fas fa-cogs"></i> Tipo de Operação</th>
               <th><i class="fas fa-thermometer-half"></i> Temperatura</th>
-              <th>Última Placa</th>
-              <th><i class="fas fa-clock"></i> Visto pela última vez</th>
+              <th><i class="fas fa-boxes"></i> Caixas</th>
+              <th><i class="fas fa-map-marker-alt"></i> Posição</th>
+              <th><i class="fas fa-map-signs"></i> Destino</th>
             </tr>
           </thead>
-          <tbody id="inactiveSeparatorsBody"></tbody>
+          <tbody></tbody>
         </table>
       </div>
-      
-            <!-- Seção: Tipo de Carga Pendente -->
-            <div class="section" id="emptyLoadsSection">
-              <h2>
-                <i class="fas fa-truck-loading"></i>
-                Cargas Pendentes (Unificadas FIXO + VARIÁVEL)
-                <span id="emptyLoadsCount"></span>
-                <button id="toggleEmptyLoads" style="margin-left:1rem;">Ocultar Seção</button>
-              </h2>
-              <table id="emptyLoadsTable">
-                <thead>
-                  <tr>
-                    <th>Placa</th>
-                    <th>OE / VIAGEM</th>
-                    <th>Grupo</th>
-                    <th>Prioridade</th>
-                    <th>Tipo de Operação</th>
-                    <th>Temperatura</th>
-                    <th>Caixas</th>
-                    <th>Posição</th>
-                    <th>Destino</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
     </div>
   </div>
+
   <script src="script.js"></script>
   <script src="aut.js"></script>
 </body>
