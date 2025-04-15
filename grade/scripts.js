@@ -126,7 +126,8 @@ async function processarGrade() {
     const placa = registro[headers[indexPlaca]];
     if (placa && !veiculosUnicos.has(placa)) {
       veiculosUnicos.add(placa);
-      totalCaixas += parseInt(registro[headers[indexQtdeCxs]]) || 0;
+      // Corrigindo a conversão: removendo o separador de milhar (ponto)
+      totalCaixas += parseInt(registro[headers[indexQtdeCxs]].replace(/[.]/g, '')) || 0;
       if (indexPeso !== -1) {
         pesoTotal += parsePeso(registro[headers[indexPeso]] || '0');
       }
@@ -211,7 +212,8 @@ async function loadGradeFromStorage() {
     const placa = registro[headers[indexPlaca]];
     if (placa && !veiculosUnicos.has(placa)) {
       veiculosUnicos.add(placa);
-      totalCaixas += parseInt(registro[headers[indexQtdeCxs]]) || 0;
+      // Corrigindo a conversão para "QTDE CXS" removendo o ponto separador
+      totalCaixas += parseInt(registro[headers[indexQtdeCxs]].replace(/[.]/g, '')) || 0;
       if (indexPeso !== -1) {
         pesoTotal += parsePeso(registro[headers[indexPeso]] || '0');
       }
@@ -322,8 +324,6 @@ function closePopup(popup) {
   popup.classList.remove('show');
   setTimeout(() => popup.classList.add('hidden'), 300);
 }
-
-
 
 // Função para copiar o texto da OE
 function copiarTexto(texto) {
