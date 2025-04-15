@@ -242,22 +242,50 @@
       background: #ccc;
       border-radius: 10px;
       overflow: hidden;
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.3);
     }
-
+    
+    /* Barra de progresso com efeito de degradê animado, transição suave e brilho */
     .progress-bar {
       height: 100%;
-      background: var(--primary);
+      width: 0; /* O valor será atualizado via JS para indicar o progresso */
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      background-size: 200% 100%;
+      border-radius: 10px;
+      transition: width 1.5s ease;
+      position: relative;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+      animation: progressAnimation 3s linear infinite;
     }
+    
+    /* Efeito brilho (shine) sobre a barra */
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  animation: shine 2s infinite;
+}
 
-    .progress-text {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #2f00ff; 
-      font-size: 0.8rem;
-      line-height: 20px;
-    }
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 0.9rem;
+  -webkit-text-stroke: 1px #000; /* Contorno preto para maior destaque */
+  text-shadow: 0px 0px 3px #000;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+
+
     .filter-select {
   margin-left: 1rem;
   padding: 0.4rem 0.8rem;
@@ -288,4 +316,15 @@
 .filter-select option {
   background: var(--background);
   color: var(--text);
+}
+/* Define a animação para o fundo da barra */
+@keyframes progressAnimation {
+  0% { background-position: 0% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* Animação para o efeito shine */
+@keyframes shine {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
