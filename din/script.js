@@ -423,13 +423,34 @@ function exportarPDF(ondaNum, tipo, registros) {
         
         let conteudo = '';
         switch (index) {
-          case 0: conteudo = item.etiquetaPalete || ''; break;
-          case 1: conteudo = item.codProduto || ''; break;
-          case 2: conteudo = item.produto || ''; break;
-          case 3: conteudo = item.qtde || ''; break;
-          case 4: conteudo = item.peso || ''; break;
-          case 5: conteudo = item.origem || ''; break;
-          case 6: conteudo = item.destino || ''; break;
+          case 0: 
+            conteudo = item.etiquetaPalete || ''; 
+            break;
+          case 1: 
+            conteudo = item.codProduto || ''; 
+            break;
+          case 2: 
+            conteudo = item.produto || ''; 
+            break;
+          case 3: 
+            conteudo = item.qtde || ''; 
+            break;
+          case 4:
+            // Formatação corrigida para o peso com no máximo 3 casas decimais
+            const pesoRaw = item.peso || '';
+            const pesoNum = parseFloat(pesoRaw.replace(',', '.'));
+            if (!isNaN(pesoNum)) {
+              conteudo = pesoNum.toFixed(3).toString().replace('.', ',');
+            } else {
+              conteudo = pesoRaw;
+            }
+            break;
+          case 5: 
+            conteudo = item.origem || ''; 
+            break;
+          case 6: 
+            conteudo = item.destino || ''; 
+            break;
         }
 
         // TODOS os valores agora são em negrito
@@ -438,12 +459,10 @@ function exportarPDF(ondaNum, tipo, registros) {
         // Etiqueta (como já estava)
         if (index === 0) {
           doc.setFontSize(8);
-          
           // Se a etiqueta for muito longa, ajusta o tamanho da fonte
           if (conteudo.length > 14) {
             doc.setFontSize(7); // Fonte menor para etiquetas longas
           }
-          
           // Alinha a etiqueta à esquerda com um pequeno padding
           doc.text(conteudo, posX + 3, posY + 12);
         } 
@@ -500,6 +519,7 @@ function exportarPDF(ondaNum, tipo, registros) {
 
   doc.save(`Picking_Dinamico_ONDA_${ondaNum}_${tipo}.pdf`);
 }
+
 
 // Funções auxiliares para a interface
 function mostrarBarraPesquisa() {
