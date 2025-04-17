@@ -1,7 +1,7 @@
 // Processa automaticamente ao colar
     document.getElementById('csvContent').addEventListener('paste', function(e) {
       e.preventDefault();
-      const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+      const pasteData = e.clipboardData.getData('text');
       this.value = pasteData; // garante que o textarea seja atualizado
       if (!pasteData.trim()) {
         alert("Por favor, cole o conteúdo do CSV.");
@@ -282,27 +282,30 @@
     }
 
     // Processa os separadores inativos persistindo-os e atualizando a tabela na área mesclada
-    function processInactiveSeparators(currentSeparators) {
-      const savedActive = JSON.parse(localStorage.getItem('activeSeparatorsSaved')) || [];
-      let historicalInactive = JSON.parse(localStorage.getItem('historicalInactiveSeparators')) || [];
-      const currentKeys = currentSeparators.map(sep => sep.separador);
-      
-      // Adiciona na lista histórica os separadores que saíram da lista ativa
-      savedActive.forEach(item => {
-        if (!currentKeys.includes(item.separador)) {
-          if (!historicalInactive.some(h => h.separador === item.separador)) {
-            historicalInactive.push(item);
-          }
-        }
+    function processInactiveSeparators(separators) {
+      const inactiveSeparators = [];
+      const now = new Date();
+
+      separators.forEach(sep => {
+      const allocationTime = parseDateFromString(sep.horaAlocacao);
+      if (isNaN(allocationTime.getTime())) return;
+
+      const diffHours = (now - allocationTime) / 3600000;
+      if (diffHours >= 1) {
+        inactiveSeparators.push({
+        separador: sep.separador,
+        oe: sep.oe,
+        camara: sep.camara,
+        horaAlocacao: sep.horaAlocacao,
+        ultimoFim: sep.ultimoFim || null
+        });
+      }
       });
-      // Se um separador da lista histórica reaparecer como ativo, removê-lo da inativa
-      historicalInactive = historicalInactive.filter(item => !currentKeys.includes(item.separador));
-      
-      localStorage.setItem('historicalInactiveSeparators', JSON.stringify(historicalInactive));
-      localStorage.setItem('activeSeparatorsSaved', JSON.stringify(currentSeparators));
-      
-      updateInactiveSeparatorsTable(historicalInactive);
+
+      updateInactiveSeparatorsTable(inactiveSeparators);
     }
+    
+    
 
     // Atualiza a tabela de Separadores Inativos dentro do container da seção de Separadores Ativos
     function updateInactiveSeparatorsTable(inactiveSeparators) {
@@ -348,10 +351,15 @@
       html += inactiveSeparators.map(item => {
         let placa = gradeMap[item.oe]?.PLACAS?.[0] || '';
         let lastSeen = 'N/A';
-        if (item.horaAlocacao) {
+        
+        // Usar preferencialmente o ultimoFim se disponível, caso contrário usar horaAlocacao
+        if (item.ultimoFim) {
+          lastSeen = item.ultimoFim;
+        } else if (item.horaAlocacao) {
           const d = new Date(item.horaAlocacao);
           lastSeen = isNaN(d.getTime()) ? item.horaAlocacao : d.toLocaleTimeString();
         }
+        
         return `
            <tr>
              <td>${item.separador}</td>
