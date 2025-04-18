@@ -130,74 +130,117 @@
     }
 
     // Processa os dados e calcula totais e separadores ativos
+    // === processData revisada ===
     function processData(data) {
-      let totals = {
-        boxes: { CONGELADO: 0, RESFRIADO: 0, Total: 0 },
+      // === Totais para Resumo Geral ===
+      const totals = {
+        boxes:     { CONGELADO: 0, RESFRIADO: 0, Total: 0 },
         positions: { CONGELADO: 0, RESFRIADO: 0, Total: 0 },
-        loads: { CONGELADO: 0, RESFRIADO: 0, Total: 0 }
+        loads:     { CONGELADO: 0, RESFRIADO: 0, Total: 0 }
       };
-
-      const activeSeparators = new Map();
-
+    
+      // Mapa: nomeSeparador → lista de objetos de linha
+      const sepRows = new Map();
+    
       data.forEach(row => {
-        const temp = row['TEMPERATURA'];
+        const caixas    = parseInt(row['CAIXAS'])     || 0;
+        const posicao   = parseInt(row['POSIÇÃO'])    || 0;
+        const progresso = parseFloat((row['PERCENTUAL']||'0').replace(',', '.')) || 0;
+        const temp      = row['TEMPERATURA']          || 'N/A';
+        const nome      = (row['SEPARADOR']||'').trim();
+        const oe        = (row['OE / VIAGEM']||'').trim() || 'N/A';
+        const alocStr   = (row['HORA DA ALOCAÇÃO']||'').trim();
+        const fimStr    = (row['FIM']||'').trim();
+    
+        // ==== Resumo Geral ====
         const tipoPeso = row['TIPO DO PESO'];
-        const caixas = parseInt(row['CAIXAS']) || 0;
-        const posicao = parseInt(row['POSIÇÃO']) || 0;
-        const usuarioAlocacao = row['USUÁRIO DE ALOCAÇÃO'];
-        const progress = parseFloat((row['PERCENTUAL'] || '0').replace(',', '.')) || 0;
-
-        // Totais para Resumo Geral (usuário '-' somente)
-        if (usuarioAlocacao === '-' && (tipoPeso === 'FIXO' || tipoPeso === 'VARIÁVEL') && caixas > 0 && posicao > 0) {
+        const usuario  = row['USUÁRIO DE ALOCAÇÃO'];
+        if (usuario === '-' && (tipoPeso === 'FIXO' || tipoPeso === 'VARIÁVEL') && caixas > 0 && posicao > 0) {
           if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
-            totals.boxes[temp] += caixas;
+            totals.boxes[temp]     += caixas;
             totals.positions[temp] += posicao;
           }
         }
-        if (usuarioAlocacao === '-' && tipoPeso === 'FIXO' && caixas > 0 && posicao > 0) {
+        if (usuario === '-' && tipoPeso === 'FIXO' && caixas > 0 && posicao > 0) {
           if (temp === 'CONGELADO' || temp === 'RESFRIADO') {
             totals.loads[temp] += 1;
           }
         }
-
-        // Processa separadores ativos (progresso < 100 e separador definido)
-        if (progress < 100 && row['SEPARADOR'] && row['SEPARADOR'].trim()) {
-          const oe = (row['OE / VIAGEM'] && row['OE / VIAGEM'].trim()) || 'N/A';
-          const key = `${row['SEPARADOR']}|${temp}|${oe}`;
-          
-          if (!activeSeparators.has(key)) {
-            activeSeparators.set(key, {
-              separador: row['SEPARADOR'],
-              camara: temp || 'N/A',
-              oe: oe,
-              caixas: caixas,
-              posicao: posicao,
-              progresso: progress,
-              horaAlocacao: row['HORA DA ALOCAÇÃO'] || null
-            });
-          } else {
-            const existing = activeSeparators.get(key);
-            existing.caixas += caixas;
-            existing.posicao += posicao;
-            existing.progresso = Math.max(existing.progresso, progress);
-            if (!existing.horaAlocacao && row['HORA DA ALOCAÇÃO']) {
-              existing.horaAlocacao = row['HORA DA ALOCAÇÃO'];
-            }
-          }
+    
+        // ==== Agrupa linhas por separador ====
+        if (nome) {
+          if (!sepRows.has(nome)) sepRows.set(nome, []);
+          sepRows.get(nome).push({
+            camara:    temp,
+            oe,
+            caixas,
+            posicao,
+            progresso,
+            alocStr,
+            fimStr
+          });
         }
       });
-
-      totals.boxes.Total = totals.boxes.CONGELADO + totals.boxes.RESFRIADO;
+    
+      // Atualiza Resumo Geral
+      totals.boxes.Total     = totals.boxes.CONGELADO + totals.boxes.RESFRIADO;
       totals.positions.Total = totals.positions.CONGELADO + totals.positions.RESFRIADO;
-      totals.loads.Total = totals.loads.CONGELADO + totals.loads.RESFRIADO;
-
-      updateSummaryTable('summaryBoxes', totals.boxes);
+      totals.loads.Total     = totals.loads.CONGELADO + totals.loads.RESFRIADO;
+      updateSummaryTable('summaryBoxes',     totals.boxes);
       updateSummaryTable('summaryPositions', totals.positions);
-      updateSummaryTable('summaryLoads', totals.loads);
-
-      const sortedSeparators = Array.from(activeSeparators.values()).sort((a, b) => b.progresso - a.progresso);
-      updateActiveSeparators(sortedSeparators);
+      updateSummaryTable('summaryLoads',     totals.loads);
+    
+      // Separa ativos/inativos
+      const ativos   = [];
+      const inativos = [];
+    
+      sepRows.forEach((rows, nome) => {
+        const ativas = rows.filter(r => r.progresso < 100);
+        if (ativas.length > 0) {
+          // Monta objeto de ativo a partir das linhas incompletas
+          const progressoMax = Math.max(...ativas.map(r => r.progresso));
+          const caixasTot    = ativas.reduce((s,r) => s + r.caixas, 0);
+          const posTot       = ativas.reduce((s,r) => s + r.posicao, 0);
+          // pega a última alocação (string) com base em maior valor de data
+          const ultimaAloc   = ativas
+            .map(r => r.alocStr)
+            .filter(s => s)
+            .sort((a,b) => parseDateFromString(b) - parseDateFromString(a))[0] || null;
+    
+          ativos.push({
+            separador:    nome,
+            camara:       ativas[0].camara,
+            oe:           ativas[0].oe,
+            caixas:       caixasTot,
+            posicao:      posTot,
+            progresso:    progressoMax,
+            horaAlocacao: ultimaAloc
+          });
+        } else {
+          // Todas as linhas concluídas => inativo
+          // pega a última FIM
+          const ultimaFim = rows
+            .map(r => r.fimStr)
+            .filter(s => s)
+            .sort((a,b) => parseDateFromString(b) - parseDateFromString(a))[0] || null;
+    
+          inativos.push({
+            separador: nome,
+            oe:         rows[0].oe,
+            camara:     rows[0].camara,
+            ultimoFim:  ultimaFim
+          });
+        }
+      });
+    
+      // Exibe
+      ativos.sort((a,b) => b.progresso - a.progresso);
+      updateActiveSeparators(ativos);
+      updateInactiveSeparatorsTable(inativos);
     }
+    
+
+    
 
     // Atualiza as tabelas de resumo geral
     function updateSummaryTable(elementId, data) {
@@ -308,6 +351,7 @@
     
 
     // Atualiza a tabela de Separadores Inativos dentro do container da seção de Separadores Ativos
+    // === updateInactiveSeparatorsTable revisada ===
     function updateInactiveSeparatorsTable(inactiveSeparators) {
       const container = document.getElementById('inactiveSeparatorsContainer');
       if (inactiveSeparators.length === 0) {
@@ -315,66 +359,50 @@
         return;
       }
       container.style.display = 'block';
-      let gradeCompleta = localStorage.getItem('gradeCompleta');
+    
+      // Reconstrói mapa de placas
       let gradeMap = {};
-      if (gradeCompleta) {
-        try {
-          let gradeData = JSON.parse(gradeCompleta);
-          let dados = Array.isArray(gradeData) ? gradeData : (gradeData.dadosGrade || []);
-          dados.forEach(item => {
-            let mappedItem = {
-              OE: item.OE || item['OE / VIAGEM'] || 'N/A',
-              PLACAS: item.PLACAS || (item['PLACA ROTEIRIZADA'] ? [item['PLACA ROTEIRIZADA']] : []),
-              DESTINO: item.DESTINO || 'N/A'
-            };
-            gradeMap[mappedItem.OE] = mappedItem;
-          });
-        } catch (e) {
-          console.error('Erro ao parsear gradeCompleta', e);
-        }
-      }
-      
+      try {
+        const arr = JSON.parse(localStorage.getItem('gradeCompleta') || '[]');
+        (Array.isArray(arr) ? arr : arr.dadosGrade || []).forEach(item => {
+          const OE = item.OE || item['OE / VIAGEM'] || 'N/A';
+          gradeMap[OE] = item.PLACAS || (item['PLACA ROTEIRIZADA'] ? [item['PLACA ROTEIRIZADA']] : []);
+        });
+      } catch { /* silent */ }
+    
       let html = `
         <h3><i class="fas fa-user-slash"></i> Separadores Inativos</h3>
         <table id="inactiveSeparators">
           <thead>
             <tr>
-              <th><i class="fas fa-user"></i> Separador</th>
-              <th><i class="fas fa-barcode"></i> Última OE</th>
-              <th><i class="fas fa-thermometer-half"></i> Temperatura</th>
-              <th><i class="fa-solid fa-truck-clock"></i> Última Placa</th>
-              <th><i class="fas fa-clock"></i> Visto pela última vez</th>
+              <th>Separador</th>
+              <th>Última OE</th>
+              <th>Temperatura</th>
+              <th>Última Placa</th>
+              <th>Visto pela última vez</th>
             </tr>
           </thead>
-          <tbody id="inactiveSeparatorsBody">
+          <tbody>
       `;
       html += inactiveSeparators.map(item => {
-        let placa = gradeMap[item.oe]?.PLACAS?.[0] || '';
-        let lastSeen = 'N/A';
-        
-        // Usar preferencialmente o ultimoFim se disponível, caso contrário usar horaAlocacao
-        if (item.ultimoFim) {
-          lastSeen = item.ultimoFim;
-        } else if (item.horaAlocacao) {
-          const d = new Date(item.horaAlocacao);
-          lastSeen = isNaN(d.getTime()) ? item.horaAlocacao : d.toLocaleTimeString();
-        }
-        
+        const placa    = (gradeMap[item.oe] || [''])[0];
+        const lastSeen = item.ultimoFim || 'N/A';
         return `
-           <tr>
-             <td>${item.separador}</td>
-             <td>${item.oe}</td>
-             <td>${item.camara}</td>
-             <td>${placa}</td>
-             <td>${lastSeen}</td>
-           </tr>
+          <tr>
+            <td>${item.separador}</td>
+            <td>${item.oe}</td>
+            <td>${item.camara}</td>
+            <td>${placa}</td>
+            <td>${lastSeen}</td>
+          </tr>
         `;
       }).join('');
-      html += `
-         
-      `;
+      html += `</tbody></table>`;
+    
       container.innerHTML = html;
     }
+    
+
 
     // Atualiza a tabela da seção "Tipo de Carga Pendente"
     function updateEmptyLoads(emptyLoads) {
