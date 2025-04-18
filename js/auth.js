@@ -1,16 +1,19 @@
-(function() {
-  'use strict';
+// auth.js
 
-  const username = localStorage.getItem('username');
-  if (!username) {
-    // redireciona quem não estiver logado
-    window.location.replace('/WMS-Tools/404.html');
-    return;
+const username = localStorage.getItem('username');
+const expiry = localStorage.getItem('expiry');
+
+if (!username || !expiry || Date.now() > parseInt(expiry)) {
+  // Remove qualquer dado antigo
+  localStorage.removeItem('username');
+  localStorage.removeItem('expiry');
+  
+  // Redireciona para página de login ou erro
+  window.location.href = '/WMS-Tools/login.html';
+} else {
+  // Login válido, exibe o nome
+  const userSpan = document.getElementById('userNameDisplay');
+  if (userSpan) {
+    userSpan.textContent = username;
   }
-
-  // se houve login, preenche o nome
-  document.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('userNameDisplay');
-    if (el) el.textContent = username;
-  });
-})();
+}

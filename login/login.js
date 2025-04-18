@@ -22,6 +22,13 @@ async function login() {
     // Salva o nome do usuário correspondente à senha no localStorage
     localStorage.setItem('username', users[password]);
 
+    // Calcula o tempo de expiração em 2 horas (em milissegundos)
+    const expiresIn = 2 * 60 * 60 * 1000; // 2 horas
+    const expiryTime = Date.now() + expiresIn;
+
+    // Salva o tempo de expiração no localStorage
+    localStorage.setItem('expiry', expiryTime.toString());
+
     // Redireciona para a página principal (index.html)
     window.location.href = 'index.html';
   } else {
