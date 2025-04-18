@@ -3,14 +3,11 @@
 <head>
   <meta charset="utf-8">
   <title>{{ page.title }}</title>
-  <script src="/js/auth.js" defer></script>
+  <!-- injeta auth.js sempre no caminho correto -->
+  <script src="{{ site.baseurl }}/js/auth.js" defer></script>
 </head>
 <body>
-  <header>
-    Bem‑vindo, <span id="userNameDisplay"></span>
-  </header>
 
-  <!-- aqui entra o conteúdo específico de cada página -->
   {{ content }}
 
 </body>
