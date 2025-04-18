@@ -138,24 +138,46 @@ function agruparMovimentacoes(movimentacoes) {
 }
 
 // Função auxiliar para extrair chave de ordenação
+// 1) Extrai as 4 chaves de ordenação da string de origem.
+//    Captura Cxx, letra, Qxx e Nn em QUALQUER parte da string.
 function extrairChaveOrdenacao(origem) {
-  const match = origem.match(/^C(\d\d)([A-Z])/);
-  if (match) {
-    return { camera: parseInt(match[1], 10), rua: match[2] };
+  if (!origem || typeof origem !== 'string') {
+    return { camera: Infinity, rua: 'Z', quadra: Infinity, numero: Infinity };
   }
-  return { camera: 99, rua: 'Z' };
+  const str = origem.toUpperCase();
+  const regex = /C(\d{2})([A-Z])Q(\d{2})N(\d+)/i;
+  const match = str.match(regex);
+  if (match) {
+    return {
+      camera: parseInt(match[1], 10),    // ex: "03" → 3
+      rua:    match[2],                  // ex: "C"
+      quadra: parseInt(match[3], 10),    // ex: "02" → 2, "36" → 36
+      numero: parseInt(match[4], 10)     // ex: "2"  → 2
+    };
+  }
+  // Se não achar Q/N, ao menos captura Cxx e letra
+  const shortMatch = str.match(/C(\d{2})([A-Z])/i);
+  if (shortMatch) {
+    return {
+      camera: parseInt(shortMatch[1], 10),
+      rua:    shortMatch[2],
+      quadra: 0,
+      numero: 0
+    };
+  }
+  // Qualquer outro caso vai para o fim
+  return { camera: Infinity, rua: 'Z', quadra: Infinity, numero: Infinity };
 }
 
 // Função de comparação para ordenar por origem
 function compararOrigem(a, b) {
-  const chaveA = extrairChaveOrdenacao(a.origem);
-  const chaveB = extrairChaveOrdenacao(b.origem);
-  if (chaveA.camera !== chaveB.camera) {
-    return chaveA.camera - chaveB.camera;
-  }
-  if (chaveA.rua < chaveB.rua) return -1;
-  if (chaveA.rua > chaveB.rua) return 1;
-  return 0;
+  const A = extrairChaveOrdenacao(a.origem);
+  const B = extrairChaveOrdenacao(b.origem);
+
+  if (A.camera !== B.camera)   return A.camera - B.camera;
+  if (A.rua    !== B.rua)      return A.rua < B.rua ? -1 : 1;
+  if (A.quadra !== B.quadra)   return A.quadra - B.quadra;
+  return A.numero - B.numero;
 }
 
 // Função para exibir as movimentações na interface
