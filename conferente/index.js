@@ -75,7 +75,7 @@ function loadDashboard() {
       container.innerHTML = `
           <div class="error-container">
               <h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO ENCONTRADA</h2>
-              <p>Por favor, carregue a grade completa para visualizar o dashboard.</p>
+                <p>Carregue a GRADE no menu ao lado.</p>
           </div>
       `;
       return;

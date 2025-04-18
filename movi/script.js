@@ -26,7 +26,8 @@ window.addEventListener('load', () => {
   // Carregar grade (key "gradeCompleta")
   const gradeString = localStorage.getItem('gradeCompleta');
   if (!gradeString) {
-    exibirMensagem('Grade não carregada');
+exibirMensagem('<h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO ENCONTRADA</h2>' +
+               '<p>Carregue a GRADE no menu ao lado.</p>');
   } else {
     try {
       gradeCompleta = JSON.parse(gradeString);
