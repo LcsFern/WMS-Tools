@@ -1,0 +1,124 @@
+---
+layout: default
+title: "WMS Tools - Ondas Pré-GRADE"
+---
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Ondas Pré-GRADE</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fa-solid fa-list-tree"></i> Ondas Pré-Grade</h1>
+    
+    <div class="section" id="ondasSection">
+      <h2><i class="fa-solid fa-wave-square"></i> Ondas da Expedição</h2>
+      <div class="actions">
+        <button id="importarBtn" onclick="showImportPopup()">
+          <i class="fa-solid fa-file-import"></i> Importar Veículos em Massa
+        </button>
+        <button id="salvarBtn" onclick="salvarOndas()">
+          <i class="fa-solid fa-save"></i> Salvar como GRADE
+        </button>
+        <button id="limparBtn" onclick="confirmarLimparOndas()">
+          <i class="fa-solid fa-trash"></i> Limpar Ondas
+        </button>
+        <button id="exportarPdfBtn" onclick="exportarPDF()">
+          <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+        </button>
+        <button id="alterarStatusBtn" onclick="alterarStatusEmMassa()">
+          <i class="fa-solid fa-layer-group"></i> Alterar Status em Massa
+        </button>
+      </div>
+      <div id="ondasContent">
+        <table class="ondas-grid" id="ondasTable">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="selecionarTodos" onclick="selecionarTodosCheckboxes()"></th>
+              <th><i class="fas fa-barcode"></i> OE</th>
+              <th><i class="fa-solid fa-truck"></i> PLACA ROTEIRIZADA</th>
+              <th><i class="fa-solid fa-warehouse-full"></i> DOCA</th>
+              <th><i class="fa-solid fa-weight-hanging"></i> PESO</th>
+              <th><i class="fas fa-pallet"></i> QTD PALLETS</th>
+              <th><i class="fa-solid fa-location-exclamation"></i> OBSERVAÇÃO</th>
+              <th><i class="fas fa-flag"></i> STATUS</th>
+              <th><i class="fas fa-eraser"></i> Excluir</th>
+            </tr>
+          </thead>
+          <tbody id="ondasTableBody">
+            <!-- As linhas serão adicionadas aqui via importação em massa -->
+          </tbody>
+        </table>
+      </div>
+      
+     
+    </div>
+    
+    <div class="section grade-alert hidden" id="gradeAlert">
+      <i class="fa-solid fa-exclamation-circle"></i>
+      <h2>Ondas não disponível</h2>
+      <p>GRADE já carregada! Para usar Ondas, é necessário resetar a grade atual.</p>
+    </div>
+  </div>
+  
+  <div id="confirmPopup" class="popup-overlay">
+    <div class="popup-box">
+      <h2><i class="fas fa-exclamation-triangle"></i> Confirmar Ação</h2>
+      <p id="popupMessage">Tem certeza que deseja prosseguir?</p>
+      <div class="popup-actions">
+        <button id="confirmBtn" class="btn-yes"><i class="fas fa-check"></i> Sim</button>
+        <button id="cancelBtn" class="btn-no"><i class="fas fa-times"></i> Não</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="importPopup" class="popup-overlay">
+    <div class="popup-box import-popup">
+      <h2><i class="fa-solid fa-file-import"></i> Importar Veículos em Massa</h2>
+      <div class="import-section">
+        <p>Cole os dados do Excel (OE/VIAGEM, PLACA, DOCA, PESO PREVISTO) abaixo:</p>
+        <textarea id="importTextarea" placeholder="OE / VIAGEM	PLACA	DOCA	PESO PREVISTO
+6231698	RKW1C32	DOCA06C	2.039,31
+6231678	IWD1F46	DOCA03D	1.295,81"></textarea>
+        <div class="import-buttons">
+          <button id="processarImportBtn" onclick="processarImportacao()">
+            <i class="fa-solid fa-file-import"></i> Importar Dados
+          </button>
+          <button onclick="document.getElementById('importTextarea').value = ''">
+            <i class="fa-solid fa-eraser"></i> Limpar
+          </button>
+          <button class="btn-no" onclick="closeImportPopup()">
+            <i class="fa-solid fa-times"></i> Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="alterarStatusPopup" class="popup-overlay">
+    <div class="popup-box">
+      <h2><i class="fa-solid fa-layer-group"></i> Alterar Status em Massa</h2>
+      <p>Selecione o novo status para os veículos marcados:</p>
+      <select id="statusEmMassaSelect" class="status-select">
+      </select>
+      <div class="popup-actions">
+        <button id="aplicarStatusBtn" class="btn-yes" onclick="aplicarAlteracaoStatusEmMassa()">
+          <i class="fas fa-check"></i> Aplicar
+        </button>
+        <button class="btn-no" onclick="document.getElementById('alterarStatusPopup').classList.remove('show')">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>window.jsPDF = window.jspdf.jsPDF;</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="script.js"></script>  
+</body>
+</html>

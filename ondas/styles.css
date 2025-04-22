@@ -1,0 +1,306 @@
+/* Os estilos permanecem inalterados, pois a remoção da linha manual não exige ajustes significativos */
+    :root {
+      --primary: #008d4c;
+      --secondary: #00a65a;
+      --accent: #34c759;
+      --background: #0f172a;
+      --glass: rgba(255, 255, 255, 0.05);
+      --text: #f8fafc;
+      --text-light: #e0e0e0;
+      --text-muted: #c0c0c0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(45deg, var(--background), #1e293b);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.8rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .section {
+      margin: 2rem 0;
+      padding: 2rem;
+      background: var(--glass);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+    }
+    h2 {
+      color: var(--accent);
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .ondas-grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .ondas-grid th {
+      padding: 1rem 0.5rem;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .ondas-grid td {
+      padding: 0.8rem 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ondas-grid tr:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    button {
+      padding: 0.8rem 1.6rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .grade-alert {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      text-align: center;
+    }
+    .grade-alert i {
+      font-size: 5rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    .grade-alert h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .grade-alert p {
+      font-size: 1.2rem;
+      color: var(--text-light);
+    }
+    .hidden {
+      display: none;
+    }
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .popup-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .popup-box {
+      background: var(--glass);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      color: var(--text);
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.3s ease-in-out;
+    }
+    .popup-overlay.show .popup-box {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .popup-box h2 {
+      color: var(--accent);
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .popup-actions {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .popup-actions .btn-yes {
+      background: linear-gradient(90deg, #008d4c, #00a65a);
+    }
+    .popup-actions .btn-no {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .popup-actions button {
+      padding: 0.6rem 1.4rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .popup-actions button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(0, 255, 170, 0.4);
+    }
+    .import-popup {
+      width: 100%;
+      max-width: 800px;
+    }
+    .import-section {
+      margin-top: 1rem;
+    }
+    .import-section h3 {
+      color: var(--accent);
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    #importTextarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: monospace;
+      resize: vertical;
+      margin-bottom: 1rem;
+    }
+    #importTextarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 141, 76, 0.2);
+    }
+    .import-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    .editable {
+      cursor: pointer;
+      position: relative;
+    }
+    .editable:hover {
+      background-color: rgba(0, 141, 76, 0.2);
+    }
+    .editable::after {
+      content: '\f044';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      font-size: 10px;
+      right: 3px;
+      top: 3px;
+      opacity: 0.5;
+    }
+    .linha-checkbox {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    #selecionarTodos {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .ondas-grid th:nth-child(1), .ondas-grid td:nth-child(1) {
+      width: 30px;
+    }
+    .edit-row input, .edit-row select {
+      width: 100%;
+      padding: 0.6rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: var(--text);
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .edit-row button {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+    /* 1) Seletores para o dropdown in‑place da coluna STATUS */
+.edit-row select {
+  /* cor de fundo do campo */
+  background-color: var(--secondary) !important;
+  /* cor do texto */
+  color: var(--text) !important;
+}
+/* cor de fundo das opções */
+.edit-row select option {
+  background-color: rgb(0, 0, 0)!important;
+  color: var(--text) !important;
+}
+
+/* 2) Seletores para o dropdown de Alterar Status em Massa */
+#statusEmMassaSelect,
+.status-select {
+  background-color: rgb(0, 141, 75) !important;
+  color: var(--text) !important;
+}
+#statusEmMassaSelect option {
+  background-color: rgb(0, 0, 0) !important;
+  color: var(--text) !important;
+}
