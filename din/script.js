@@ -1,5 +1,5 @@
 // Carrega as ondas do localStorage ou inicializa um array vazio
-let ondas = JSON.parse(localStorage.getItem('ondas')) || [];
+let ondas = JSON.parse(localStorage.getItem('ondasdin')) || [];
 // Determina o número da onda atual com base no maior número existente
 let ondaAtual = ondas.length > 0 ? Math.max(...ondas.map(o => o.numero)) : 0;
 
@@ -103,7 +103,7 @@ function processarMovimentacao(rawText) {
   novaOnda.resfriado.sort(compararOrigem);
 
   ondas.push(novaOnda);
-  localStorage.setItem('ondas', JSON.stringify(ondas));
+  localStorage.setItem('ondasdin', JSON.stringify(ondas));
 
   exibirMovimentacoes();
   mostrarBarraPesquisa();
@@ -278,7 +278,7 @@ function exibirMovimentacoes() {
         e.stopPropagation();
         exportarPDF(onda.numero, 'congelado', onda.congelado);
         onda.exportado.congelado = true;
-        localStorage.setItem('ondas', JSON.stringify(ondas));
+        localStorage.setItem('ondasdin', JSON.stringify(ondas));
         if (isOndaFinalizada(onda)) {
           header.querySelector('.export-checkbox').checked = true;
           card.classList.add('finalized-card');
@@ -292,7 +292,7 @@ function exibirMovimentacoes() {
         e.stopPropagation();
         exportarPDF(onda.numero, 'resfriado', onda.resfriado);
         onda.exportado.resfriado = true;
-        localStorage.setItem('ondas', JSON.stringify(ondas));
+        localStorage.setItem('ondasdin', JSON.stringify(ondas));
         if (isOndaFinalizada(onda)) {
           header.querySelector('.export-checkbox').checked = true;
           card.classList.add('finalized-card');
