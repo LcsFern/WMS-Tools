@@ -1,7 +1,8 @@
 ---
 layout: default
-title: "WMS Tools - Ondas Pré-GRADE"
+title: "WMS Tools - ONDAS Pré-GRADE"
 ---
+
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -55,8 +56,6 @@ title: "WMS Tools - Ondas Pré-GRADE"
           </tbody>
         </table>
       </div>
-      
-     
     </div>
     
     <div class="section grade-alert hidden" id="gradeAlert">
@@ -81,6 +80,12 @@ title: "WMS Tools - Ondas Pré-GRADE"
     <div class="popup-box import-popup">
       <h2><i class="fa-solid fa-file-import"></i> Importar Veículos em Massa</h2>
       <div class="import-section">
+        <div class="onda-selection">
+          <label for="ondaImportacaoSelect"><i class="fa-solid fa-wave-square"></i> Selecione a Onda para os veículos:</label>
+          <select id="ondaImportacaoSelect" class="status-select">
+            <!-- As opções serão preenchidas dinamicamente -->
+          </select>
+        </div>
         <p>Cole os dados do Excel (OE/VIAGEM, PLACA, DOCA, PESO PREVISTO) abaixo:</p>
         <textarea id="importTextarea" placeholder="OE / VIAGEM	PLACA	DOCA	PESO PREVISTO
 6231698	RKW1C32	DOCA06C	2.039,31

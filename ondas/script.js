@@ -1,4 +1,3 @@
-
 let veiculosData = [];
 
 // Debounce para evitar gravações repetidas no localStorage
@@ -78,13 +77,50 @@ function carregarVeiculos() {
 
 // 2. Mostrar e fechar popup de importação
 function showImportPopup() {
+  // Preencher o dropdown de ondas no popup de importação
+  const selectOndas = document.getElementById('ondaImportacaoSelect');
+  selectOndas.innerHTML = '';
+  
+  // Lista única de ondas
+  const listaOndas = [];
+  for (let i = 1; i <= 10; i++) {
+    listaOndas.push(`${i}ª ONDA`);
+  }
+  
+  // Adicionar ondas existentes na tabela
+  document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
+    const ondaText = c.textContent.trim();
+    if (ondaText && !listaOndas.includes(ondaText)) {
+      listaOndas.push(ondaText);
+    }
+  });
+  
+  // Ordenar ondas
+  listaOndas.sort((a, b) => {
+    const numA = parseInt(a) || 999;
+    const numB = parseInt(b) || 999;
+    return numA - numB;
+  });
+  
+  // Adicionar ao dropdown sem duplicatas
+  const ondasAdicionadas = new Set();
+  listaOndas.forEach(onda => {
+    if (!ondasAdicionadas.has(onda)) {
+      const opt = document.createElement('option');
+      opt.value = onda;
+      opt.textContent = onda;
+      selectOndas.appendChild(opt);
+      ondasAdicionadas.add(onda);
+    }
+  });
+  
   document.getElementById('importPopup').classList.add('show');
 }
 function closeImportPopup() {
   document.getElementById('importPopup').classList.remove('show');
 }
 
-// 3. Importação em massa (DocumentFragment para performance)
+// 3. Importação em massa com seleção de onda
 function processarImportacao() {
   const txt = document.getElementById('importTextarea').value.trim();
   if (!txt) { showInfoPopup('Cole os dados para importação.'); return; }
@@ -97,6 +133,9 @@ function processarImportacao() {
     showInfoPopup('Cabeçalho inválido.'); return;
   }
 
+  // Obter onda selecionada para importação
+  const ondaSelecionada = document.getElementById('ondaImportacaoSelect').value;
+  
   let sucessos = 0, falhas = 0;
   const tbody = document.getElementById('ondasTableBody');
   const frag = document.createDocumentFragment();
@@ -121,7 +160,7 @@ function processarImportacao() {
       <td>${peso}</td>
       <td>${pallets}</td>
       <td class="editable" onclick="editarCelula(this,'destino')">${destino}</td>
-      <td class="editable" onclick="editarCelula(this,'status')">1ª ONDA</td>
+      <td class="editable" onclick="editarCelula(this,'status')">${ondaSelecionada}</td>
       <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
     `;
     frag.appendChild(tr);
@@ -130,6 +169,7 @@ function processarImportacao() {
 
   if (sucessos) {
     tbody.appendChild(frag);
+    ordenarTabelaPorOnda(); // Ordena a tabela após adicionar novas linhas
     showInfoPopup(`Importados: ${sucessos} | Ignorados: ${falhas}`);
     document.getElementById('importTextarea').value = '';
     closeImportPopup();
@@ -155,10 +195,11 @@ function adicionarLinhaTabelaOnda(oe, placa, doca, peso, pallets, destino, statu
     <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
   `;
   tbody.appendChild(tr);
+  ordenarTabelaPorOnda(); // Reordenar após adicionar linha
   debouncedAtualizarStorageOndas();
 }
 
-// 5. Edição in‑place; repuxa ao editar placa
+// 5. Edição in-place; repuxa ao editar placa
 function editarCelula(cel, tipo) {
   const orig = cel.textContent;
   const tr = cel.parentElement;
@@ -168,14 +209,31 @@ function editarCelula(cel, tipo) {
   if (tipo === 'status') {
     let opts = '';
     const atual = orig;
-    const lista = [];
+    const ondasSet = new Set();
+    
+    // Adicionar ondas existentes na tabela
     document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
-      const t = c.textContent.trim(); if (t && !lista.includes(t)) lista.push(t);
+      const t = c.textContent.trim(); 
+      if (t) ondasSet.add(t);
     });
-    for (let i = 1; i <= 10; i++) lista.push(`${i}ª ONDA`);
-    lista.sort((a,b)=>parseInt(a)-parseInt(b)).forEach(v=>{
+    
+    // Adicionar ondas padrão
+    for (let i = 1; i <= 10; i++) {
+      ondasSet.add(`${i}ª ONDA`);
+    }
+    
+    // Ordenar ondas
+    const listaOndas = Array.from(ondasSet);
+    listaOndas.sort((a, b) => {
+      const numA = parseInt(a.match(/\d+/)?.[0] || "999");
+      const numB = parseInt(b.match(/\d+/)?.[0] || "999");
+      return numA - numB;
+    });
+    
+    listaOndas.forEach(v => {
       opts += `<option value="${v}" ${v===atual?'selected':''}>${v}</option>`;
     });
+    
     cel.innerHTML = `<select>${opts}</select>`;
   } else {
     cel.innerHTML = `<input type="text" value="${orig}">`;
@@ -193,6 +251,10 @@ function editarCelula(cel, tipo) {
       const cells = tr.querySelectorAll('td');
       cells[5].textContent = v["QTD PALLETS"] || '';
       cells[6].textContent = v["DESTINO"] || '';
+    }
+    if (tipo === 'status') {
+      // Reordenar a tabela quando mudar o status/onda
+      ordenarTabelaPorOnda();
     }
     debouncedAtualizarStorageOndas();
   }
@@ -273,6 +335,7 @@ function carregarDadosNaTabela(dados) {
     `;
     tbody.appendChild(tr);
   });
+  ordenarTabelaPorOnda(); // Ordenar após carregar dados
 }
 
 // 9. Confirmar e limpar
@@ -314,7 +377,7 @@ function verificarGradeCarregada() {
   return false;
 }
 
-// 12. Exportar PDF em background, com bordas e negrito
+// 12. Exportar PDF com bordas mais grossas
 function exportarPDF() {
   if (!window.jspdf || typeof window.jsPDF !== 'function') {
     showInfoPopup('Biblioteca jsPDF não carregada.'); return;
@@ -345,8 +408,19 @@ function exportarPDF() {
       body,
       theme: 'grid',
       margin: { top: 30, left: 10, right: 10 },
-      styles: { fontSize: 10, fontStyle: 'bold', overflow: 'ellipsize' },
-      headStyles: { fillColor: [0,141,76], textColor: [255,255,255], fontStyle: 'bold' },
+      styles: { 
+        fontSize: 10, 
+        fontStyle: 'bold', 
+        overflow: 'ellipsize',
+        lineWidth: 0.5, // Bordas mais grossas
+        lineColor: [0, 0, 0] // Cor preta para as bordas
+      },
+      headStyles: { 
+        fillColor: [0,141,76], 
+        textColor: [255,255,255], 
+        fontStyle: 'bold',
+        lineWidth: 0.5 // Bordas mais grossas para o cabeçalho também
+      },
       didDrawPage: data => {
         const total = doc.internal.getNumberOfPages();
         for (let i = 1; i <= total; i++) {
@@ -366,13 +440,33 @@ function alterarStatusEmMassa() {
   document.getElementById('alterarStatusPopup').classList.add('show');
   const sel = document.getElementById('statusEmMassaSelect');
   sel.innerHTML = '';
-  const lista = [];
+  
+  // Usar Set para evitar duplicatas
+  const ondasSet = new Set();
+  
+  // Adicionar ondas existentes
   document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
-    const t = c.textContent.trim(); if (t && !lista.includes(t)) lista.push(t);
+    const t = c.textContent.trim(); 
+    if (t) ondasSet.add(t);
   });
-  for (let i = 1; i <= 10; i++) lista.push(`${i}ª ONDA`);
-  lista.sort((a, b) => parseInt(a) - parseInt(b)).forEach(o => {
-    const opt = document.createElement('option'); opt.value = o; opt.textContent = o;
+  
+  // Adicionar ondas padrão
+  for (let i = 1; i <= 10; i++) {
+    ondasSet.add(`${i}ª ONDA`);
+  }
+  
+  // Converter para array, ordenar e adicionar ao dropdown
+  const listaOndas = Array.from(ondasSet);
+  listaOndas.sort((a, b) => {
+    const numA = parseInt(a.match(/\d+/)?.[0] || "999");
+    const numB = parseInt(b.match(/\d+/)?.[0] || "999");
+    return numA - numB;
+  });
+  
+  listaOndas.forEach(o => {
+    const opt = document.createElement('option'); 
+    opt.value = o; 
+    opt.textContent = o;
     sel.appendChild(opt);
   });
 }
@@ -392,6 +486,31 @@ function aplicarAlteracaoStatusEmMassa() {
 function selecionarTodosCheckboxes() {
   const all = document.getElementById('selecionarTodos').checked;
   document.querySelectorAll('.linha-checkbox').forEach(cb => cb.checked = all);
+}
+
+// Nova função para ordenar a tabela por onda
+function ordenarTabelaPorOnda() {
+  const tbody = document.getElementById('ondasTableBody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  
+  // Função para extrair o número da onda
+  function extrairNumeroOnda(texto) {
+    const match = texto.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 999; // Se não for numérico, coloca no final
+  }
+  
+  // Ordenar linhas por número de onda
+  rows.sort((a, b) => {
+    const ondaA = a.querySelector('td:nth-child(8)').textContent;
+    const ondaB = b.querySelector('td:nth-child(8)').textContent;
+    return extrairNumeroOnda(ondaA) - extrairNumeroOnda(ondaB);
+  });
+  
+  // Remover todas as linhas
+  rows.forEach(row => tbody.removeChild(row));
+  
+  // Adicionar linhas ordenadas
+  rows.forEach(row => tbody.appendChild(row));
 }
 
 // Inicialização
