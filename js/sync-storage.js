@@ -1,10 +1,24 @@
 (function () {
-  const userId = localStorage.getItem('username');
+  const userId = localStorage.getItem('username')?.toLowerCase();
   if (!userId) return;
 
-  const chavesParaSincronizar = ['ondasdin', 'gradeCompleta', 'movimentacoesProcessadas' , 'ondas' , 'result_state_monitor' , 'checkbox_state_monitor' , 'dashboardHTML' , 'rankingArray']; // adicione as chaves que quiser
+  const chavesParaSincronizar = [
+    'ondasdin', 'gradeCompleta', 'movimentacoesProcessadas',
+    'ondas', 'result_state_monitor', 'checkbox_state_monitor',
+    'dashboardHTML', 'rankingArray'
+  ];
 
-  // Restaura do servidor via proxy (Cloudflare Worker)
+  // 🔁 Override para salvar automaticamente ao alterar localStorage
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function (key, value) {
+    originalSetItem.apply(this, arguments);
+
+    if (chavesParaSincronizar.includes(key)) {
+      salvarLocalStorage();
+    }
+  };
+
+  // 🧠 Restaura do servidor
   fetch(`https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/pegar.php?userId=${userId}`)
     .then(res => res.json())
     .then(data => {
@@ -13,11 +27,11 @@
         Object.keys(restaurados).forEach(key => {
           localStorage.setItem(key, restaurados[key]);
         });
-        console.log('Dados restaurados do servidor');
+        console.log('✅ Dados restaurados do servidor');
       }
     });
 
-  // Salva no servidor via proxy (Cloudflare Worker)
+  // 💾 Salva no servidor
   function salvarLocalStorage() {
     const dados = {};
     chavesParaSincronizar.forEach(key => {
@@ -29,15 +43,19 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, dados: JSON.stringify(dados) })
-    }).then(() => console.log('Dados enviados ao servidor'));
+    })
+    .then(() => console.log('💾 Dados enviados ao servidor'));
   }
 
-  // Salva ao sair da página
+  // 🔁 Salva também ao sair
   window.addEventListener('beforeunload', salvarLocalStorage);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') salvarLocalStorage();
-  });
-  
-  // Opcional: você pode exportar a função para usar manualmente
+
+  // 🔘 Exporta função manual
   window.sincronizarAgora = salvarLocalStorage;
+
+    // ⏱️ Backup automático a cada 10 segundos
+    setInterval(() => {
+      salvarLocalStorage();
+    }, 10000); // 10000 ms = 10 segundos
+  
 })();
