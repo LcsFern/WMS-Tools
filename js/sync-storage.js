@@ -5,57 +5,93 @@
   const chavesParaSincronizar = [
     'ondasdin', 'gradeCompleta', 'movimentacoesProcessadas',
     'ondas', 'result_state_monitor', 'checkbox_state_monitor',
-    'dashboardHTML', 'rankingArray' , 'logHistoricoMudancas'
+    'dashboardHTML', 'rankingArray', 'logHistoricoMudancas'
   ];
+  const LAST_MODIFIED_KEY = 'syncLastModified';
+  let skipSync = false;
+  const originalSetItem = localStorage.setItem.bind(localStorage);
 
-  // 🔁 Override para salvar automaticamente ao alterar localStorage
-  const originalSetItem = localStorage.setItem;
+  // Carrega mapa de timestamps de modificações locais
+  let lastModifiedMap = {};
+  try {
+    lastModifiedMap = JSON.parse(localStorage.getItem(LAST_MODIFIED_KEY)) || {};
+  } catch { /* ignorar se inválido */ }
+
+  // Envia dados ao servidor
+  function salvarLocalStorage() {
+    const payload = {};
+    chavesParaSincronizar.forEach(key => {
+      const v = localStorage.getItem(key);
+      if (v !== null) {
+        payload[key] = { value: v, timestamp: lastModifiedMap[key] || Date.now() };
+      }
+    });
+    fetch('https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/salvar.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, dados: JSON.stringify(payload) })
+    }).then(() => console.log('💾 Dados sincronizados ao servidor'));
+  }
+
+  // Override de setItem para interceptar alterações
   localStorage.setItem = function (key, value) {
-    originalSetItem.apply(this, arguments);
-
+    originalSetItem(key, value);
+    if (skipSync) return;
     if (chavesParaSincronizar.includes(key)) {
+      lastModifiedMap[key] = Date.now();
+      skipSync = true;
+      originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
+      skipSync = false;
       salvarLocalStorage();
     }
   };
 
-  // 🧠 Restaura do servidor
-  fetch(`https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/pegar.php?userId=${userId}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data?.dados) {
-        const restaurados = JSON.parse(data.dados);
-        Object.keys(restaurados).forEach(key => {
-          localStorage.setItem(key, restaurados[key]);
+  // Recupera do servidor sem sobrescrever dados locais mais recentes
+  function restaurarLocalStorage() {
+    fetch(`https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/pegar.php?userId=${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data?.dados) return;
+        const serverData = JSON.parse(data.dados);
+        let updated = false;
+        Object.keys(serverData).forEach(key => {
+          if (!chavesParaSincronizar.includes(key)) return;
+          const { value, timestamp } = serverData[key];
+          const localTime = lastModifiedMap[key] || 0;
+          if (timestamp > localTime) {
+            skipSync = true;
+            originalSetItem(key, value);
+            skipSync = false;
+            lastModifiedMap[key] = timestamp;
+            updated = true;
+          }
         });
-        console.log('✅ Dados restaurados do servidor');
-      }
-    });
-
-  // 💾 Salva no servidor
-  function salvarLocalStorage() {
-    const dados = {};
-    chavesParaSincronizar.forEach(key => {
-      const valor = localStorage.getItem(key);
-      if (valor !== null) dados[key] = valor;
-    });
-
-    fetch('https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/salvar.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, dados: JSON.stringify(dados) })
-    })
-    .then(() => console.log('💾 Dados enviados ao servidor'));
+        if (updated) {
+          skipSync = true;
+          originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
+          skipSync = false;
+          console.log('✅ Dados restaurados do servidor');
+        }
+      })
+      .catch(console.error);
   }
 
-  // 🔁 Salva também ao sair
+  // Inicializa restauração
+  restaurarLocalStorage();
+
+  // Salva antes de sair e em intervalos
   window.addEventListener('beforeunload', salvarLocalStorage);
+  setInterval(salvarLocalStorage, 10000);
 
-  // 🔘 Exporta função manual
+  // Garanta restauração ao recarregar iframes
+  document.addEventListener('DOMContentLoaded', () => {
+    restaurarLocalStorage();
+    document.querySelectorAll('iframe').forEach(frm => {
+      frm.addEventListener('load', restaurarLocalStorage);
+    });
+  });
+
+  // Disponibiliza manualmente
   window.sincronizarAgora = salvarLocalStorage;
-
-    // ⏱️ Backup automático a cada 10 segundos
-    setInterval(() => {
-      salvarLocalStorage();
-    }, 10000); // 10000 ms = 10 segundos
-  
 })();
+// Fim do código
