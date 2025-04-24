@@ -121,6 +121,7 @@ function closeImportPopup() {
 }
 
 // 3. Importação em massa com seleção de onda
+// 3. Importação em massa com detecção automática de colunas
 function processarImportacao() {
   const txt = document.getElementById('importTextarea').value.trim();
   if (!txt) { showInfoPopup('Cole os dados para importação.'); return; }
@@ -128,9 +129,29 @@ function processarImportacao() {
   const linhas = txt.split('\n');
   if (linhas.length < 2) { showInfoPopup('Dados insuficientes.'); return; }
 
+  // Obter cabeçalho e separar em colunas (detecta se usa tab ou múltiplos espaços)
   const cab = linhas[0];
-  if (!cab.includes('OE') || !cab.includes('PLACA') || !cab.includes('DOCA') || !cab.includes('PESO')) {
-    showInfoPopup('Cabeçalho inválido.'); return;
+  const separador = cab.includes('\t') ? /\t/ : /\s{2,}/;
+  const colunas = cab.split(separador);
+  
+  // Procurar índices das colunas necessárias (case-insensitive)
+  const indices = {
+    oe: colunas.findIndex(col => /oe|viagem/i.test(col)),
+    placa: colunas.findIndex(col => /placa/i.test(col)),
+    doca: colunas.findIndex(col => /doca/i.test(col)),
+    peso: colunas.findIndex(col => /peso.*(prev|tot|brut|liq)/i.test(col))
+  };
+  
+  // Verificar se encontrou as colunas necessárias
+  const colunasNaoEncontradas = [];
+  if (indices.oe === -1) colunasNaoEncontradas.push("OE/VIAGEM");
+  if (indices.placa === -1) colunasNaoEncontradas.push("PLACA");
+  if (indices.doca === -1) colunasNaoEncontradas.push("DOCA");
+  if (indices.peso === -1) colunasNaoEncontradas.push("PESO");
+  
+  if (colunasNaoEncontradas.length > 0) {
+    showInfoPopup(`Colunas não encontradas: ${colunasNaoEncontradas.join(', ')}`);
+    return;
   }
 
   // Obter onda selecionada para importação
@@ -143,13 +164,29 @@ function processarImportacao() {
   for (let i = 1; i < linhas.length; i++) {
     const l = linhas[i].trim();
     if (!l) continue;
-    const cols = l.split(/\t|    +/);
-    if (cols.length < 3) { falhas++; continue; }
+    
+    // Dividir linha usando o mesmo separador do cabeçalho
+    const cols = l.split(separador);
+    if (cols.length < Math.max(indices.oe, indices.placa, indices.doca, indices.peso) + 1) { 
+      falhas++; 
+      continue; 
+    }
 
-    const oe = cols[0].trim(), placa = cols[1].trim(), doca = cols[2].trim();
-    const peso = cols[3]?.trim().replace('.', '').replace(',', '.') || '';
+    // Extrair dados usando os índices detectados
+    const oe = cols[indices.oe]?.trim() || '';
+    const placa = cols[indices.placa]?.trim() || '';
+    const doca = cols[indices.doca]?.trim() || '';
+    const peso = cols[indices.peso]?.trim().replace('.', '').replace(',', '.') || '';
+    
+    // Se algum campo obrigatório estiver vazio, pula
+    if (!oe || !placa || !doca) {
+      falhas++;
+      continue;
+    }
+    
     const v = veiculosData.find(x => x["PLACA ROTEIRIZADA"] === placa) || {};
-    const pallets = v["QTD PALLETS"] || '', destino = v["DESTINO"] || '';
+    const pallets = v["QTD PALLETS"] || '';
+    const destino = v["DESTINO"] || '';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `

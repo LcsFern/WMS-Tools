@@ -1,0 +1,170 @@
+    /* Reset básico */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    :root {
+  --primary: #008d4c;
+  --secondary: #00a65a;
+  --accent: #34c759;
+  --background: #0f172a;
+  --glass: rgba(255, 255, 255, 0.05);
+  --text: #f8fafc;
+  --text-light: #e0e0e0;
+    --text-muted: #c0c0c0;
+  }
+
+body {
+  font-family: "Segoe UI", sans-serif;
+background: linear-gradient(45deg, var(--background), #1e293b);
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  text-align: center;
+  font-size: 2.8rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-weight: bold;
+}
+
+main {
+  flex: 1;
+  max-width: 1200px; /* Aumenta a largura máxima */
+  margin: 1rem auto;
+  width: 90%;
+  padding: 1.5rem;
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+}
+
+.log-item {
+  background: rgba(30,30,30,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-left: 4px solid #00ff9c;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  transition: background 0.2s;
+}
+.log-item:hover {
+  background: rgba(30,30,30,0.8);
+}
+
+.log-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-time {
+  font-size: 0.85rem;
+  color: #bbb;
+  margin-bottom: 0.5rem;
+}
+
+.log-key {
+  font-weight: bold;
+  color: #00ff9c;
+  margin-bottom: 0.5rem;
+}
+
+.log-deleted {
+  font-size: 0.9rem;
+  color: #ff4c4c;
+  font-style: italic;
+}
+
+.restore-btn {
+  background: linear-gradient(135deg, #00ff9c, #00d783);
+  color: #111;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
+}
+.restore-btn:hover {
+  opacity: 0.8;
+}
+
+.no-log {
+  text-align: center;
+  color: #bbb;
+  padding: 2rem 0;
+  font-size: 1rem;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem 0;
+  font-size: 0.8rem;
+  color: #aaa;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(6px);
+}
+
+/* Toast notifications */
+#toast-container {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+.toast {
+  background: linear-gradient(135deg, #00ff9c, #00d783);
+  color: #111;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: translateY(1rem);
+  animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 2.7s;
+}
+
+@keyframes slideIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateY(1rem); }
+}
+/* Barra de rolagem personalizada */
+body {
+  overflow: auto; /* Barra de rolagem normal */
+}
+
+/* Personalização da barra de rolagem no WebKit (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 8px; /* Largura da barra de rolagem */
+  background-color: transparent; /* Fundo transparente */
+}
+
+/* Cor do polegar da barra de rolagem (parte que o usuário arrasta) */
+::-webkit-scrollbar-thumb {
+  background-color: #00ff9c; /* Cor verde */
+  border-radius: 10px; /* Bordas arredondadas */
+  box-shadow: 0 0 6px rgba(0, 255, 156, 0.5); /* Sombras sutis */
+}
+
+/* Cor do "track" (parte onde o polegar desliza) */
+::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.1); /* Fundo suave */
+  border-radius: 10px;
+}

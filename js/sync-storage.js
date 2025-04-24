@@ -5,7 +5,7 @@
   const chavesParaSincronizar = [
     'ondasdin', 'gradeCompleta', 'movimentacoesProcessadas',
     'ondas', 'result_state_monitor', 'checkbox_state_monitor',
-    'dashboardHTML', 'rankingArray'
+    'dashboardHTML', 'rankingArray' , 'logHistoricoMudancas'
   ];
 
   // 🔁 Override para salvar automaticamente ao alterar localStorage
