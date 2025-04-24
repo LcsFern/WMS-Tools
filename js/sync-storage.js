@@ -5,7 +5,7 @@
     const chavesParaSincronizar = ['ondasdin', 'gradeCompleta', 'movimentacoesProcessadas' , 'ondas' , 'result_state_monitor' , 'checkbox_state_monitor' , 'dashboardHTML' , 'rankingArray']; // adicione as chaves que quiser
   
     // Restaura do servidor
-    fetch(`http://labsuaideia.store/api/pegar.php?userId=${userId}`)
+    fetch(`https://labsuaideia.store/api/pegar.php?userId=${userId}`)
       .then(res => res.json())
       .then(data => {
         if (data?.dados) {
@@ -25,7 +25,7 @@
         if (valor !== null) dados[key] = valor;
       });
   
-      fetch('http://labsuaideia.store/api/salvar.php', {
+      fetch('https://labsuaideia.store/api/salvar.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, dados: JSON.stringify(dados) })
