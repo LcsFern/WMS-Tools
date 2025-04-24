@@ -34,7 +34,10 @@
 
   // Salva ao sair da página
   window.addEventListener('beforeunload', salvarLocalStorage);
-
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') salvarLocalStorage();
+  });
+  
   // Opcional: você pode exportar a função para usar manualmente
   window.sincronizarAgora = salvarLocalStorage;
 })();
