@@ -21,7 +21,7 @@
     setTimeout(() => container.removeChild(toast), 3000);
   }
 
-  function saveLogEntry(key, rawValue) {
+  function saveLogEntryAsync(key, rawValue) {
     setTimeout(() => {
       try {
         const logRaw = localStorage.getItem('logHistoricoMudancas') || '[]';
@@ -33,7 +33,6 @@
         };
         log.push(entry);
 
-        // Limita tamanho do log
         let json = JSON.stringify(log);
         let size = new Blob([json]).size;
         while (size > MAX_LOG_BYTES && log.length) {
@@ -47,19 +46,18 @@
         skipLog = false;
         updateUI();
       } catch (err) {
-        console.error('Erro ao salvar no log:', err);
+        console.error('Erro ao salvar log:', err);
       }
     }, 0);
   }
 
-  // Substitui setItem só pra capturar alterações
   localStorage.setItem = function (key, value) {
     originalSetItem(key, value);
     if (skipLog) return;
     if (trackedKeys.includes(key)) {
       let val;
       try { val = JSON.parse(value); } catch { val = value; }
-      saveLogEntry(key, val);
+      saveLogEntryAsync(key, val);
     }
   };
 
@@ -68,7 +66,7 @@
     if (trackedKeys.includes(event.key)) {
       let val;
       try { val = JSON.parse(event.newValue); } catch { val = event.newValue; }
-      saveLogEntry(event.key, val);
+      saveLogEntryAsync(event.key, val);
     }
   });
 

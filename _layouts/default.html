@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="/js/log-capture.js"></script>
   <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" href="favicon.ico" />
@@ -42,12 +43,6 @@
 
   {{ content }}
   <script src="{{ '/js/sync-storage.js' | relative_url }}"></script>
-  {% if page.url contains '/log/' %}
-  <script src="/WMS-Tools/log/script.js"></script>
-{% else %}
-  <script src="/WMS-Tools/log/script.js"></script> <!-- pode deixar mesmo assim -->
-{% endif %}
-
 
 </body>
 </html>
