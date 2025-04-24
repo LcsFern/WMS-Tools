@@ -42,7 +42,12 @@
 
   {{ content }}
   <script src="{{ '/js/sync-storage.js' | relative_url }}"></script>
-  <script src="{{ '/log/script.js' | relative_url }}"></script>
+  {% if page.url contains '/log/' %}
+  <script src="/WMS-Tools/log/script.js"></script>
+{% else %}
+  <script src="/WMS-Tools/log/script.js"></script> <!-- pode deixar mesmo assim -->
+{% endif %}
+
 
 </body>
 </html>
