@@ -269,7 +269,7 @@ async function loadGradeFromStorage() {
 
 function resetGrade() {
   askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
-    if (confirmarOndas) localStorage.removeItem("ondas");
+    if (confirmarOndas) localStorage.removeItem("ondasdin");
 
     askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
       if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
