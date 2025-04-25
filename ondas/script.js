@@ -43,7 +43,8 @@ function atualizarStorageOndas() {
       "PESO TOTAL": c[4].textContent,
       "QTD PALLETS": c[5].textContent,
       DESTINO: c[6].textContent,
-      STATUS: c[7].textContent
+      STATUS: c[7].textContent,
+      "QTDE CXS": row.dataset.qtdeCx || "0"  // Preserva o valor de caixas
     };
   });
   localStorage.setItem('ondas', JSON.stringify(dados));
@@ -140,7 +141,8 @@ function processarImportacao() {
     placa: colunas.findIndex(col => /placa/i.test(col)),
     doca: colunas.findIndex(col => /doca/i.test(col)),
     pesoPrevisto: colunas.findIndex(col => /peso\s+previsto/i.test(col)),
-    pesoLiq: colunas.findIndex(col => /peso\s+liq/i.test(col))
+    pesoLiq: colunas.findIndex(col => /peso\s+liq/i.test(col)),
+    cx: colunas.findIndex(col => /cx|caixas|qtd\s+cx|qtde\s+cx/i.test(col)) // Adiciona detecção de coluna CX
   };
   
   // Priorizar PESO PREVISTO se existir, caso contrário usar PESO LIQ.
@@ -197,6 +199,18 @@ function processarImportacao() {
       }
     }
     
+    // Extrair quantidade de caixas (CX) - NOVA FUNCIONALIDADE
+    let qtdeCx = indices.cx !== -1 ? cols[indices.cx]?.trim() || '0' : '0';
+    // Garantir que seja um número inteiro
+    if (qtdeCx) {
+      qtdeCx = qtdeCx.replace(/\./g, '').replace(',', '.');
+      if (!isNaN(parseInt(qtdeCx))) {
+        qtdeCx = parseInt(qtdeCx).toString();
+      } else {
+        qtdeCx = '0';
+      }
+    }
+    
     // Se algum campo obrigatório estiver vazio, pula
     if (!oe || !placa || !doca) {
       falhas++;
@@ -207,6 +221,7 @@ function processarImportacao() {
     const pallets = v["QTD PALLETS"] || '';
     const destino = v["DESTINO"] || '';
 
+    // Criar a linha na tabela
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="checkbox" class="linha-checkbox"></td>
@@ -219,6 +234,11 @@ function processarImportacao() {
       <td class="editable" onclick="editarCelula(this,'status')">${ondaSelecionada}</td>
       <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
     `;
+    
+    // Armazena a quantidade de caixas como atributo de dados para uso posterior
+    // Isso não afeta a UI, mas mantém o dado para uso ao salvar como grade
+    tr.dataset.qtdeCx = qtdeCx;
+    
     frag.appendChild(tr);
     sucessos++;
   }
@@ -348,7 +368,8 @@ function salvarOndas() {
       DESTINO: c[6].textContent,
       STATUS: c[7].textContent,
       DATA: hoje,
-      "QTDE CXS": "0",
+      // Usar o valor de dataset.qtdeCx se existir, senão usar "0"
+      "QTDE CXS": row.dataset.qtdeCx || "0",
       TRANSPORTADORA: "",
       "QUANT. ENTREGAS": "1"
     };
@@ -390,6 +411,10 @@ function carregarDadosNaTabela(dados) {
       <td class="editable" onclick="editarCelula(this,'status')">${item.STATUS||''}</td>
       <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
     `;
+    // Preservar o valor de QTDE CXS caso exista
+    if (item["QTDE CXS"]) {
+      tr.dataset.qtdeCx = item["QTDE CXS"];
+    }
     tbody.appendChild(tr);
   });
   ordenarTabelaPorOnda(); // Ordenar após carregar dados
