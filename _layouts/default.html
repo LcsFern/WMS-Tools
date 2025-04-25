@@ -9,7 +9,8 @@
   <link rel="manifest" href="site.webmanifest" />  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta charset="utf-8">
+  <link rel="stylesheet" href="/assets/css/main.css?v={{ site.time | date: '%s' }}">
+
   <title>{{ page.title }}</title>
   <style>
   /* Barra de rolagem personalizada */
@@ -43,5 +44,6 @@
 
   {{ content }}
   <script src="{{ '/js/sync-storage.js' | relative_url }}"></script>
+  <script src="/assets/js/main.js?v={{ site.time | date: '%s' }}"></script>
 </body>
 </html>
