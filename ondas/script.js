@@ -121,7 +121,6 @@ function closeImportPopup() {
 }
 
 // 3. Importação em massa com seleção de onda
-// 3. Importação em massa com detecção automática de colunas
 function processarImportacao() {
   const txt = document.getElementById('importTextarea').value.trim();
   if (!txt) { showInfoPopup('Cole os dados para importação.'); return; }
@@ -135,19 +134,25 @@ function processarImportacao() {
   const colunas = cab.split(separador);
   
   // Procurar índices das colunas necessárias (case-insensitive)
+  // Com prioridade para PESO PREVISTO sobre PESO LIQ.
   const indices = {
     oe: colunas.findIndex(col => /oe|viagem/i.test(col)),
     placa: colunas.findIndex(col => /placa/i.test(col)),
     doca: colunas.findIndex(col => /doca/i.test(col)),
-    peso: colunas.findIndex(col => /peso.*(prev|tot|brut|liq)/i.test(col))
+    pesoPrevisto: colunas.findIndex(col => /peso\s+previsto/i.test(col)),
+    pesoLiq: colunas.findIndex(col => /peso\s+liq/i.test(col))
   };
+  
+  // Priorizar PESO PREVISTO se existir, caso contrário usar PESO LIQ.
+  const indicePeso = indices.pesoPrevisto !== -1 ? indices.pesoPrevisto : indices.pesoLiq;
+  indices.peso = indicePeso;
   
   // Verificar se encontrou as colunas necessárias
   const colunasNaoEncontradas = [];
   if (indices.oe === -1) colunasNaoEncontradas.push("OE/VIAGEM");
   if (indices.placa === -1) colunasNaoEncontradas.push("PLACA");
   if (indices.doca === -1) colunasNaoEncontradas.push("DOCA");
-  if (indices.peso === -1) colunasNaoEncontradas.push("PESO");
+  if (indices.peso === -1) colunasNaoEncontradas.push("PESO PREVISTO ou PESO LIQ.");
   
   if (colunasNaoEncontradas.length > 0) {
     showInfoPopup(`Colunas não encontradas: ${colunasNaoEncontradas.join(', ')}`);
@@ -176,7 +181,21 @@ function processarImportacao() {
     const oe = cols[indices.oe]?.trim() || '';
     const placa = cols[indices.placa]?.trim() || '';
     const doca = cols[indices.doca]?.trim() || '';
-    const peso = cols[indices.peso]?.trim().replace('.', '').replace(',', '.') || '';
+    
+    // Tratamento do valor do peso
+    let peso = cols[indices.peso]?.trim() || '';
+    // Garantir que o peso seja um número formatado corretamente
+    if (peso) {
+      // Remove pontos de milhares e substitui vírgula por ponto para decimal
+      peso = peso.replace(/\./g, '').replace(',', '.');
+      // Se for um número válido, formata como número
+      if (!isNaN(parseFloat(peso))) {
+        peso = parseFloat(peso).toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+    }
     
     // Se algum campo obrigatório estiver vazio, pula
     if (!oe || !placa || !doca) {
@@ -339,6 +358,7 @@ function salvarOndas() {
   });
   localStorage.setItem('gradeCompleta', JSON.stringify(grade));
   localStorage.setItem('ondas', JSON.stringify(grade));
+  localStorage.removeItem('gradeCarregadaExternamente'); // Remove a flag de carregamento externo
   showInfoPopup('Ondas salvas como Grade!');
 }
 
@@ -379,12 +399,25 @@ function carregarDadosNaTabela(dados) {
 function confirmarLimparOndas() {
   showConfirmationPopup('Deseja limpar todas as ondas?', limparOndas);
 }
-function limparOndas() {
-  document.querySelectorAll('#ondasTableBody tr').forEach(r => r.remove());
-  localStorage.removeItem('ondas');
-  localStorage.removeItem('gradeCompleta');
-}
 
+function limparOndas() {
+  try {
+    // Abordagem mais robusta para remoção de linhas
+    const tbody = document.getElementById('ondasTableBody');
+    while (tbody.firstChild) {
+      tbody.removeChild(tbody.firstChild);
+    }
+    
+    // Limpar dados do localStorage em uma operação separada
+    localStorage.removeItem('ondas');
+    localStorage.removeItem('gradeCompleta');
+    
+    showInfoPopup('Todas as ondas foram removidas com sucesso.');
+  } catch (error) {
+    console.error('Erro ao limpar ondas:', error);
+    showInfoPopup('Ocorreu um erro ao limpar as ondas. Tente recarregar a página.');
+  }
+}
 // 10. Popup de confirmação
 function showConfirmationPopup(msg, fn) {
   const pop = document.getElementById('confirmPopup');
@@ -401,14 +434,20 @@ function showConfirmationPopup(msg, fn) {
 // 11. Verifica grade carregada
 function verificarGradeCarregada() {
   const g = localStorage.getItem('gradeCompleta');
+  const o = localStorage.getItem('ondas');
+  
+  // Se temos uma grade completa
   if (g && JSON.parse(g).length) {
-    const o = localStorage.getItem('ondas');
-    if (!o || o !== g) {
+    // Se não temos ondas salvas OU temos uma flag indicando que a grade foi carregada externamente
+    if (!o || localStorage.getItem('gradeCarregadaExternamente') === 'true') {
       document.getElementById('ondasSection').classList.add('hidden');
       document.getElementById('gradeAlert').classList.remove('hidden');
       return true;
     }
   }
+  
+  // Marcamos que qualquer grade carregada a partir daqui é do próprio Ondas
+  localStorage.removeItem('gradeCarregadaExternamente');
   document.getElementById('ondasSection').classList.remove('hidden');
   document.getElementById('gradeAlert').classList.add('hidden');
   return false;
@@ -472,7 +511,70 @@ function exportarPDF() {
   }, 0);
 }
 
-// 13 & 14. Status em massa e seleção geral
+// 13. Exportar CSV
+function exportarCSV() {
+  const rows = document.querySelectorAll('#ondasTableBody tr');
+  if (!rows.length) {
+    showInfoPopup('Não há dados para exportar.'); 
+    return;
+  }
+  
+  // Criar o cabeçalho CSV com separador ponto e vírgula (melhor para Excel)
+  let csvContent = "OE;PLACA;DOCA;PESO;PALLETS;OBSERVACAO;STATUS\n";
+  
+  // Adicionar cada linha da tabela
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    // Ignorar a primeira célula (checkbox) e a última (botão excluir)
+    const values = [
+      cells[1].textContent, // OE
+      cells[2].textContent, // PLACA
+      cells[3].textContent, // DOCA
+      cells[4].textContent, // PESO
+      cells[5].textContent, // PALLETS
+      cells[6].textContent, // OBSERVAÇÃO
+      cells[7].textContent  // STATUS
+    ].join(';'); // Usa ponto e vírgula como separador para compatibilidade com Excel
+    csvContent += values + "\n";
+  });
+  
+  // Adicionar BOM (Byte Order Mark) para indicar UTF-8 ao Excel
+  const BOM = '\uFEFF';
+  const csvContentWithBOM = BOM + csvContent;
+  
+  // Criar um blob com o conteúdo CSV usando codificação UTF-8
+  const blob = new Blob([csvContentWithBOM], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  // Criar um link para download e simular o clique
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Ondas_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// 14. Popup para escolher formato de exportação
+function showExportOptions() {
+  const pop = document.getElementById('confirmPopup');
+  document.getElementById('popupMessage').innerHTML = 'Escolha o formato de exportação:';
+  const actionDiv = document.querySelector('#confirmPopup .popup-actions');
+  actionDiv.innerHTML = `
+    <button onclick="exportarPDF(); closePopup();" class="btn-yes">
+      <i class="fa-solid fa-file-pdf"></i> PDF
+    </button>
+    <button onclick="exportarCSV(); closePopup();" class="btn-yes" style="background: #4a72da;">
+      <i class="fa-solid fa-file-csv"></i> CSV
+    </button>
+    <button class="btn-no" onclick="closePopup()">
+      <i class="fa-solid fa-times"></i> Cancelar
+    </button>
+  `;
+  pop.classList.add('show');
+}
+
+// 15. Alterar status em massa
 function alterarStatusEmMassa() {
   document.getElementById('alterarStatusPopup').classList.add('show');
   const sel = document.getElementById('statusEmMassaSelect');
@@ -507,12 +609,15 @@ function alterarStatusEmMassa() {
     sel.appendChild(opt);
   });
 }
+
+// 16. Aplicar alteração de status em massa
 function aplicarAlteracaoStatusEmMassa() {
   const novo = document.getElementById('statusEmMassaSelect').value;
   const chks = document.querySelectorAll('.linha-checkbox:checked');
   if (!chks.length) { showInfoPopup('Selecione ao menos um veículo.'); return; }
   chks.forEach(cb => {
-    const c = cb.closest('tr').querySelector('td:nth-child(8)'); c.textContent = novo;
+    const c = cb.closest('tr').querySelector('td:nth-child(8)'); 
+    c.textContent = novo;
     cb.checked = false;
   });
   document.getElementById('selecionarTodos').checked = false;
@@ -520,12 +625,14 @@ function aplicarAlteracaoStatusEmMassa() {
   showInfoPopup(`Status alterado para ${novo} em ${chks.length} veículo(s).`);
   debouncedAtualizarStorageOndas();
 }
+
+// 17. Selecionar todos os checkboxes
 function selecionarTodosCheckboxes() {
   const all = document.getElementById('selecionarTodos').checked;
   document.querySelectorAll('.linha-checkbox').forEach(cb => cb.checked = all);
 }
 
-// Nova função para ordenar a tabela por onda
+// 18. Função para ordenar a tabela por onda
 function ordenarTabelaPorOnda() {
   const tbody = document.getElementById('ondasTableBody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
