@@ -114,11 +114,10 @@
 
     sincronizandoAtualmente = true;
 
-    fetch('https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/salvar.php', {
+    fetch('https://tight-field-106d.tjslucasvl.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, dados: JSON.stringify(payload) }),
-      // Adiciona timeout e modo de tratamento de erros
       signal: AbortSignal.timeout(10000) // 10 segundos de timeout
     })
     .then(() => {
@@ -126,9 +125,7 @@
     })
     .catch(err => {
       console.error('❌ Erro ao sincronizar:', err);
-      // Verificamos se é um problema de rede ou servidor
       if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-        // Nao mostramos popup para erros de conexão comuns
         console.log('Possível problema de conexão ou CORS. Tentando novamente mais tarde.');
       } else {
         mostrarPopup('Falha ao sincronizar dados. Verifique sua conexão.', 'error');
@@ -148,7 +145,7 @@
 
     sincronizandoAtualmente = true;
 
-    return fetch(`https://dry-scene-2df7.tjslucasvl.workers.dev/proxy/pegar.php?userId=${userId}`, {
+    return fetch(`https://tight-field-106d.tjslucasvl.workers.dev/?userId=${userId}`, {
       signal: AbortSignal.timeout(10000) // 10 segundos de timeout
     })
       .then(res => {
@@ -159,7 +156,6 @@
       })
       .then(data => {
         if (!data?.dados) {
-          // mesmo sem dados, marcamos restauração concluída
           hasRestored = true;
           return;
         }
@@ -191,7 +187,6 @@
       })
       .catch(err => {
         console.error('❌ Erro ao restaurar:', err);
-        // Só mostramos erro no popup se não for um problema comum de conexão
         if (!(err.name === 'TypeError' && err.message.includes('Failed to fetch'))) {
           mostrarPopup('Falha ao restaurar dados do servidor', 'error');
         }
@@ -207,15 +202,13 @@
     return navigator.onLine;
   }
 
-  // Inicializa
   if (verificarConexao()) {
     restaurarLocalStorage();
   } else {
-    hasRestored = true; // marca como restaurado mesmo sem conexão
+    hasRestored = true;
     console.log('🛑 Sem conexão para sincronizar');
   }
 
-  // Registra eventos de conexão
   window.addEventListener('online', () => {
     console.log('✅ Conexão restabelecida, sincronizando...');
     restaurarLocalStorage().then(() => salvarLocalStorage());
@@ -224,15 +217,13 @@
   window.addEventListener('offline', () => {
     console.log('🛑 Conexão perdida');
   });
-  
-  // Eventos de sincronização
+
   window.addEventListener('beforeunload', () => {
     if (verificarConexao()) {
       salvarLocalStorage();
     }
   });
-  
-  // Evita sincronizações muito frequentes
+
   let syncInterval = setInterval(() => {
     if (verificarConexao() && !sincronizandoAtualmente) {
       salvarLocalStorage();
@@ -252,7 +243,6 @@
     );
   });
 
-  // Para sincronização manual
   window.sincronizarAgora = function() {
     if (verificarConexao()) {
       mostrarPopup('Sincronizando dados...', 'info');
