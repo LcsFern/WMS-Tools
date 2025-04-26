@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1B1F27, #212837);
+      color: #E0E0E0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+    }
+
+    /* Glass Effect */
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 20px 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+      flex-wrap: wrap;
+      gap: 15px;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    header h1 {
+      font-size: 28px;
+      color: #00DFA2;
+      text-align: center;
+    }
+
+    /* Cards Container */
+    .cards-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      max-width: 1200px;
+      width: 100%;
+      margin-top: 30px;
+    }
+
+    /* Card */
+    .card {
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+      height: 300px;
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(145deg, rgba(0, 223, 162, 0.2), rgba(0, 150, 136, 0.2));
+      transition: background 0.3s;
+      border-radius: 20px;
+    }
+
+    .card:hover .card-content {
+      background: linear-gradient(145deg, rgba(0, 223, 162, 0.3), rgba(0, 150, 136, 0.3));
+    }
+
+    .card-icon {
+      font-size: 60px;
+      color: #00DFA2;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FFFFFF;
+      margin-bottom: 15px;
+    }
+
+    .card-description {
+      font-size: 16px;
+      color: #CCCCCC;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      overflow: auto;
+    }
+
+    .modal-content {
+      position: relative;
+      background: linear-gradient(135deg, #1B1F27, #212837);
+      margin: 2% auto;
+      width: 95%;
+      height: 90%;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      animation: modalFadeIn 0.4s;
+    }
+
+    @keyframes modalFadeIn {
+      from {opacity: 0; transform: translateY(-50px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      color: #FFFFFF;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+      transition: color 0.3s;
+    }
+
+    .close-btn:hover {
+      color: #00DFA2;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 20px;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .cards-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .card {
+        width: 90%;
+      }
+    }
+
+    /* Barra de rolagem personalizada */
+    ::-webkit-scrollbar {
+      width: 8px;
+      background-color: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #00DFA2;
+      border-radius: 10px;
+      box-shadow: 0 0 6px rgba(0, 223, 162, 0.5);
+    }
+
+    ::-webkit-scrollbar-track {
+      background-color: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header class="glass">
+    <h1><i class="fa-solid fa-server"></i> Painel de Monitoramento de Logs</h1>
+  </header>
+
+  <div class="cards-container">
+    <!-- Card para Logs do Servidor -->
+    <div class="card glass" onclick="openModal('serverModal')">
+      <div class="card-content">
+        <i class="fa-solid fa-server card-icon"></i>
+        <h2 class="card-title">Logs do Servidor</h2>
+        <p class="card-description">Visualize os logs de sincronização do servidor</p>
+      </div>
+    </div>
+
+    <!-- Card para Logs do Usuário -->
+    <div class="card glass" onclick="openModal('userModal')">
+      <div class="card-content">
+        <i class="fa-solid fa-user-clock card-icon"></i>
+        <h2 class="card-title">Logs do Usuário</h2>
+        <p class="card-description">Visualize o histórico de alterações do usuário</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Logs do Servidor -->
+  <div id="serverModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('serverModal')">&times;</span>
+      <iframe src="./logserve/index.html" title="Logs do Servidor"></iframe>
+    </div>
+  </div>
+
+  <!-- Modal para Logs do Usuário -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('userModal')">&times;</span>
+      <iframe src="./log/index.html" title="Logs do Usuário"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Funções para abrir e fechar os modais
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = "block";
+      document.body.style.overflow = "hidden"; // Impede rolagem no fundo
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+      document.body.style.overflow = "auto"; // Restaura rolagem no fundo
+    }
+
+    // Fechar modal ao clicar fora do conteúdo
+    window.onclick = function(event) {
+      const modals = document.getElementsByClassName('modal');
+      for (let i = 0; i < modals.length; i++) {
+        if (event.target === modals[i]) {
+          modals[i].style.display = "none";
+          document.body.style.overflow = "auto";
+        }
+      }
+    }
+
+    // Fechar modal com a tecla ESC
+    document.addEventListener('keydown', function(event) {
+      if (event.key === "Escape") {
+        const modals = document.getElementsByClassName('modal');
+        for (let i = 0; i < modals.length; i++) {
+          if (modals[i].style.display === "block") {
+            modals[i].style.display = "none";
+            document.body.style.overflow = "auto";
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

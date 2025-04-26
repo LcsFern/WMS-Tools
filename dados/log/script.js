@@ -7,6 +7,15 @@
     reaba: 'Ressuprimento'
   };
 
+  const iconesChaves = {
+    ondas: 'fa-solid fa-list-tree',
+    gradeCompleta: 'fa-solid fa-table-cells',
+    movimentacoesProcessadas: 'fa-solid fa-truck-container',
+    ondasdin: 'fa-solid fa-list-check',
+    reaba: 'fa-solid fa-shelves',
+    default: 'fa-solid fa-circle-info'
+  };
+
   const trackedKeys = Object.keys(keyNames);
   const MAX_LOG_BYTES = 2 * 1024 * 1024;
   let skipLog = false;
@@ -84,17 +93,22 @@
       return;
     }
 
-    log.slice().reverse().forEach(entry => {
+    log.slice().reverse().forEach((entry, index) => {
       const item = document.createElement('div');
       item.className = 'log-item';
+      item.style.animationDelay = `${index * 0.05}s`;
 
       const details = document.createElement('div');
       details.className = 'log-details';
+      
       const displayName = keyNames[entry.key] || entry.key;
+      const icon = iconesChaves[entry.key] || iconesChaves.default;
+      
       details.innerHTML = `
         <div class="log-time">${entry.timestamp}</div>
-        <div class="log-key">Chave alterada: ${displayName}</div>
+        <div class="log-key"><i class="${icon}"></i> ${displayName}</div>
       `;
+      
       if (entry.valor === null) {
         details.innerHTML += `<div class="log-deleted">Dados apagados</div>`;
       }
