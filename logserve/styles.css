@@ -11,7 +11,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: center; /* Centraliza o conteúdo horizontalmente */
+  padding: 20px 10px;
 }
 
 /* Glass Effect */
@@ -29,9 +30,11 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 20px;
+  margin: 20px 0;
   flex-wrap: wrap;
   gap: 15px;
+  max-width: 800px; /* Limita a largura máxima */
+  width: 100%; /* Usa 100% da largura disponível até o máximo */
 }
 
 header h1 {
@@ -93,11 +96,14 @@ header h1 {
 
 /* Logs Container */
 .logs {
-  margin: 20px;
+  margin: 0 0 20px 0;
   flex-grow: 1;
   overflow-y: auto;
   max-height: 70vh;
+  max-width: 800px; /* Limita a largura máxima */
+  width: 100%; /* Usa 100% da largura disponível até o máximo */
 }
+
 
 .log-entry {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -171,6 +177,35 @@ header h1 {
 }
 
 /* Responsividade */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .header-controls {
+    flex-direction: column;
+  }
+  
+  #searchInput, #searchInput:focus {
+    width: 100%;
+  }
+  
+  .search-container {
+    width: 100%;
+  }
+  
+  #refreshButton {
+    width: 100%;
+    text-align: center;
+  }
+}
+@media (max-width: 850px) {
+  header, .logs {
+    max-width: 95%; /* Em telas menores, usa quase toda a largura */
+  }
+}
+
 @media (max-width: 768px) {
   header {
     flex-direction: column;

@@ -7,18 +7,31 @@ const username = localStorage.getItem('username')?.toLowerCase();
 
 // Nomes personalizados para as chaves
 const nomesPersonalizados = {
-  'onda1': 'Ondas Primárias',
-  'onda2': 'Ondas Secundárias',
-  'movimento1': 'Movimento Principal',
-  'resultado': 'Resultado Final',
+  'logHistoricoMudancas': 'Ultimo backup Local',
+  'checkbox_state_monitor': 'Ultimo backup checkbox carros em conferencia',
+  'result_state_monitor': 'Ultimo backup pendencias de picking',
+  'ondasdin': 'Ultimo backup picking dinâmico',
+  'ondas': 'Ultimo backup picking',
+  'gradeCompleta': 'Ultimo backup grade completa',
+  'reaba': 'Ultimo backup reabastecimento',
+  'movimentacoesProcessadas': 'Ultimo backup movimentações',
+  'dashboardHTML': 'Ultimo backup Produtividade',
+  'rankingArray': 'Ultimo backup ranking',
   // Adicione mais mapeamentos conforme necessário
 };
 
 // Ícones para categorias de logs
 const iconesChaves = {
-  'onda': 'fa-solid fa-wave-square',
-  'movimento': 'fa-solid fa-arrow-trend-up',
-  'resultado': 'fa-solid fa-chart-pie',
+  'checkbox_state_monitor': 'fa-solid fa-check-square',
+  'movimentacoesProcessadas': 'fa-solid fa-truck-container',
+  'result_state_monitor': 'fa-solid fa-check-circle',
+  'ondasdin': 'fa-solid fa-list-check',
+  'ondas': 'fa-solid fa-list-tree',
+  'gradeCompleta': 'fa-solid fa-table-cells',
+  'reaba': 'fa-solid fa-shelves',
+  'dashboardHTML': 'fas fa-chart-line',
+  'rankingArray': 'fa-solid fa-trophy',
+  'logHistoricoMudancas': 'fa-solid fa-history',
   // ícone padrão para chaves não especificadas
   'default': 'fa-solid fa-circle-info'
 };
