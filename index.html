@@ -48,9 +48,7 @@ title: "WMS Tools"
       transition: width 0.3s ease;
       position: relative;
     }
-    .sidebar:hover {
-      width: 260px;
-    }
+    .sidebar:hover { width: 260px; }
 
     .sidebar-user {
       display: flex;
@@ -74,22 +72,13 @@ title: "WMS Tools"
       border-radius: 12px;
       transition: background 0.3s, color 0.3s;
     }
-
     .sidebar-user a:hover {
       background: var(--hover);
       color: #00ff88;
     }
-
-    .sidebar-user a span {
-      display: none;
-    }
-    .sidebar:hover .sidebar-user {
-      justify-content: flex-start;
-      padding-left: 20px;
-    }
-    .sidebar:hover .sidebar-user a span {
-      display: inline;
-    }
+    .sidebar-user a span { display: none; }
+    .sidebar:hover .sidebar-user { justify-content: flex-start; padding-left: 20px; }
+    .sidebar:hover .sidebar-user a span { display: inline; }
 
     .logout-btn {
       margin-top: auto;
@@ -108,16 +97,9 @@ title: "WMS Tools"
       box-shadow: 0 2px 6px rgba(0,0,0,0.4);
       justify-content: center;
     }
-    .logout-btn span {
-      display: none;
-    }
-    .sidebar:hover .logout-btn {
-      justify-content: flex-start;
-      padding-left: 20px;
-    }
-    .sidebar:hover .logout-btn span {
-      display: inline;
-    }
+    .logout-btn span { display: none; }
+    .sidebar:hover .logout-btn { justify-content: flex-start; padding-left: 20px; }
+    .sidebar:hover .logout-btn span { display: inline; }
     .logout-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
@@ -140,27 +122,13 @@ title: "WMS Tools"
       position: relative;
       overflow: hidden;
     }
-    .sidebar:hover .nav-btn {
-      justify-content: flex-start;
-      padding-left: 20px;
-    }
-    .nav-btn span {
-      display: none;
-    }
-    .sidebar:hover .nav-btn span {
-      display: inline;
-    }
-    .nav-btn:hover {
-      background: var(--hover);
-      transform: translateY(-2px);
-    }
-    .nav-btn.active {
-      background: var(--hover);
-    }
+    .sidebar:hover .nav-btn { justify-content: flex-start; padding-left: 20px; }
+    .nav-btn span { display: none; }
+    .sidebar:hover .nav-btn span { display: inline; }
+    .nav-btn:hover { background: var(--hover); transform: translateY(-2px); }
+    .nav-btn.active { background: var(--hover); }
 
-    .dropdown-btn {
-      position: relative;
-    }
+    .dropdown-btn { position: relative; }
     .dropdown-btn::after {
       content: '\f078';
       font-family: "Font Awesome 6 Free";
@@ -171,14 +139,11 @@ title: "WMS Tools"
       transform: rotate(0deg);
       opacity: 0;
     }
-    .sidebar:hover .dropdown-btn::after {
-      opacity: 1;
-    }
+    .sidebar:hover .dropdown-btn::after { opacity: 1; }
     .dropdown-open.dropdown-btn::after {
       transform: rotate(180deg);
       animation: pulse 1.5s infinite;
     }
-
     .dropdown-content {
       max-height: 0;
       overflow: hidden;
@@ -187,9 +152,7 @@ title: "WMS Tools"
       padding-left: 10px;
       transition: max-height 0.4s ease;
     }
-    .dropdown-open + .dropdown-content {
-      max-height: 500px;
-    }
+    .dropdown-open + .dropdown-content { max-height: 500px; }
 
     @keyframes pulse {
       0% { transform: rotate(180deg) scale(1); }
@@ -208,22 +171,27 @@ title: "WMS Tools"
       border: none;
     }
 
+    /* ANIMAÇÃO DE TREMER */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+    }
+
+    .shake {
+      animation: shake 0.5s;
+    }
+
     @media(max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
+      .container { flex-direction: column; }
       .sidebar {
         flex-direction: row;
         width: 100%;
         overflow-x: auto;
       }
-      .sidebar:hover {
-        width: 100%;
-      }
-      .nav-btn {
-        flex: 1;
-        justify-content: center;
-      }
+      .sidebar:hover { width: 100%; }
+      .nav-btn { flex: 1; justify-content: center; }
     }
   </style>
 </head>
@@ -258,7 +226,6 @@ title: "WMS Tools"
         </button>
       </div>
 
-      
       <button class="nav-btn" data-page="conferente/index.html">
         <i class="fa-solid fa-truck"></i> <span>Monitor de Expedição</span>
       </button>
@@ -266,8 +233,7 @@ title: "WMS Tools"
         <i class="fa-solid fa-chart-bar"></i> <span>Porcentagem de Carros</span>
       </button>
       <button class="nav-btn" data-page="monitordepicking/pickingnew.html">
-        <i class="fas fa-tasks"></i>
-        <span class="nav-text">Pendências de Picking</span>
+        <i class="fas fa-tasks"></i> <span>Pendências de Picking</span>
       </button>
 
       <button class="nav-btn" data-page="produtividade/index.html">
@@ -294,6 +260,7 @@ title: "WMS Tools"
     const username = localStorage.getItem('username');
     const sidebarUserName = document.getElementById('sidebarUserName');
     const userLink = document.getElementById('userLink');
+
     if (!username) {
       window.location.href = 'login.html';
     } else {
@@ -320,14 +287,70 @@ title: "WMS Tools"
       });
     });
 
-    document.querySelector('.logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('username');
-      window.location.href = 'login.html';
+    const logoutButton = document.querySelector('.logout-btn');
+    logoutButton.addEventListener('click', () => {
+      const confirmBox = document.createElement('div');
+      confirmBox.style.position = 'fixed';
+      confirmBox.style.top = '0';
+      confirmBox.style.left = '0';
+      confirmBox.style.width = '100%';
+      confirmBox.style.height = '100%';
+      confirmBox.style.background = 'rgba(0, 0, 0, 0.5)';
+      confirmBox.style.display = 'flex';
+      confirmBox.style.alignItems = 'center';
+      confirmBox.style.justifyContent = 'center';
+      confirmBox.style.zIndex = '1000';
+
+      confirmBox.innerHTML = `
+        <div style="
+          background: linear-gradient(45deg, #ff6b6b, #ff5252);
+          padding: 30px;
+          border-radius: 20px;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+          text-align: center;
+          color: white;
+          max-width: 300px;
+          animation: shake 0.5s;
+        ">
+          <h2 style="margin-bottom: 20px;">Tem certeza que deseja sair?</h2>
+          <button id="confirmLogout" style="
+            background: white;
+            color: #ff5252;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+          ">Sim</button>
+          <button id="cancelLogout" style="
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+          ">Cancelar</button>
+        </div>
+      `;
+
+      document.body.appendChild(confirmBox);
+
+      document.getElementById('confirmLogout').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'login.html';
+      });
+
+      document.getElementById('cancelLogout').addEventListener('click', () => {
+        document.body.removeChild(confirmBox);
+      });
     });
 
     const dropdownBtn = document.querySelector('.dropdown-btn');
-    const dropdownContent = dropdownBtn.nextElementSibling;
-
     dropdownBtn.addEventListener('click', (e) => {
       e.preventDefault();
       dropdownBtn.classList.toggle('dropdown-open');
