@@ -1,0 +1,155 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1B1F27, #212837);
+    color: #E0E0E0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  /* Glass Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 20px 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  }
+  
+  /* Header */
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px;
+  }
+  
+  header h1 {
+    font-size: 28px;
+    color: #00DFA2;
+    text-align: center;
+  }
+  
+  /* Controls */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .search, .select {
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #E0E0E0;
+  }
+  
+  .search::placeholder {
+    color: #bbb;
+  }
+  
+  #refreshButton {
+    background: linear-gradient(135deg, #00DFA2, #009688);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  #refreshButton:hover {
+    background: linear-gradient(135deg, #00c48c, #00796b);
+  }
+  
+  /* Logs Container */
+  .logs {
+    margin: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 70vh;
+  }
+  
+  .log-entry {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px 0;
+  }
+  
+  .log-entry:last-child {
+    border-bottom: none;
+  }
+  
+  .log-key {
+    color: #00DFA2;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .log-value {
+    color: #CCCCCC;
+    margin-top: 5px;
+    font-size: 14px;
+    word-break: break-word;
+  }
+  
+  .timestamp {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+  }
+  
+  /* Placeholder */
+  .placeholder {
+    text-align: center;
+    margin-top: 50px;
+    color: #888;
+  }
+  
+  /* Footer */
+  footer {
+    text-align: center;
+    font-size: 14px;
+    margin: 20px;
+    color: #AAAAAA;
+  }
+  /* Adicione isso ao final do seu styles.css */
+
+/* Animação fade-in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Aplicando a animação nos logs */
+.log-entry {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Animação hover no botão */
+#refreshButton {
+  transition: background 0.3s, transform 0.2s;
+}
+
+#refreshButton:hover {
+  background: linear-gradient(135deg, #00c48c, #00796b);
+  transform: scale(1.05);
+}
