@@ -1,146 +1,121 @@
-// Simulação de dados para exemplo
-const logs = [
-  { chave: 'ondasdin', value: '{"data":"some-data"}', timestamp: Date.now() - 600000 },
-  { chave: 'gradeCompleta', value: '{"grade":"complete"}', timestamp: Date.now() - 500000 },
-  { chave: 'rankingArray', value: '[1,2,3]', timestamp: Date.now() - 400000 },
-  { chave: 'movimentacoesProcessadas', value: '{"moves":"123"}', timestamp: Date.now() - 300000 },
-  { chave: 'result_state_monitor', value: '{"state":"ok"}', timestamp: Date.now() - 200000 },
-  { chave: 'dashboardHTML', value: '<div>Dashboard</div>', timestamp: Date.now() - 100000 }
-];
-
-const nomesPersonalizados = {
-  ondasdin: 'Ondas Dinâmicas',
-  gradeCompleta: 'Grade Completa',
-  movimentacoesProcessadas: 'Movimentações Processadas',
-  ondas: 'Ondas',
-  result_state_monitor: 'Estado do Monitor',
-  checkbox_state_monitor: 'Checkbox Monitor',
-  dashboardHTML: 'Dashboard',
-  rankingArray: 'Ranking',
-  logHistoricoMudancas: 'Histórico de Mudanças',
-  reaba: 'Reabastecimento'
-};
-
-const categorias = {
-  ondasdin: 'ondas',
-  gradeCompleta: 'ondas',
-  movimentacoesProcessadas: 'movimentacoes',
-  ondas: 'ondas',
-  result_state_monitor: 'monitor',
-  checkbox_state_monitor: 'monitor',
-  dashboardHTML: 'dashboard',
-  rankingArray: 'dashboard',
-  logHistoricoMudancas: 'movimentacoes',
-  reaba: 'movimentacoes'
-};
-
-const icones = {
-  ondasdin: 'fa-water',
-  gradeCompleta: 'fa-layer-group',
-  movimentacoesProcessadas: 'fa-truck',
-  ondas: 'fa-wave-square',
-  result_state_monitor: 'fa-desktop',
-  checkbox_state_monitor: 'fa-check-square',
-  dashboardHTML: 'fa-chart-pie',
-  rankingArray: 'fa-trophy',
-  logHistoricoMudancas: 'fa-history',
-  reaba: 'fa-boxes'
-};
-
 const logContainer = document.getElementById('logContainer');
+const refreshButton = document.getElementById('refreshButton');
 const searchInput = document.getElementById('searchInput');
-const categorySelect = document.getElementById('categorySelect');
-const orderSelect = document.getElementById('orderSelect');
-const toggleValuesBtn = document.getElementById('toggleValuesBtn');
-const paginationDiv = document.getElementById('pagination');
 
-let mostrarValores = JSON.parse(localStorage.getItem('mostrarValores')) || false;
-let paginaAtual = 1;
-const logsPorPagina = 20;
+// Defina o username que será usado para buscar os dados
+const username = localStorage.getItem('username')?.toLowerCase();
 
-toggleValuesBtn.innerHTML = mostrarValores
-  ? '<i class="fas fa-eye-slash"></i> Esconder Valores'
-  : '<i class="fas fa-eye"></i> Mostrar Valores';
+// Nomes personalizados para as chaves
+const nomesPersonalizados = {
+  'onda1': 'Ondas Primárias',
+  'onda2': 'Ondas Secundárias',
+  'movimento1': 'Movimento Principal',
+  'resultado': 'Resultado Final',
+  // Adicione mais mapeamentos conforme necessário
+};
 
-function renderizarLogs() {
-  const filtro = searchInput.value.toLowerCase();
-  const categoriaSelecionada = categorySelect.value;
-  const ordem = orderSelect.value;
+// Ícones para categorias de logs
+const iconesChaves = {
+  'onda': 'fa-solid fa-wave-square',
+  'movimento': 'fa-solid fa-arrow-trend-up',
+  'resultado': 'fa-solid fa-chart-pie',
+  // ícone padrão para chaves não especificadas
+  'default': 'fa-solid fa-circle-info'
+};
 
-  let logsFiltrados = logs.filter(log => {
-    const chaveLower = log.chave.toLowerCase();
-    const categoriaLog = categorias[log.chave] || '';
-    return chaveLower.includes(filtro) && (categoriaSelecionada === '' || categoriaLog === categoriaSelecionada);
-  });
+async function carregarLogs() {
+  logContainer.innerHTML = '<p class="placeholder">Carregando logs...</p>';
 
-  logsFiltrados.sort((a, b) => {
-    return ordem === 'desc' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp;
-  });
+  try {
+    const response = await fetch(`https://tight-field-106d.tjslucasvl.workers.dev/?userId=${username}`, {
+      signal: AbortSignal.timeout(10000)
+    });
 
-  const inicio = (paginaAtual - 1) * logsPorPagina;
-  const fim = inicio + logsPorPagina;
-  const logsPagina = logsFiltrados.slice(inicio, fim);
+    if (!response.ok) throw new Error(`Erro ${response.status}`);
 
-  logContainer.innerHTML = '';
+    const data = await response.json();
+    const registros = JSON.parse(data.dados || '{}');
 
-  if (logsPagina.length === 0) {
-    logContainer.innerHTML = '<p class="placeholder">Nenhum log encontrado.</p>';
-    paginationDiv.innerHTML = '';
-    return;
+    logContainer.innerHTML = '';
+
+    const chaves = Object.keys(registros);
+
+    if (chaves.length === 0) {
+      logContainer.innerHTML = '<p class="placeholder">Nenhum dado encontrado.</p>';
+      return;
+    }
+
+    // Ordenar por timestamp (mais recente primeiro)
+    chaves.sort((a, b) => {
+      return new Date(registros[b].timestamp) - new Date(registros[a].timestamp);
+    });
+
+    chaves.forEach((key, index) => {
+      const entry = registros[key];
+      
+      // Determinar nome personalizado
+      const nomeExibido = nomesPersonalizados[key] || key;
+      
+      // Determinar ícone adequado
+      let icone = iconesChaves.default;
+      for (const categoria in iconesChaves) {
+        if (key.includes(categoria)) {
+          icone = iconesChaves[categoria];
+          break;
+        }
+      }
+      
+      const logDiv = document.createElement('div');
+      logDiv.className = 'log-entry';
+      // Adicionar delay para animação escalonada
+      logDiv.style.animationDelay = `${index * 0.05}s`;
+      
+      logDiv.innerHTML = `
+        <div class="log-header">
+          <i class="log-icon ${icone}"></i>
+          <div class="log-key">${nomeExibido}</div>
+          <div class="timestamp">${new Date(entry.timestamp).toLocaleString('pt-BR')}</div>
+        </div>
+        <div class="log-value">${entry.value}</div>
+      `;
+      
+      // Adicionar evento de clique para mostrar/ocultar o valor
+      logDiv.addEventListener('click', () => {
+        const valorElement = logDiv.querySelector('.log-value');
+        valorElement.classList.toggle('visible');
+      });
+      
+      logContainer.appendChild(logDiv);
+    });
+
+  } catch (error) {
+    console.error('Erro ao carregar logs:', error);
+    logContainer.innerHTML = '<p class="placeholder">Erro ao carregar dados. Tente novamente.</p>';
   }
-
-  logsPagina.forEach(log => {
-    const logDiv = document.createElement('div');
-    logDiv.className = 'log-entry' + (mostrarValores ? ' show' : '');
-
-    const nomeExibicao = nomesPersonalizados[log.chave] || log.chave;
-    const iconeClasse = icones[log.chave] || 'fa-database';
-
-    logDiv.innerHTML = `
-      <div class="log-header">
-        <i class="fas ${iconeClasse}"></i>
-        <span>${nomeExibicao}</span>
-      </div>
-      <div class="timestamp">${new Date(log.timestamp).toLocaleString('pt-BR')}</div>
-      <div class="log-value">${log.value}</div>
-    `;
-    logContainer.appendChild(logDiv);
-  });
-
-  renderizarPaginacao(logsFiltrados.length);
 }
 
-function renderizarPaginacao(totalLogs) {
-  const totalPaginas = Math.ceil(totalLogs / logsPorPagina);
-  paginationDiv.innerHTML = '';
-
-  if (totalPaginas <= 1) return;
-
-  for (let i = 1; i <= totalPaginas; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = i;
-    btn.className = i === paginaAtual ? 'active' : '';
-    btn.onclick = () => {
-      paginaAtual = i;
-      renderizarLogs();
-    };
-    paginationDiv.appendChild(btn);
-  }
+// Função para filtrar logs
+function filtrarLogs() {
+  const termo = searchInput.value.toLowerCase();
+  const entradas = document.querySelectorAll('.log-entry');
+  
+  entradas.forEach(entrada => {
+    const chave = entrada.querySelector('.log-key').textContent.toLowerCase();
+    const valor = entrada.querySelector('.log-value').textContent.toLowerCase();
+    
+    if (chave.includes(termo) || valor.includes(termo)) {
+      entrada.style.display = 'flex';
+    } else {
+      entrada.style.display = 'none';
+    }
+  });
 }
 
-// Eventos
-searchInput.addEventListener('input', () => { paginaAtual = 1; renderizarLogs(); });
-categorySelect.addEventListener('change', () => { paginaAtual = 1; renderizarLogs(); });
-orderSelect.addEventListener('change', () => { paginaAtual = 1; renderizarLogs(); });
+// Atualizar manualmente
+refreshButton.addEventListener('click', carregarLogs);
 
-toggleValuesBtn.addEventListener('click', () => {
-  mostrarValores = !mostrarValores;
-  localStorage.setItem('mostrarValores', JSON.stringify(mostrarValores));
-  toggleValuesBtn.innerHTML = mostrarValores
-    ? '<i class="fas fa-eye-slash"></i> Esconder Valores'
-    : '<i class="fas fa-eye"></i> Mostrar Valores';
-  renderizarLogs();
-});
+// Pesquisar conforme digita
+searchInput.addEventListener('input', filtrarLogs);
 
-// Primeira renderização
-renderizarLogs();
+// Carregar ao abrir
+document.addEventListener('DOMContentLoaded', carregarLogs);
