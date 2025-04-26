@@ -11,7 +11,7 @@ const nomesPersonalizados = {
   'checkbox_state_monitor': 'Ultima Sincronização checkbox carros em conferencia',
   'result_state_monitor': 'Ultima Sincronização pendencias de picking',
   'ondasdin': 'Ultima Sincronização picking dinâmico',
-  'ondas': 'Ultima Sincronização picking',
+  'ondas': 'Ultima Sincronização Ondas da GRADE',
   'gradeCompleta': 'Ultima Sincronização grade completa',
   'reaba': 'Ultima Sincronização reabastecimento',
   'movimentacoesProcessadas': 'Ultima Sincronização movimentações',

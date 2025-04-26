@@ -105,7 +105,7 @@
     originalSetItem(key, value);
     if (skipSync) return;
     if (chavesParaSincronizar.includes(key)) {
-      if (oldValue !== value) { // Só se realmente mudou
+      if (oldValue !== value) {
         lastModifiedMap[key] = Date.now();
         skipSync = true;
         originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
@@ -128,12 +128,11 @@
   function salvarLocalStorage() {
     if (!hasRestored) {
       console.log('🛑 Aguardando restauração completa antes de sincronizar');
-      return;
+      return Promise.resolve();
     }
-
     if (sincronizandoAtualmente) {
       console.log('🛑 Sincronização já em andamento');
-      return;
+      return Promise.resolve();
     }
 
     const payload = {};
@@ -147,25 +146,34 @@
     if (Object.keys(payload).length === 0) {
       console.log('🛑 Nenhum dado para sincronizar');
       precisaSincronizar = false;
-      return;
+      return Promise.resolve();
     }
 
     sincronizandoAtualmente = true;
     precisaSincronizar = false;
 
-    fetch('https://tight-field-106d.tjslucasvl.workers.dev/', {
+    // AbortController manual para timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    // Retorna a promise do fetch para quem chamar poder encadear
+    return fetch('https://tight-field-106d.tjslucasvl.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, dados: JSON.stringify(payload) }),
-      signal: AbortSignal.timeout(10000)
+      signal: controller.signal
     })
-    .then(() => {
+    .then(res => {
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       console.log('💾 Dados sincronizados ao servidor');
     })
     .catch(err => {
       console.error('❌ Erro ao sincronizar:', err);
       mostrarPopup('Falha ao sincronizar dados. Verifique sua conexão.', 'error');
-      precisaSincronizar = true; // Tenta novamente na próxima vez
+      // marca para tentar de novo depois
+      precisaSincronizar = true;
+      throw err;
     })
     .finally(() => {
       sincronizandoAtualmente = false;
@@ -179,55 +187,59 @@
     }
 
     sincronizandoAtualmente = true;
-    mostrarLoading();  // Mostra o overlay enquanto restaura os dados
+    mostrarLoading();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     return fetch(`https://tight-field-106d.tjslucasvl.workers.dev/?userId=${userId}`, {
-      signal: AbortSignal.timeout(10000)
+      signal: controller.signal
     })
-      .then(res => {
-        if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        if (!data?.dados) {
-          hasRestored = true;
-          return;
-        }
-        const serverData = JSON.parse(data.dados);
-        let updated = false;
-        let dadosAtualizados = 0;
-
-        Object.keys(serverData).forEach(key => {
-          if (!chavesParaSincronizar.includes(key)) return;
-          const { value, timestamp } = serverData[key];
-          const localTime = lastModifiedMap[key] || 0;
-          if (timestamp > localTime) {
-            skipSync = true;
-            originalSetItem(key, value);
-            skipSync = false;
-            lastModifiedMap[key] = timestamp;
-            updated = true;
-            dadosAtualizados++;
-          }
-        });
-
-        if (updated) {
-          skipSync = true;
-          originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
-          skipSync = false;
-          console.log(`✅ ${dadosAtualizados} dados restaurados do servidor`);
-          mostrarPopup(`${dadosAtualizados} itens restaurados do servidor`, 'success');
-        }
-      })
-      .catch(err => {
-        console.error('❌ Erro ao restaurar:', err);
-        mostrarPopup('Falha ao restaurar dados do servidor', 'error');
-      })
-      .finally(() => {
+    .then(res => {
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      if (!data?.dados) {
         hasRestored = true;
-        sincronizandoAtualmente = false;
-        esconderLoading();  // Esconde o overlay quando restaurar é concluído
+        return;
+      }
+      const serverData = JSON.parse(data.dados);
+      let updated = false;
+      let dadosAtualizados = 0;
+
+      Object.keys(serverData).forEach(key => {
+        if (!chavesParaSincronizar.includes(key)) return;
+        const { value, timestamp } = serverData[key];
+        const localTime = lastModifiedMap[key] || 0;
+        if (timestamp > localTime) {
+          skipSync = true;
+          originalSetItem(key, value);
+          skipSync = false;
+          lastModifiedMap[key] = timestamp;
+          updated = true;
+          dadosAtualizados++;
+        }
       });
+
+      if (updated) {
+        skipSync = true;
+        originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
+        skipSync = false;
+        console.log(`✅ ${dadosAtualizados} dados restaurados do servidor`);
+        mostrarPopup(`${dadosAtualizados} itens restaurados do servidor`, 'success');
+      }
+    })
+    .catch(err => {
+      console.error('❌ Erro ao restaurar:', err);
+      mostrarPopup('Falha ao restaurar dados do servidor', 'error');
+    })
+    .finally(() => {
+      hasRestored = true;
+      sincronizandoAtualmente = false;
+      esconderLoading();
+    });
   }
 
   function verificarConexao() {
@@ -243,7 +255,9 @@
 
   window.addEventListener('online', () => {
     console.log('✅ Conexão restabelecida, sincronizando...');
-    restaurarLocalStorage().then(() => salvarLocalStorage());
+    restaurarLocalStorage()
+      .then(() => salvarLocalStorage())
+      .catch(() => {});
   });
 
   window.addEventListener('offline', () => {
@@ -276,6 +290,9 @@
         .then(() => salvarLocalStorage())
         .then(() => {
           mostrarPopup('Sincronização concluída', 'success');
+        })
+        .catch(() => {
+          /* já tratado em salvar/restaurar */
         });
     } else {
       mostrarPopup('Sem conexão com a internet', 'error');
