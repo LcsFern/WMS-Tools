@@ -271,8 +271,13 @@ function resetGrade() {
   askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
     if (confirmarOndas) localStorage.removeItem("ondasdin");
 
-    askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
-      if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
+    askConfirmation("Deseja apagar os Ressuprimentos?", function (confirmarRessu) {
+      if (confirmarRessu) localStorage.removeItem("reaba");
+
+      askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
+        if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
+
+});
 
       // Zera os demais dados
       localStorage.removeItem("activeSeparatorsSaved");
