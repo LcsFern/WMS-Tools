@@ -1,25 +1,55 @@
 (function () {
   const userId = localStorage.getItem('username')?.toLowerCase();
-  if (!userId) return;
+  const username = localStorage.getItem('username');
+  const expiry = localStorage.getItem('expiry');
+  const LAST_MODIFIED_KEY = 'syncLastModified';
+  const DEBOUNCE_DELAY = 5000; // 5 segundos após última alteração
 
   const chavesParaSincronizar = [
     'ondasdin', 'gradeCompleta', 'movimentacoesProcessadas',
     'ondas', 'result_state_monitor', 'checkbox_state_monitor',
     'dashboardHTML', 'rankingArray', 'logHistoricoMudancas',
   ];
-  const LAST_MODIFIED_KEY = 'syncLastModified';
 
   let hasRestored = false;
   let skipSync = false;
   let sincronizandoAtualmente = false;
   let lastModifiedMap = {};
+  let precisaSincronizar = false;
+  let debounceTimer = null;
+
   try {
     lastModifiedMap = JSON.parse(localStorage.getItem(LAST_MODIFIED_KEY)) || {};
   } catch { /* ignora JSON inválido */ }
 
-  // Função para criar e mostrar popup
+  function mostrarLoading() {
+    const loading = document.createElement('div');
+    loading.id = 'loading-overlay';
+    loading.style.position = 'fixed';
+    loading.style.top = '0';
+    loading.style.left = '0';
+    loading.style.width = '100%';
+    loading.style.height = '100%';
+    loading.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    loading.style.display = 'flex';
+    loading.style.alignItems = 'center';
+    loading.style.justifyContent = 'center';
+    loading.style.fontFamily = 'Arial, sans-serif';
+    loading.style.fontSize = '24px';
+    loading.style.color = 'white';
+    loading.style.zIndex = '9999';
+    loading.innerHTML = '<div>Restaurando dados...</div>';
+    document.body.appendChild(loading);
+  }
+
+  function esconderLoading() {
+    const loading = document.getElementById('loading-overlay');
+    if (loading) {
+      loading.remove();
+    }
+  }
+
   function mostrarPopup(mensagem, tipo = 'success') {
-    // Cria o elemento de popup se não existir
     let popup = document.getElementById('sync-notification-popup');
     if (!popup) {
       popup = document.createElement('div');
@@ -39,7 +69,6 @@
       document.body.appendChild(popup);
     }
 
-    // Configura o estilo baseado no tipo
     if (tipo === 'success') {
       popup.style.backgroundColor = '#4CAF50';
       popup.style.color = 'white';
@@ -52,42 +81,50 @@
     }
 
     popup.textContent = mensagem;
-    
-    // Mostra o popup com animação
+
     setTimeout(() => {
       popup.style.transform = 'translateY(0)';
       popup.style.opacity = '1';
     }, 10);
 
-    // Remove o popup após 3 segundos
     setTimeout(() => {
       popup.style.transform = 'translateY(100px)';
       popup.style.opacity = '0';
-      
       setTimeout(() => {
         if (popup && popup.parentNode) {
           popup.parentNode.removeChild(popup);
         }
-      }, 300); // Espera a animação terminar
+      }, 300);
     }, 3000);
   }
 
   const originalSetItem = localStorage.setItem.bind(localStorage);
 
-  // Intercepta setItem para marcar timestamp e disparar sync
   localStorage.setItem = function (key, value) {
+    const oldValue = localStorage.getItem(key);
     originalSetItem(key, value);
     if (skipSync) return;
     if (chavesParaSincronizar.includes(key)) {
-      lastModifiedMap[key] = Date.now();
-      skipSync = true;
-      originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
-      skipSync = false;
-      salvarLocalStorage();
+      if (oldValue !== value) { // Só se realmente mudou
+        lastModifiedMap[key] = Date.now();
+        skipSync = true;
+        originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
+        skipSync = false;
+        marcarParaSincronizar();
+      }
     }
   };
 
-  // Envia ao servidor somente após restauração e se houver algo para enviar
+  function marcarParaSincronizar() {
+    precisaSincronizar = true;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (precisaSincronizar) {
+        salvarLocalStorage();
+      }
+    }, DEBOUNCE_DELAY);
+  }
+
   function salvarLocalStorage() {
     if (!hasRestored) {
       console.log('🛑 Aguardando restauração completa antes de sincronizar');
@@ -109,34 +146,32 @@
 
     if (Object.keys(payload).length === 0) {
       console.log('🛑 Nenhum dado para sincronizar');
+      precisaSincronizar = false;
       return;
     }
 
     sincronizandoAtualmente = true;
+    precisaSincronizar = false;
 
     fetch('https://tight-field-106d.tjslucasvl.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, dados: JSON.stringify(payload) }),
-      signal: AbortSignal.timeout(10000) // 10 segundos de timeout
+      signal: AbortSignal.timeout(10000)
     })
     .then(() => {
       console.log('💾 Dados sincronizados ao servidor');
     })
     .catch(err => {
       console.error('❌ Erro ao sincronizar:', err);
-      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-        console.log('Possível problema de conexão ou CORS. Tentando novamente mais tarde.');
-      } else {
-        mostrarPopup('Falha ao sincronizar dados. Verifique sua conexão.', 'error');
-      }
+      mostrarPopup('Falha ao sincronizar dados. Verifique sua conexão.', 'error');
+      precisaSincronizar = true; // Tenta novamente na próxima vez
     })
     .finally(() => {
       sincronizandoAtualmente = false;
     });
   }
 
-  // Recupera do servidor e atualiza localStorage se o servidor estiver mais novo
   function restaurarLocalStorage() {
     if (sincronizandoAtualmente) {
       console.log('🛑 Operação de sincronização já em andamento');
@@ -144,14 +179,13 @@
     }
 
     sincronizandoAtualmente = true;
+    mostrarLoading();  // Mostra o overlay enquanto restaura os dados
 
     return fetch(`https://tight-field-106d.tjslucasvl.workers.dev/?userId=${userId}`, {
-      signal: AbortSignal.timeout(10000) // 10 segundos de timeout
+      signal: AbortSignal.timeout(10000)
     })
       .then(res => {
-        if (!res.ok) {
-          throw new Error(`Erro HTTP: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
         return res.json();
       })
       .then(data => {
@@ -187,17 +221,15 @@
       })
       .catch(err => {
         console.error('❌ Erro ao restaurar:', err);
-        if (!(err.name === 'TypeError' && err.message.includes('Failed to fetch'))) {
-          mostrarPopup('Falha ao restaurar dados do servidor', 'error');
-        }
+        mostrarPopup('Falha ao restaurar dados do servidor', 'error');
       })
       .finally(() => {
         hasRestored = true;
         sincronizandoAtualmente = false;
+        esconderLoading();  // Esconde o overlay quando restaurar é concluído
       });
   }
 
-  // Verifica conexão antes de iniciar sincronização
   function verificarConexao() {
     return navigator.onLine;
   }
@@ -219,16 +251,10 @@
   });
 
   window.addEventListener('beforeunload', () => {
-    if (verificarConexao()) {
+    if (verificarConexao() && precisaSincronizar) {
       salvarLocalStorage();
     }
   });
-
-  let syncInterval = setInterval(() => {
-    if (verificarConexao() && !sincronizandoAtualmente) {
-      salvarLocalStorage();
-    }
-  }, 10000);
 
   document.addEventListener('DOMContentLoaded', () => {
     if (verificarConexao()) {
