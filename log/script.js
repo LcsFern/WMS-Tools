@@ -4,6 +4,7 @@
     gradeCompleta: 'GRADE',
     movimentacoesProcessadas: 'Movimentações',
     ondasdin: 'Picking Dinâmico',
+    reaba: 'Ressuprimento'
   };
 
   const trackedKeys = Object.keys(keyNames);

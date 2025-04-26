@@ -1,5 +1,5 @@
 (function () {
-    const trackedKeys = ['ondas', 'gradeCompleta', 'movimentacoesProcessadas', 'ondasdin'];
+    const trackedKeys = ['ondas', 'gradeCompleta', 'movimentacoesProcessadas', 'ondasdin' , 'reaba'];
     const MAX_LOG_BYTES = 2 * 1024 * 1024;
     let skipLog = false;
     const originalSetItem = localStorage.setItem.bind(localStorage);

@@ -8,7 +8,7 @@
   const chavesParaSincronizar = [
     'ondasdin', 'gradeCompleta', 'movimentacoesProcessadas',
     'ondas', 'result_state_monitor', 'checkbox_state_monitor',
-    'dashboardHTML', 'rankingArray', 'logHistoricoMudancas',
+    'dashboardHTML', 'rankingArray', 'logHistoricoMudancas', 'reaba',
   ];
 
   let hasRestored = false;
