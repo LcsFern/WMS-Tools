@@ -7,16 +7,16 @@ const username = localStorage.getItem('username')?.toLowerCase();
 
 // Nomes personalizados para as chaves
 const nomesPersonalizados = {
-  'logHistoricoMudancas': 'Ultimo backup Local',
-  'checkbox_state_monitor': 'Ultimo backup checkbox carros em conferencia',
-  'result_state_monitor': 'Ultimo backup pendencias de picking',
-  'ondasdin': 'Ultimo backup picking dinâmico',
-  'ondas': 'Ultimo backup picking',
-  'gradeCompleta': 'Ultimo backup grade completa',
-  'reaba': 'Ultimo backup reabastecimento',
-  'movimentacoesProcessadas': 'Ultimo backup movimentações',
-  'dashboardHTML': 'Ultimo backup Produtividade',
-  'rankingArray': 'Ultimo backup ranking',
+  'logHistoricoMudancas': 'Ultima Sincronização de Logs de Alterações',
+  'checkbox_state_monitor': 'Ultima Sincronização checkbox carros em conferencia',
+  'result_state_monitor': 'Ultima Sincronização pendencias de picking',
+  'ondasdin': 'Ultima Sincronização picking dinâmico',
+  'ondas': 'Ultima Sincronização picking',
+  'gradeCompleta': 'Ultima Sincronização grade completa',
+  'reaba': 'Ultima Sincronização reabastecimento',
+  'movimentacoesProcessadas': 'Ultima Sincronização movimentações',
+  'dashboardHTML': 'Ultima Sincronização Produtividade',
+  'rankingArray': 'Ultima Sincronização ranking',
   // Adicione mais mapeamentos conforme necessário
 };
 
