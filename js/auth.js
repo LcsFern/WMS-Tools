@@ -1,75 +1,78 @@
-// js/auth.js
+// auth.js
 
-(function() {
-  // Caminho da página de login
-  const LOGIN_PAGE = '/WMS-Tools/login.html';
+// Tempo de expiração padrão da sessão (2 horas)
+const TEMPO_EXPIRACAO_MS = 2 * 60 * 60 * 1000;
 
-  // Função de redirecionamento segura
-  function redirectToLogin() {
-    try {
-      if (window.top !== window.self) {
-        window.top.location.href = LOGIN_PAGE;
-      } else {
-        window.location.href = LOGIN_PAGE;
-      }
-    } catch (e) {
-      window.location.href = LOGIN_PAGE;
-    }
+// Variável de controle para saber se há dados para sincronizar
+let precisaSincronizar = false;
+
+// Função para logar o usuário
+function login(username) {
+  const expiry = Date.now() + TEMPO_EXPIRACAO_MS;
+  localStorage.setItem('username', username);
+  localStorage.setItem('expiry', expiry.toString());
+}
+
+// Função para verificar se o usuário está logado
+function verificarLogin() {
+  const username = localStorage.getItem('username');
+  const expiry = parseInt(localStorage.getItem('expiry'), 10);
+
+  if (!username || !expiry || Date.now() > expiry) {
+    redirectToLogin();
   }
+}
 
-  // Função de logout
-  function logout(clearAll = false) {
+// Função para redirecionar para a página de login
+function redirectToLogin() {
+  window.location.href = '/login.html'; // Altere conforme seu sistema
+}
+
+// Função para logout do usuário
+function logout(clearAll = false) {
+  async function fazerLogout() {
     if (clearAll) {
-      // Limpa todo o localStorage do site
       localStorage.clear();
     } else {
-      // Apenas remove dados de login
       localStorage.removeItem('username');
       localStorage.removeItem('expiry');
     }
     redirectToLogin();
   }
 
-  // Função principal de autenticação
-  function authenticateUser() {
-    // Se já estamos na página de login, não faz nada
-    if (window.location.pathname.includes(LOGIN_PAGE)) return;
+  if (navigator.onLine && typeof salvarLocalStorage === 'function' && precisaSincronizar) {
+    salvarLocalStorage();
+    setTimeout(fazerLogout, 1500); // Espera 1,5s para garantir o salvamento
+  } else {
+    fazerLogout();
+  }
+}
 
+// Função para renovar a sessão com base em atividade do usuário
+(function monitorarAtividade() {
+  let ultimoEvento = Date.now();
+
+  function renovarSessao() {
     const username = localStorage.getItem('username');
-    const expiry = localStorage.getItem('expiry');
-
-    if (!username || !expiry) {
-      return logout();
-    }
-
-    const expiryTime = parseInt(expiry, 10);
-
-    if (isNaN(expiryTime) || Date.now() > expiryTime) {
-      return logout();
-    }
-
-    // Confirma que o objeto 'users' foi carregado
-    if (typeof users !== 'object' || !users) {
-      console.error('Erro: Banco de usuários não carregado.');
-      return logout();
-    }
-
-    const userIsValid = Object.values(users).includes(username);
-
-    if (!userIsValid) {
-      return logout();
-    }
-
-    // Se chegou aqui, o login é válido, exibe o nome do usuário
-    const userSpan = document.getElementById('userNameDisplay');
-    if (userSpan) {
-      userSpan.textContent = username;
+    if (username) {
+      const novoExpiry = Date.now() + TEMPO_EXPIRACAO_MS;
+      localStorage.setItem('expiry', novoExpiry.toString());
+      console.log('🕒 Sessão renovada até:', new Date(novoExpiry).toLocaleTimeString());
     }
   }
 
-  // Aguarda o carregamento completo do DOM
-  document.addEventListener('DOMContentLoaded', authenticateUser);
+  function registrarAtividade() {
+    const agora = Date.now();
+    if (agora - ultimoEvento > 60000) { // Renova se ficou mais de 1 min sem renovar
+      renovarSessao();
+    }
+    ultimoEvento = agora;
+  }
 
-  // Torna as funções disponíveis globalmente se precisar chamar manualmente
-  window.logout = logout;
+  ['click', 'keydown', 'scroll', 'mousemove'].forEach(evt => {
+    document.addEventListener(evt, registrarAtividade, { passive: true });
+  });
 })();
+
+// Sempre checar login ao carregar a página
+document.addEventListener('DOMContentLoaded', verificarLogin);
