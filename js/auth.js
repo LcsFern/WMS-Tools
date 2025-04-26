@@ -25,7 +25,7 @@ function verificarLogin() {
 
 // Função para redirecionar para a página de login
 function redirectToLogin() {
-  window.top.location.href = 'login.html'; // Altere conforme seu sistema
+  window.top.location.href = 'WMS-tools/login.html'; // Altere conforme seu sistema
 }
 
 // Função para logout do usuário
