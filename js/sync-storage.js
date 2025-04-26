@@ -143,20 +143,21 @@
       }
     });
 
-    if (Object.keys(payload).length === 0) {
+    if (!Object.keys(payload).length) {
       console.log('🛑 Nenhum dado para sincronizar');
       precisaSincronizar = false;
       return Promise.resolve();
     }
 
+    console.log('➡️ [DEBUG] userId:', userId);
+    console.log('➡️ [DEBUG] payload:', payload);
+
     sincronizandoAtualmente = true;
     precisaSincronizar = false;
 
-    // AbortController manual para timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    // Retorna a promise do fetch para quem chamar poder encadear
     return fetch('https://tight-field-106d.tjslucasvl.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -165,13 +166,18 @@
     })
     .then(res => {
       clearTimeout(timeoutId);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      console.log('💾 Dados sincronizados ao servidor');
+      console.log(`📬 [DEBUG] resposta HTTP: ${res.status} ${res.statusText}`);
+      return res.text().then(text => {
+        console.log('📋 [DEBUG] body:', text);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      });
+    })
+    .then(() => {
+      console.log('✅ Dados sincronizados com sucesso (recebido 2xx)');
     })
     .catch(err => {
-      console.error('❌ Erro ao sincronizar:', err);
-      mostrarPopup('Falha ao sincronizar dados. Verifique sua conexão.', 'error');
-      // marca para tentar de novo depois
+      console.error('❌ Erro na sincronização:', err);
+      mostrarPopup('Falha ao sincronizar dados. Veja console para detalhes.', 'error');
       precisaSincronizar = true;
       throw err;
     })
@@ -255,9 +261,7 @@
 
   window.addEventListener('online', () => {
     console.log('✅ Conexão restabelecida, sincronizando...');
-    restaurarLocalStorage()
-      .then(() => salvarLocalStorage())
-      .catch(() => {});
+    restaurarLocalStorage().then(() => salvarLocalStorage());
   });
 
   window.addEventListener('offline', () => {
@@ -292,7 +296,7 @@
           mostrarPopup('Sincronização concluída', 'success');
         })
         .catch(() => {
-          /* já tratado em salvar/restaurar */
+          mostrarPopup('Erro durante a sincronização', 'error');
         });
     } else {
       mostrarPopup('Sem conexão com a internet', 'error');
