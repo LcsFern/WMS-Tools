@@ -1,135 +1,224 @@
-const ENDPOINT = "https://tight-field-106d.tjslucasvl.workers.dev/";
-const USER_ID = "lucas"; // seu userId fixo
-const TEMPO_SINCRONIZACAO_MS = 30000; // tempo para auto-sincronizar (30 segundos)
-let sincronizacaoAgendada = null;
-let sincronizandoAgora = false;
+(function () {
+  const SERVER_PHP = 'http://wmstools.ct.ws/api/save.php'; // <- Atualize com sua URL real
+  const SERVER_LOAD_PHP = 'http://wmstools.ct.ws/api/load.php'; // <- Atualize com sua URL real
+  const WORKER_URL = 'https://tight-field-106d.tjslucasvl.workers.dev/'; // Fallback
 
-// Função para mostrar notificação na tela
-function mostrarNotificacao(mensagem, tipo = "info") {
-  const cor = tipo === "erro" ? "#ff5555" : (tipo === "sucesso" ? "#50fa7b" : "#8be9fd");
+  const userId = localStorage.getItem('username')?.toLowerCase();
+  const LAST_MODIFIED_KEY = 'syncLastModified';
+  const DEBOUNCE_DELAY = 5000;
   
-  const div = document.createElement("div");
-  div.textContent = mensagem;
-  div.style.position = "fixed";
-  div.style.bottom = "20px";
-  div.style.right = "20px";
-  div.style.backgroundColor = cor;
-  div.style.color = "#282a36";
-  div.style.padding = "10px 20px";
-  div.style.borderRadius = "10px";
-  div.style.boxShadow = "0 0 10px rgba(0,0,0,0.3)";
-  div.style.zIndex = 10000;
-  div.style.fontSize = "14px";
-  div.style.fontFamily = "sans-serif";
-  div.style.transition = "opacity 0.5s ease";
-  div.style.opacity = "1";
+  const keysToSync = [
+    'ondasdin', 'gradeCompleta', 'movimentacoesProcessadas',
+    'ondas', 'result_state_monitor', 'checkbox_state_monitor',
+    'dashboardHTML', 'rankingArray', 'logHistoricoMudancas', 'reaba',
+  ];
+  
+  let hasRestored = false;
+  let syncingNow = false;
+  let skipSync = false;
+  let needSync = false;
+  let debounceTimer = null;
+  let lastModified = {};
 
-  document.body.appendChild(div);
-
-  setTimeout(() => {
-    div.style.opacity = "0";
-    setTimeout(() => div.remove(), 500);
-  }, 3000);
-}
-
-// Função para verificar se o servidor está online
-async function verificarServidor() {
   try {
-    const response = await fetch(`${ENDPOINT}?userId=${USER_ID}`, { method: "GET" });
-    if (!response.ok) {
-      throw new Error(`Servidor respondeu com status ${response.status}`);
+    lastModified = JSON.parse(localStorage.getItem(LAST_MODIFIED_KEY)) || {};
+  } catch { }
+
+  function showToast(msg, type = 'info') {
+    let toast = document.createElement('div');
+    toast.className = `toast-${type}`;
+    toast.style = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#F44336' : '#2196F3'};
+      color: white;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.3s ease;
+      z-index: 10000;
+    `;
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(30px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  const originalSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function (key, value) {
+    const oldValue = localStorage.getItem(key);
+    originalSetItem(key, value);
+    if (skipSync) return;
+    if (keysToSync.includes(key) && oldValue !== value) {
+      lastModified[key] = Date.now();
+      skipSync = true;
+      originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModified));
+      skipSync = false;
+      markForSync();
     }
-    console.log("🛰️ Servidor online");
-    return true;
-  } catch (error) {
-    console.error("🛑 Servidor offline ou inacessível:", error);
-    mostrarNotificacao("Servidor offline, tentativa adiada.", "erro");
-    return false;
-  }
-}
+  };
 
-// Função para salvar dados no servidor
-async function salvarLocalStorage() {
-  if (sincronizandoAgora) {
-    console.warn("⏳ Operação de sincronização já em andamento");
-    return;
+  function markForSync() {
+    needSync = true;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (needSync) saveStorage();
+    }, DEBOUNCE_DELAY);
   }
-  
-  sincronizandoAgora = true;
-  
-  try {
-    const servidorDisponivel = await verificarServidor();
-    if (!servidorDisponivel) {
-      sincronizandoAgora = false;
-      agendarSincronizacao();
+
+  async function saveStorage() {
+    if (!hasRestored || syncingNow) return;
+    syncingNow = true;
+    needSync = false;
+
+    const payload = {};
+    keysToSync.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val !== null) {
+        payload[key] = { value: val, timestamp: lastModified[key] || Date.now() };
+      }
+    });
+
+    if (Object.keys(payload).length === 0) {
+      syncingNow = false;
       return;
     }
 
-    const dadosParaSalvar = {
-      ondas: JSON.parse(localStorage.getItem("ondas") || "{}"),
-      logHistoricoMudancas: JSON.parse(localStorage.getItem("logHistoricoMudancas") || "[]")
-    };
+    const body = JSON.stringify({ userId, dados: JSON.stringify(payload) });
 
-    const payload = {
-      userId: USER_ID,
-      dados: JSON.stringify(dadosParaSalvar)
-    };
+    try {
+      const res = await fetch(SERVER_PHP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: AbortSignal.timeout(10000)
+      });
 
-    console.log("➡️ [DEBUG] Salvando payload:", payload);
-
-    const resposta = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!resposta.ok) {
-      throw new Error(`Erro na resposta do servidor: ${resposta.status}`);
+      if (!res.ok) throw new Error('Falha PHP');
+      showToast('✔️ Dados salvos com sucesso!', 'success');
+    } catch (e) {
+      console.warn('Erro PHP, tentando Worker...', e);
+      try {
+        await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: AbortSignal.timeout(10000)
+        });
+        showToast('✔️ Salvo via fallback Worker!', 'info');
+      } catch (err2) {
+        console.error('Erro total:', err2);
+        showToast('❌ Falha ao salvar dados', 'error');
+        needSync = true;
+      }
+    } finally {
+      syncingNow = false;
     }
-
-    const json = await resposta.json();
-    if (json.status !== "ok") {
-      throw new Error("Servidor retornou erro: " + (json.mensagem || "Desconhecido"));
-    }
-
-    mostrarNotificacao("✅ Dados sincronizados com sucesso!", "sucesso");
-  } catch (error) {
-    console.error("❌ Erro na sincronização:", error);
-    mostrarNotificacao("Erro ao sincronizar dados.", "erro");
-  } finally {
-    sincronizandoAgora = false;
-  }
-}
-
-// Função para agendar próxima sincronização
-function agendarSincronizacao() {
-  if (sincronizacaoAgendada !== null) {
-    clearTimeout(sincronizacaoAgendada);
   }
 
-  sincronizacaoAgendada = setTimeout(() => {
-    salvarLocalStorage();
-  }, TEMPO_SINCRONIZACAO_MS);
-}
+  async function restoreStorage() {
+    if (syncingNow) return;
+    syncingNow = true;
 
-// Inicializa a sincronização
-function iniciarSincronizacao() {
-  console.log("🔄 Inicializando sistema de sincronização automática...");
-  agendarSincronizacao();
-}
+    try {
+      const res = await fetch(`${SERVER_LOAD_PHP}?userId=${userId}`, {
+        signal: AbortSignal.timeout(10000)
+      });
 
-// Para salvar imediatamente quando quiser
-function salvarAgora() {
-  salvarLocalStorage();
-}
+      if (!res.ok) throw new Error('Falha PHP load');
+      const data = await res.json();
+      if (!data?.dados) {
+        hasRestored = true;
+        syncingNow = false;
+        return;
+      }
 
-// Exportando para uso externo se precisar
-window.SyncStorage = {
-  iniciarSincronizacao,
-  salvarAgora
-};
+      const serverData = JSON.parse(data.dados);
+      let restoredCount = 0;
 
-// Iniciar automaticamente ao carregar o script
-iniciarSincronizacao();
+      for (const key of Object.keys(serverData)) {
+        if (!keysToSync.includes(key)) continue;
+        const { value, timestamp } = serverData[key];
+        const localValue = localStorage.getItem(key);
+        const localTime = lastModified[key] || 0;
+        if (timestamp > localTime && value !== null && value !== "") {
+          skipSync = true;
+          originalSetItem(key, value);
+          skipSync = false;
+          lastModified[key] = timestamp;
+          restoredCount++;
+        }
+      }
+
+      if (restoredCount > 0) {
+        skipSync = true;
+        originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModified));
+        skipSync = false;
+        showToast(`✅ ${restoredCount} dados restaurados!`, 'success');
+      }
+    } catch (err) {
+      console.warn('Falha no PHP, tentando Worker...', err);
+      try {
+        const res = await fetch(`${WORKER_URL}?userId=${userId}`, { signal: AbortSignal.timeout(10000) });
+        const data = await res.json();
+        if (!data?.dados) return;
+        const serverData = JSON.parse(data.dados);
+        let restoredCount = 0;
+
+        for (const key of Object.keys(serverData)) {
+          if (!keysToSync.includes(key)) continue;
+          const { value, timestamp } = serverData[key];
+          const localValue = localStorage.getItem(key);
+          const localTime = lastModified[key] || 0;
+          if (timestamp > localTime && value !== null && value !== "") {
+            skipSync = true;
+            originalSetItem(key, value);
+            skipSync = false;
+            lastModified[key] = timestamp;
+            restoredCount++;
+          }
+        }
+
+        if (restoredCount > 0) {
+          skipSync = true;
+          originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModified));
+          skipSync = false;
+          showToast(`✅ ${restoredCount} dados restaurados pelo Worker!`, 'info');
+        }
+      } catch (err2) {
+        console.error('Falha total ao restaurar:', err2);
+        showToast('❌ Falha ao restaurar dados', 'error');
+      }
+    } finally {
+      hasRestored = true;
+      syncingNow = false;
+    }
+  }
+
+  window.sincronizarAgora = function () {
+    if (!navigator.onLine) return showToast('❌ Sem conexão', 'error');
+    restoreStorage().then(() => saveStorage());
+  };
+
+  window.addEventListener('online', () => {
+    restoreStorage().then(() => saveStorage());
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (navigator.onLine && needSync) saveStorage();
+  });
+
+  if (navigator.onLine) restoreStorage();
+})();
