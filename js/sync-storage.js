@@ -3,7 +3,7 @@
 // ────────────────────────────────────────────────────────────
 const SERVER_PHP       = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD_PHP  = 'https://labsuaideia.store/api/load.php';
-const WORKER_URL       = 'https://tight-field-106d.tjslucasvl.workers.dev/'; // fallback em caso de falha
+const WORKER_URL       = 'https://dry-scene-2df7.tjslucasvl.workers.dev/'; // fallback em caso de falha
 
 // ────────────────────────────────────────────────────────────
 // VARIÁVEIS DE ESTADO
