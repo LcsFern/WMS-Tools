@@ -18,6 +18,7 @@ const nomesPersonalizados = {
   'dashboardHTML': 'Ultima Sincronização Produtividade',
   'rankingArray': 'Ultima Sincronização ranking',
   'pickingData': 'Ultima Sincronização pendências de picking',
+  'pickingTimestamp': 'Horário de sincronização pendências de picking'
   // Adicione mais mapeamentos conforme necessário
 };
 
@@ -34,6 +35,7 @@ const iconesChaves = {
   'rankingArray': 'fa-solid fa-trophy',
   'logHistoricoMudancas': 'fa-solid fa-history',
   'pickingData': 'fas fa-tasks',
+  'pickingTimestamp': 'fa-solid fa-clock',
   // ícone padrão para chaves não especificadas
   'default': 'fa-solid fa-circle-info'
 };

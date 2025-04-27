@@ -5,7 +5,7 @@
     movimentacoesProcessadas: 'Movimentações',
     ondasdin: 'Picking Dinâmico',
     reaba: 'Ressuprimento',
-    pickingData: 'Pendencias de Picking',
+    pickingData: 'Pendencias de Picking'
   };
 
   const iconesChaves = {
