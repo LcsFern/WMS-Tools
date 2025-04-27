@@ -30,7 +30,7 @@ async function login() {
     localStorage.setItem('expiry', expiryTime.toString());
 
     // Redireciona para a página principal (index.html)
-    window.location.href = '/index.html';
+    window.location.href = '/WMS-Tools/index.html';
   } else {
     // Se a senha for incorreta, exibe uma mensagem de erro
     errorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> Senha incorreta!`;
