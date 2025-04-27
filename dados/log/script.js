@@ -4,7 +4,8 @@
     gradeCompleta: 'GRADE',
     movimentacoesProcessadas: 'Movimentações',
     ondasdin: 'Picking Dinâmico',
-    reaba: 'Ressuprimento'
+    reaba: 'Ressuprimento',
+    pickingData: 'Pendencias de Picking',
   };
 
   const iconesChaves = {
@@ -13,6 +14,7 @@
     movimentacoesProcessadas: 'fa-solid fa-truck-container',
     ondasdin: 'fa-solid fa-list-check',
     reaba: 'fa-solid fa-shelves',
+    pickingData: 'fas fa-tasks',
     default: 'fa-solid fa-circle-info'
   };
 

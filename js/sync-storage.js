@@ -12,7 +12,8 @@ const userId = localStorage.getItem('username')?.toLowerCase();
 const chaves = [
   'ondasdin','gradeCompleta','movimentacoesProcessadas',
   'ondas','result_state_monitor','checkbox_state_monitor',
-  'dashboardHTML','rankingArray','logHistoricoMudancas','reaba'
+  'dashboardHTML','rankingArray','logHistoricoMudancas','reaba',
+  'pickingData','pickingTimestamp'
 ];
 const LAST_MODIFIED_KEY = 'syncLastModified';
 const DEBOUNCE_DELAY    = 5000; // ms

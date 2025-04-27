@@ -15,20 +15,23 @@
 
     // Toggle para a seção "TIPO DE CARGA PENDENTE" – alterna apenas a tabela, não o título com o botão
     document.addEventListener('DOMContentLoaded', function() {
+      // Tenta carregar dados salvos
+      const dataLoaded = loadSavedData();
+      
       // Toggle para cargas pendentes
       const toggleEmptyBtn = document.getElementById('toggleEmptyLoads');
       toggleEmptyBtn.addEventListener('click', function() {
         const table = document.getElementById('emptyLoadsTable');
         if (table.style.display === 'none' || table.style.display === '') {
           table.style.display = 'table';
-            this.innerHTML = ' <i class="fa-solid fa-eye-slash"></i>';
+          this.innerHTML = ' <i class="fa-solid fa-eye-slash"></i>';
         } else {
           table.style.display = 'none';
-            this.innerHTML = '<i class="fa-solid fa-eye"></i>';
+          this.innerHTML = '<i class="fa-solid fa-eye"></i>';
         }
       });
-
-      // Toggle para a seção "Separadores Ativos" – alterna tabela e contagem
+    
+      // Toggle para a seção "Separadores Ativos"
       const toggleActiveBtn = document.getElementById('toggleActiveSeparators');
       toggleActiveBtn.addEventListener('click', function() {
         const table = document.getElementById('activeSeparators');
@@ -36,14 +39,14 @@
         if (table.style.display === 'none' || table.style.display === '') {
           table.style.display = 'table';
           countDiv.style.display = 'block';
-            this.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+          this.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
         } else {
           table.style.display = 'none';
           countDiv.style.display = 'none';
           this.innerHTML = '<i class="fa-solid fa-eye"></i>';
         }
       });
-
+    
       // Eventos dos filtros de temperatura
       document.getElementById('activeFilterTemp').addEventListener('change', filterActiveSeparatorsTable);
       document.getElementById('loadFilterTemp').addEventListener('change', filterLoadTable);
@@ -102,7 +105,15 @@
           }
         }
       }
-
+    
+      // Salva os dados no localStorage
+      const pickingData = {
+        csvData: csvData,
+        data: data,
+        emptyLoads: emptyLoads
+      };
+      localStorage.setItem('pickingData', JSON.stringify(pickingData));
+      
       processData(data);
       updateEmptyLoads(emptyLoads);
     }
@@ -515,9 +526,26 @@
           document.getElementById('csvContent').style.display = 'block';
           document.getElementById('results').style.display = 'none';
           resetSummaryTables();
+          localStorage.removeItem('pickingData');
+          localStorage.removeItem('pickingTimestamp');
+          document.getElementById('dataTimestamp')?.remove();
           this.remove();
         });
         importSection.appendChild(resetBtn);
+        
+        // Adiciona timestamp
+        const now = new Date();
+        const formattedDate = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+        const timestamp = document.createElement('div');
+        timestamp.id = 'dataTimestamp';
+        timestamp.innerHTML = `<i class="fas fa-clock"></i> Dados de: ${formattedDate}`;
+        timestamp.style.marginTop = '10px';
+        timestamp.style.fontSize = '0.9rem';
+        timestamp.style.color = 'var(--accent)';
+        importSection.appendChild(timestamp);
+        
+        // Salva timestamp no localStorage
+        localStorage.setItem('pickingTimestamp', formattedDate);
       }
     }
 
@@ -569,6 +597,32 @@
           } else {
             rows[i].style.display = 'none';
           }
+        }
+      }
+    }
+    function loadSavedData() {
+      const savedData = localStorage.getItem('pickingData');
+      const savedTimestamp = localStorage.getItem('pickingTimestamp');
+      
+      if (savedData) {
+    try {
+      const parsedData = JSON.parse(savedData);
+      
+      // Oculta a área de importação
+      document.getElementById('csvContent').style.display = 'none';
+      
+      // Processa os dados salvos
+      processData(parsedData.data);
+      updateEmptyLoads(parsedData.emptyLoads);
+      
+      // Mostra os resultados
+      document.getElementById('results').style.display = 'block';
+      
+      // Adiciona o botão de resetar
+      addResetButton();
+      
+      } catch (error) {
+          console.error('Erro ao carregar os dados salvos:', error);
         }
       }
     }

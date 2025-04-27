@@ -17,6 +17,7 @@ const nomesPersonalizados = {
   'movimentacoesProcessadas': 'Ultima Sincronização movimentações',
   'dashboardHTML': 'Ultima Sincronização Produtividade',
   'rankingArray': 'Ultima Sincronização ranking',
+  'pickingData': 'Ultima Sincronização pendências de picking',
   // Adicione mais mapeamentos conforme necessário
 };
 
@@ -32,6 +33,7 @@ const iconesChaves = {
   'dashboardHTML': 'fas fa-chart-line',
   'rankingArray': 'fa-solid fa-trophy',
   'logHistoricoMudancas': 'fa-solid fa-history',
+  'pickingData': 'fas fa-tasks',
   // ícone padrão para chaves não especificadas
   'default': 'fa-solid fa-circle-info'
 };
