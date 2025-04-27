@@ -177,29 +177,7 @@ header h1 {
 }
 
 /* Responsividade */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-controls {
-    flex-direction: column;
-  }
-  
-  #searchInput, #searchInput:focus {
-    width: 100%;
-  }
-  
-  .search-container {
-    width: 100%;
-  }
-  
-  #refreshButton {
-    width: 100%;
-    text-align: center;
-  }
-}
+/* Removed duplicate @media (max-width: 768px) block */
 @media (max-width: 850px) {
   header, .logs {
     max-width: 95%; /* Em telas menores, usa quase toda a largura */
@@ -229,3 +207,21 @@ header h1 {
     text-align: center;
   }
 }
+
+#syncButton {
+  background: linear-gradient(135deg, #00DFA2, #009688);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  white-space: nowrap;
+}
+
+#syncButton:hover {
+  background: linear-gradient(135deg, #00c48c, #00796b);
+}
+
+

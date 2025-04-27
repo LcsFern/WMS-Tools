@@ -160,6 +160,16 @@ function mostrarToast(mensagem, tipo) {
   }, 5000);
 }
 
+// Função para sincronizar agora
+async function sincronizarAgora() {
+
+  mostrarToast("Sincronização iniciada...", "info");
+}
+
+document.getElementById('syncButton').addEventListener('click', async () => {
+  await sincronizarAgora();
+});
+
 // Atualizar manualmente
 refreshButton.addEventListener('click', carregarLogs);
 
