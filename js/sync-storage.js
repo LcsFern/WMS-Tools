@@ -1,6 +1,6 @@
 (function () {
-  const SERVER_PHP = 'http://wmstools.ct.ws/api/save.php'; // <- Atualize com sua URL real
-  const SERVER_LOAD_PHP = 'http://wmstools.ct.ws/api/load.php'; // <- Atualize com sua URL real
+  const SERVER_PHP = 'https://labsuaideia.store/api/save.php'; // <- Atualize com sua URL real
+  const SERVER_LOAD_PHP = 'https://labsuaideia.store/api/load.php'; // <- Atualize com sua URL real
   const WORKER_URL = 'https://tight-field-106d.tjslucasvl.workers.dev/'; // Fallback
 
   const userId = localStorage.getItem('username')?.toLowerCase();

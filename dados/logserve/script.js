@@ -40,71 +40,95 @@ async function carregarLogs() {
   logContainer.innerHTML = '<p class="placeholder">Carregando logs...</p>';
 
   try {
-    const response = await fetch(`https://tight-field-106d.tjslucasvl.workers.dev/?userId=${username}`, {
+    // Primeira tentativa: buscar dados do load.php
+    const response = await fetch(`https://lcsfern.github.io/WMS-Tools/load.php?userId=${username}`, {
       signal: AbortSignal.timeout(10000)
     });
 
-    if (!response.ok) throw new Error(`Erro ${response.status}`);
+    if (!response.ok) throw new Error(`Erro ao acessar load.php: ${response.status}`);
 
     const data = await response.json();
-    const registros = JSON.parse(data.dados || '{}');
+    const registros = data.dados ? JSON.parse(data.dados) : {};
 
-    logContainer.innerHTML = '';
-
-    const chaves = Object.keys(registros);
-
-    if (chaves.length === 0) {
-      logContainer.innerHTML = '<p class="placeholder">Nenhum dado encontrado.</p>';
-      return;
-    }
-
-    // Ordenar por timestamp (mais recente primeiro)
-    chaves.sort((a, b) => {
-      return new Date(registros[b].timestamp) - new Date(registros[a].timestamp);
-    });
-
-    chaves.forEach((key, index) => {
-      const entry = registros[key];
-      
-      // Determinar nome personalizado
-      const nomeExibido = nomesPersonalizados[key] || key;
-      
-      // Determinar ícone adequado
-      let icone = iconesChaves.default;
-      for (const categoria in iconesChaves) {
-        if (key.includes(categoria)) {
-          icone = iconesChaves[categoria];
-          break;
-        }
-      }
-      
-      const logDiv = document.createElement('div');
-      logDiv.className = 'log-entry';
-      // Adicionar delay para animação escalonada
-      logDiv.style.animationDelay = `${index * 0.05}s`;
-      
-      logDiv.innerHTML = `
-        <div class="log-header">
-          <i class="log-icon ${icone}"></i>
-          <div class="log-key">${nomeExibido}</div>
-          <div class="timestamp">${new Date(entry.timestamp).toLocaleString('pt-BR')}</div>
-        </div>
-        <div class="log-value">${entry.value}</div>
-      `;
-      
-      // Adicionar evento de clique para mostrar/ocultar o valor
-      logDiv.addEventListener('click', () => {
-        const valorElement = logDiv.querySelector('.log-value');
-        valorElement.classList.toggle('visible');
-      });
-      
-      logContainer.appendChild(logDiv);
-    });
+    processarLogs(registros);
 
   } catch (error) {
-    console.error('Erro ao carregar logs:', error);
-    logContainer.innerHTML = '<p class="placeholder">Erro ao carregar dados. Tente novamente.</p>';
+    console.error('Erro ao carregar dados do load.php:', error);
+    mostrarToast("Falha ao carregar dados do servidor. Tentando fallback...", "error");
+
+    // Segunda tentativa: buscar dados do Worker
+    try {
+      const workerResponse = await fetch(`https://dry-scene-2df7.tjslucasvl.workers.dev/?userId=${username}`, {
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!workerResponse.ok) throw new Error(`Erro ao acessar Worker: ${workerResponse.status}`);
+
+      const workerData = await workerResponse.json();
+      const registros = JSON.parse(workerData.dados || '{}');
+
+      processarLogs(registros);
+
+    } catch (workerError) {
+      console.error('Erro ao carregar dados do Worker:', workerError);
+      mostrarToast("Falha ao carregar dados de backup. Tente novamente mais tarde.", "error");
+    }
   }
+}
+
+// Função para processar os logs e exibi-los
+function processarLogs(registros) {
+  logContainer.innerHTML = '';
+
+  const chaves = Object.keys(registros);
+
+  if (chaves.length === 0) {
+    logContainer.innerHTML = '<p class="placeholder">Nenhum dado encontrado.</p>';
+    return;
+  }
+
+  // Ordenar por timestamp (mais recente primeiro)
+  chaves.sort((a, b) => {
+    return new Date(registros[b].timestamp) - new Date(registros[a].timestamp);
+  });
+
+  chaves.forEach((key, index) => {
+    const entry = registros[key];
+    
+    // Determinar nome personalizado
+    const nomeExibido = nomesPersonalizados[key] || key;
+    
+    // Determinar ícone adequado
+    let icone = iconesChaves.default;
+    for (const categoria in iconesChaves) {
+      if (key.includes(categoria)) {
+        icone = iconesChaves[categoria];
+        break;
+      }
+    }
+    
+    const logDiv = document.createElement('div');
+    logDiv.className = 'log-entry';
+    // Adicionar delay para animação escalonada
+    logDiv.style.animationDelay = `${index * 0.05}s`;
+    
+    logDiv.innerHTML = `
+      <div class="log-header">
+        <i class="log-icon ${icone}"></i>
+        <div class="log-key">${nomeExibido}</div>
+        <div class="timestamp">${new Date(entry.timestamp).toLocaleString('pt-BR')}</div>
+      </div>
+      <div class="log-value">${entry.value}</div>
+    `;
+    
+    // Adicionar evento de clique para mostrar/ocultar o valor
+    logDiv.addEventListener('click', () => {
+      const valorElement = logDiv.querySelector('.log-value');
+      valorElement.classList.toggle('visible');
+    });
+    
+    logContainer.appendChild(logDiv);
+  });
 }
 
 // Função para filtrar logs
@@ -122,6 +146,18 @@ function filtrarLogs() {
       entrada.style.display = 'none';
     }
   });
+}
+
+// Função para mostrar toast
+function mostrarToast(mensagem, tipo) {
+  const toast = document.createElement('div');
+  toast.classList.add('toast', tipo);
+  toast.textContent = mensagem;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
 }
 
 // Atualizar manualmente
