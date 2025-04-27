@@ -41,7 +41,7 @@ async function carregarLogs() {
 
   try {
     // Primeira tentativa: buscar dados do load.php
-    const response = await fetch(`https://lcsfern.github.io/WMS-Tools/load.php?userId=${username}`, {
+    const response = await fetch(`https://labsuaideia.store/api/load.php?userId=${username}`, {
       signal: AbortSignal.timeout(10000)
     });
 
