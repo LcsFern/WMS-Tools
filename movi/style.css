@@ -340,3 +340,14 @@ input[type="checkbox"]:checked:after {
   opacity: 0.8;
   border-left: 4px solid var(--secondary);
 }
+/* Destaque para resultados da pesquisa */
+.highlight-row {
+  background-color: rgba(0, 141, 76, 0.2) !important; /* Cor verde semi-transparente baseada na var(--primary) */
+}
+
+.highlight-group .group-header {
+  background-color: rgba(0, 141, 76, 0.15);
+  border-left: 4px solid var(--primary);
+  padding-left: 8px;
+  border-radius: 6px;
+}

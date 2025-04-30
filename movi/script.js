@@ -438,6 +438,7 @@ function exibirMovimentacoes() {
 }
 
 // Função para realizar pesquisa
+// Função para realizar pesquisa
 function realizarPesquisa() {
   const termo = document.getElementById('searchInput').value.toLowerCase().trim();
   const grupos = document.querySelectorAll('#movimentacoesList .group-card');
@@ -445,11 +446,13 @@ function realizarPesquisa() {
 
   if (termo === '') {
     grupos.forEach(grupo => {
+      grupo.style.display = 'block'; // Mostrar todos os grupos
       const details = grupo.querySelector('.group-details');
-      details.style.display = 'block'; // Mostrar todos os grupos
+      details.style.display = 'none'; // Recolher detalhes quando busca estiver vazia
       const linhas = details.querySelectorAll('tbody tr');
       linhas.forEach(linha => {
         linha.style.display = '';
+        linha.classList.remove('highlight-row');
       });
     });
     document.getElementById('searchResults').textContent = '';
@@ -457,26 +460,57 @@ function realizarPesquisa() {
   }
 
   grupos.forEach(grupo => {
+    // Buscar informações do cabeçalho do grupo (OE, Placa, Destino)
+    const oe = grupo.dataset.oe.toLowerCase();
+    const placaElement = grupo.querySelector('.group-info div:nth-child(2)');
+    const placa = placaElement ? placaElement.textContent.toLowerCase().replace('placa:', '').trim() : '';
+    const destinoElement = grupo.querySelector('.group-info div:nth-child(3)');
+    const destino = destinoElement ? destinoElement.textContent.toLowerCase().replace('destino:', '').trim() : '';
+
+    // Verificar se o termo está no cabeçalho do grupo
+    const grupoCorresponde = oe.includes(termo) || placa.includes(termo) || destino.includes(termo);
+
     const details = grupo.querySelector('.group-details');
     const linhas = details.querySelectorAll('tbody tr');
     let correspondentesNoGrupo = 0;
 
     linhas.forEach(linha => {
+      // Buscar em todos os campos relevantes da linha
       const etiqueta = linha.dataset.etiqueta.toLowerCase();
       const produto = linha.dataset.produto.toLowerCase();
-      if (etiqueta.includes(termo) || produto.includes(termo)) {
+      const origem = linha.cells[5] ? linha.cells[5].textContent.toLowerCase() : '';
+      const destinoLinha = linha.cells[6] ? linha.cells[6].textContent.toLowerCase() : '';
+      const grupo = linha.cells[7] ? linha.cells[7].textContent.toLowerCase() : '';
+      
+      if (etiqueta.includes(termo) || 
+          produto.includes(termo) || 
+          origem.includes(termo) || 
+          destinoLinha.includes(termo) || 
+          grupo.includes(termo)) {
         linha.style.display = '';
+        linha.classList.add('highlight-row');
         correspondentesNoGrupo++;
       } else {
-        linha.style.display = 'none';
+        linha.style.display = grupoCorresponde ? '' : 'none';
+        linha.classList.remove('highlight-row');
       }
     });
 
-    if (correspondentesNoGrupo > 0) {
-      details.style.display = 'block';
+    // Mostrar o grupo se corresponder ao termo ou se tiver linhas correspondentes
+    if (grupoCorresponde || correspondentesNoGrupo > 0) {
+      grupo.style.display = 'block';
+      details.style.display = 'block'; // Expandir detalhes para mostrar correspondências
       encontrados += correspondentesNoGrupo;
+      
+      // Se o termo corresponde ao grupo, destacamos o cabeçalho
+      if (grupoCorresponde) {
+        grupo.classList.add('highlight-group');
+        encontrados++; // Incrementar contador para incluir o grupo encontrado
+      } else {
+        grupo.classList.remove('highlight-group');
+      }
     } else {
-      details.style.display = 'none';
+      grupo.style.display = 'none';
     }
   });
 
