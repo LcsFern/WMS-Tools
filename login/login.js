@@ -1,6 +1,5 @@
 // Função assíncrona para realizar o login
 async function login() {
-  // Obtém o valor digitado no campo de senha
   const password = document.getElementById('password').value;
   const button = document.querySelector('button');
   const errorMsg = document.getElementById('errorMsg');
@@ -44,17 +43,11 @@ async function login() {
   }
 }
 
-// Aguarda o carregamento completo do DOM antes de adicionar eventos
 document.addEventListener('DOMContentLoaded', function() {
-  // Seleciona o campo de senha
   const passwordField = document.getElementById('password');
-  // Seleciona o botão de login
   passwordField.addEventListener('keyup', function(event) {
     if (event.key === 'Enter') login();
   });
-
-  // Permite login também via clique no botão
-  // Garante foco no campo ao carregar a página
   passwordField.focus();
 });
 
