@@ -23,11 +23,17 @@ window.addEventListener('load', () => {
   // Reforçar que o modal comece oculto
   document.getElementById('modalGrupos').classList.add('hidden');
   
+  // Garantir que a barra de pesquisa comece oculta
+  document.getElementById('searchContainer').classList.add('hidden');
+  
   // Carregar grade (key "gradeCompleta")
   const gradeString = localStorage.getItem('gradeCompleta');
   if (!gradeString) {
-exibirMensagem('<h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO ENCONTRADA</h2>' +
-               '<p>Carregue a GRADE no menu ao lado.</p>');
+    exibirMensagem('<h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO ENCONTRADA</h2>' +
+                  '<p>Carregue a GRADE no menu ao lado.</p>');
+    // Ocultar a seção de importação e a barra de pesquisa
+    document.getElementById('importSection').classList.add('hidden');
+    document.getElementById('searchContainer').classList.add('hidden');
   } else {
     try {
       gradeCompleta = JSON.parse(gradeString);
@@ -41,10 +47,10 @@ exibirMensagem('<h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO 
   
   // Carregar movimentações processadas (se houver)
   const movString = localStorage.getItem('movimentacoesProcessadas');
-  if (movString) {
+  if (movString && gradeCompleta) { // Só carrega movimentações se a grade estiver disponível
     movimentacoesProcessadas = JSON.parse(movString);
     exibirMovimentacoes(); // Exibe as movimentações salvas
-    mostrarBarraPesquisa(); // Mostra a barra de pesquisa
+    mostrarBarraPesquisa(); // Mostra a barra de pesquisa SOMENTE se a grade estiver carregada
     // Esconder a área de importação e exibir os botões de ação
     ocultarImportacaoExibirMais();
   }
@@ -144,7 +150,13 @@ exibirMensagem('<h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO 
 
 // Função para mostrar barra de pesquisa
 function mostrarBarraPesquisa() {
-  document.getElementById('searchContainer').classList.remove('hidden');
+  // Verificar se a grade está carregada antes de mostrar a barra de pesquisa
+  if (gradeCompleta) {
+    document.getElementById('searchContainer').classList.remove('hidden');
+  } else {
+    // Se a grade não estiver carregada, mantenha a barra de pesquisa oculta
+    document.getElementById('searchContainer').classList.add('hidden');
+  }
 }
 
 // Função para ocultar importação e mostrar botão de "processar mais" e "adicionar grupos"
@@ -287,7 +299,9 @@ function processarMovimentacao(rawText) {
   exibirMovimentacoes();
   
   // Mostra a barra de pesquisa e exibe os botões
-  mostrarBarraPesquisa();
+  if (gradeCompleta) {
+    mostrarBarraPesquisa();
+  }
   ocultarImportacaoExibirMais();
 }
 

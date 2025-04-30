@@ -1,6 +1,6 @@
 {
-  "name": "WYMS Tools",
-  "short_name": "WYMS",
+  "name": "WMS Tools",
+  "short_name": "WMS",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
