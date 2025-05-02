@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Carrega o JSON com os produtos
     let prodMap = {};
     try {
-      const r = await fetch('/produtos.json');
+      const r = await fetch('produtos.json');
       const data = await r.json();
       if (Array.isArray(data)) {
         data.forEach(p => {
