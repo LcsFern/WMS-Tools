@@ -1,0 +1,74 @@
+/* Reset e Fontes */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { background:#0f172a; color:#f8fafc; line-height:1.6; }
+.container {
+  max-width:960px; margin:40px auto; padding:20px;
+  max-height: 800px; overflow:auto;
+  background:rgba(255,255,255,0.03); border-radius:16px;
+  backdrop-filter:blur(8px); box-shadow:0 8px 32px rgba(0,0,0,0.7);
+}
+h1 {
+  text-align:center; margin-bottom:24px; font-size:2.5rem;
+  background:linear-gradient(90deg,#008d4c,#34c759);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+
+/* Seções */
+.section { margin-bottom:20px; }
+label { display:block; margin-bottom:6px; font-weight:600; }
+textarea {
+  width:100%; min-height:80px; padding:12px;
+  background:rgba(255,255,255,0.05); border:none; border-radius:8px;
+  color:#e0e0e0; font-family:monospace; font-size:.9rem; resize:vertical;
+  transition:background .2s;
+}
+textarea:focus { background:rgba(255,255,255,0.1); outline:none; }
+
+/* Botões */
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:12px 24px; font-size:1rem; font-weight:600;
+  border:none; border-radius:8px; cursor:pointer;
+  transition:background .3s,transform .2s;
+}
+.btn-primary { background:#00a65a; color:#0f172a; box-shadow:0 4px 16px rgba(0,166,90,0.4); }
+.btn-primary:hover { background:#34c759; transform:translateY(-2px); }
+.btn-secondary { background:#1f2937; color:#e0e0e0; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
+.btn-secondary:hover { background:#374151; transform:translateY(-2px); }
+
+/* Resultados */
+#resultado { display:none; margin-top:30px; }
+.cards { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.card {
+  background:rgba(255,255,255,0.05); border-radius:12px;
+  padding:16px; backdrop-filter:blur(6px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  transition:transform .2s;
+}
+.card:hover { transform:translateY(-4px); }
+.card h3 {
+  margin-bottom:12px; font-size:1.2rem;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.card ul { list-style:none; padding-left:1em; max-height:200px; overflow:auto; }
+.card li {
+  position:relative; padding-left:1.2em; margin-bottom:8px; font-size:.95rem;
+}
+.card li::before { content:"•"; position:absolute; left:0; color:#00a65a; }
+
+/* Badges */
+.badge {
+  display:inline-block; padding:2px 6px; border-radius:4px;
+  font-size:.75rem; font-weight:600; margin-left:6px;
+}
+.badge-info    { background:#0288d1; color:#fff; }
+.badge-success { background:#388e3c; color:#fff; }
+.badge-warning { background:#f9a825; color:#121212; }
+.badge-alert   { background:#d32f2f; color:#fff; }
+
+.copy-btn {
+  background:transparent; border:none; color:#34c759;
+  font-size:1.1rem; cursor:pointer; transition:color .2s;
+}
+.copy-btn:hover { color:#00FFC8; }
+.hidden { display:none!important; }

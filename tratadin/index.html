@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Logística Avançada com Badges</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-exchange-alt"></i> Abastecer Picking Dinâmico</h1>
+
+    <!-- Entradas -->
+    <div id="inputs">
+      <div class="section">
+        <label><i class="fas fa-table"></i> 1. Posições de Picking</label>
+        <textarea id="txtPicking" placeholder="LOCALIZAÇÃO[TAB]PRODUTO[TAB]QTD ATUAL"></textarea>
+      </div>
+      <div class="section">
+        <label><i class="fas fa-clipboard-list"></i> 2. Prévia de Pedidos</label>
+        <textarea id="txtPreview" placeholder="COD. PRODUTO[TAB]QTDE PALETE[TAB]SHELF (ex: 31,670)"></textarea>
+      </div>
+      <div class="section">
+        <label><i class="fas fa-search"></i> 3. Pesquisa de SKU</label>
+        <textarea id="txtSku" placeholder="LOCALIZAÇÃO[TAB]COD. PRODUTO[TAB]QTD CX[TAB]SHELF LIFE (ex: 31,67000)"></textarea>
+      </div>
+      <button id="btnProcess" class="btn btn-primary"><i class="fas fa-play"></i> Processar Dados</button>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultado">
+      <button id="btnReset" class="btn btn-secondary" style="margin-bottom:20px;">
+        <i class="fas fa-rotate-left"></i> Resetar
+      </button>
+      <div class="cards">
+        <div class="card">
+          <h3>
+            <span><i class="fas fa-warehouse"></i> Forçar Ressuprimento</span>
+            <button id="copyResup" class="copy-btn" title="Copiar códigos"><i class="fas fa-copy"></i></button>
+          </h3>
+          <ul id="listaResup"></ul>
+        </div>
+        <div class="card">
+          <h3>
+            <span><i class="fas fa-exchange-alt"></i> Picking Dinâmico</span>
+            <button id="copyDyn" class="copy-btn" title="Copiar códigos"><i class="fas fa-copy"></i></button>
+          </h3>
+          <ul id="listaDinamico"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
