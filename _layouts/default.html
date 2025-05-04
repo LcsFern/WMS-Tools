@@ -35,13 +35,133 @@
       background-color: rgba(0, 0, 0, 0.1); /* Fundo suave */
       border-radius: 10px;
     }
+
+
+    /* Oculta o cursor nativo */
+body {
+  cursor: none;
+  margin: 0;
+  padding: 0;
+  background-color: #0f172a; /* fundo escuro do seu site */
+  color: #f8fafc;
+  font-family: Arial, sans-serif;
+}
+
+/* Estilização base do cursor personalizado */
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #34c759;
+  box-shadow: 0 0 10px rgba(52, 199, 89, 0.5);
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+  z-index: 9999;
+  transition: all 0.2s ease;
+}
+
+/* Estado ao passar por links */
+.custom-cursor.hover {
+  transform: scale(1.4);
+  background-color: #00a65a;
+}
+
+/* Estado de carregamento com animação de rotação */
+.custom-cursor.loading {
+  border: 3px solid #00ff99;
+  border-top: 3px solid transparent;
+  background-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+/* Estado de sucesso (copiado) */
+.custom-cursor.success {
+  background-color: #00ff99;
+  box-shadow: 0 0 10px #00ff99;
+  transform: scale(1.5);
+}
+
+/* Estado de erro */
+.custom-cursor.error {
+  background-color: #ff4d4f;
+  box-shadow: 0 0 10px #ff4d4f;
+  transform: scale(1.5);
+}
+
+/* Animação de carregamento */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
     </style>
-  <!-- injeta auth.js sempre no caminho correto -->
+
+
+  <!-- Autenticação -->
   <script src="{{ site.baseurl }}/js/auth.js" defer></script>
 </head>
-<body>
 
+<body>
+<!-- Sincronizar dados -->
   {{ content }}
   <script src="{{ '/js/sync-storage.js' | relative_url }}"></script>
+
+  <!-- Cursor personalizado -->
+   <script>
+    // Seleciona o cursor no DOM
+const cursor = document.createElement('div');
+cursor.classList.add('custom-cursor');
+document.body.appendChild(cursor);
+
+// Atualiza a posição do cursor com base no mouse
+document.addEventListener('mousemove', (e) => {
+  cursor.style.left = `${e.clientX - 13}px`; // centraliza
+  cursor.style.top = `${e.clientY - 13}px`;
+});
+
+// Detecta hover em links
+document.querySelectorAll('a, button').forEach((el) => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+// Função para mudar o estado do cursor
+function setCursorState(state) {
+  cursor.classList.remove('loading', 'success', 'error');
+  if (state) cursor.classList.add(state);
+
+  // Se for sucesso ou erro, remove após 1,5s
+  if (state === 'success' || state === 'error') {
+    setTimeout(() => {
+      cursor.classList.remove(state);
+    }, 1500);
+  }
+}
+
+// Exemplo: simular carregamento
+function simularCarregamento() {
+  setCursorState('loading');
+  setTimeout(() => {
+    setCursorState('success'); // Ou 'error' se quiser
+  }, 3000);
+}
+
+// Exemplo: detectar dados copiados do Excel (texto colado com tabulação)
+document.addEventListener('paste', (event) => {
+  const text = (event.clipboardData || window.clipboardData).getData('text');
+  if (text.includes('\t')) {
+    setCursorState('success'); // Indicador de dados colados do Excel
+    console.log('Dados colados do Excel detectados!');
+  } else {
+    setCursorState('error'); // Algo foi colado, mas não é do Excel
+    console.warn('Conteúdo colado não parece ser do Excel.');
+  }
+});
+
+   </script>
 </body>
 </html>
