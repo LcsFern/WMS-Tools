@@ -1,0 +1,2659 @@
+---
+layout: default
+title: "checkdigito"
+---
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Posições do Estoque</title>
+  <style>
+    :root {
+      --fundo: #0f172a;
+      --glass: rgba(255,255,255,0.05);
+      --neon: #008d4c;
+      --texto: #f8fafc;
+      --apagado: #777;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; font-family:'Segoe UI', sans-serif; }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(145deg, var(--fundo), #121e34);
+      color: var(--texto);
+    }
+    .container {
+      max-width: 650px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(57, 255, 20, 0.1);
+      border: 1px solid rgba(57, 255, 20, 0.1);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      color: var(--neon);
+      text-shadow: 0 0 10px #008d4c(57, 255, 20, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      letter-spacing: 1px;
+    }
+    h1 i {
+      font-size: 2.2rem;
+    }
+    .section {
+      margin: 1.5rem 0;
+      padding: 1.8rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+      border: 1px solid rgba(57, 255, 20, 0.1);
+      backdrop-filter: blur(5px);
+    }
+    #search {
+      width: 100%; 
+      padding: 14px 20px;
+      border: 2px solid var(--neon);
+      border-radius: 16px;
+      background: rgba(0,0,0,0.5);
+      color: var(--texto);
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+      transition: all 0.3s ease;
+    }
+    #search:focus {
+      outline: none;
+      box-shadow: 0 0 20px #008d4c(57, 255, 20, 0.4);
+      transform: translateY(-2px);
+    }
+    #search::placeholder { 
+      color: var(--apagado); 
+      opacity: 0.7;
+    }
+    #suggestions {
+      list-style: none;
+      max-height: 150px; 
+      overflow-y: auto;
+      margin-bottom: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      border: 1px solid rgba(57, 255, 20, 0.1);
+      scrollbar-width: thin;
+      scrollbar-color: var(--neon) #222;
+    }
+    #suggestions::-webkit-scrollbar {
+      width: 8px;
+    }
+    #suggestions::-webkit-scrollbar-track {
+      background: #222;
+      border-radius: 10px;
+    }
+    #suggestions::-webkit-scrollbar-thumb {
+      background-color: var(--neon);
+      border-radius: 10px;
+    }
+    #suggestions li {
+      padding: 12px 18px; 
+      cursor: pointer;
+      border-bottom: 1px solid rgba(57, 255, 20, 0.1);
+      transition: all 0.25s ease;
+      font-weight: 500;
+    }
+    #suggestions li:hover {
+      background: rgba(57, 255, 20, 0.15);
+      padding-left: 24px;
+    }
+    #suggestions li:last-child {
+      border-bottom: none;
+    }
+    .card {
+      background: rgba(0,0,0,0.5);
+      padding: 2rem; 
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(57, 255, 20, 0.15);
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card h2 { 
+      margin-bottom: 1.2rem;
+      color: var(--neon);
+      font-size: 1.8rem;
+      text-shadow: 0 0 5px #008d4c(57, 255, 20, 0.5);
+    }
+    .card p { 
+      margin: 0.7rem 0;
+      color: var(--texto);
+      font-size: 1.1rem;
+      background: rgba(0,0,0,0.3);
+      padding: 10px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    .qr-container {
+      width: 180px;
+      height: 180px;
+      margin: 1.5rem auto;
+      background: white;
+      border-radius: 16px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3), 0 0 15px rgba(57, 255, 20, 0.3);
+      position: relative;
+    }
+    .qr-container:before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 2px;
+      background: linear-gradient(45deg, #008d4c, transparent, #00a65a);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    .qr {
+      width: 150px; 
+      height: 150px;
+    }
+    .label {
+      font-size: 1rem;
+      color: var(--apagado);
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+    }
+    .icon-pulse {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+  <!-- Biblioteca para gerar QR Codes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fa-solid fa-qrcode icon-pulse"></i> Posições do Estoque</h1>
+
+    <div class="section">
+      <!-- Campo de pesquisa -->
+      <input id="search" placeholder="Pesquise a posição (ex: C01)…" autocomplete="off"/>
+
+      <!-- Lista de sugestões -->
+      <ul id="suggestions"></ul>
+
+      <!-- Área de detalhes com QR Codes -->
+      <div id="details"></div>
+    </div>
+  </div>
+
+  <script>
+    // === Exemplo de dados; substitua ou complemente conforme seu JSON ===
+    const data = [
+ {
+  "COLUNA": "C01AQ01",
+  "CHECK DÍGITO": "4F313A44603D3C"
+ },
+ {
+  "COLUNA": "C01AQ02",
+  "CHECK DÍGITO": "4F313A44603D3D"
+ },
+ {
+  "COLUNA": "C01AQ03",
+  "CHECK DÍGITO": "4F313A44603D3E"
+ },
+ {
+  "COLUNA": "C01AQ04",
+  "CHECK DÍGITO": "4F313A44603D3F"
+ },
+ {
+  "COLUNA": "C01AQ05",
+  "CHECK DÍGITO": "4F313A44603D40"
+ },
+ {
+  "COLUNA": "C01AQ06",
+  "CHECK DÍGITO": "4F313A44603D41"
+ },
+ {
+  "COLUNA": "C01AQ07",
+  "CHECK DÍGITO": "4F313A44603D42"
+ },
+ {
+  "COLUNA": "C01AQ08",
+  "CHECK DÍGITO": "4F313A44603D43"
+ },
+ {
+  "COLUNA": "C01AQ09",
+  "CHECK DÍGITO": "4F313A44603D44"
+ },
+ {
+  "COLUNA": "C01AQ10",
+  "CHECK DÍGITO": "4F313A44603E3B"
+ },
+ {
+  "COLUNA": "C01AQ11",
+  "CHECK DÍGITO": "4F313A44603E3C"
+ },
+ {
+  "COLUNA": "C01AQ12",
+  "CHECK DÍGITO": "4F313A44603E3D"
+ },
+ {
+  "COLUNA": "C01AQ13",
+  "CHECK DÍGITO": "4F313A44603E3E"
+ },
+ {
+  "COLUNA": "C01AQ14",
+  "CHECK DÍGITO": "4F313A44603E3F"
+ },
+ {
+  "COLUNA": "C01AQ15",
+  "CHECK DÍGITO": "4F313A44603E40"
+ },
+ {
+  "COLUNA": "C01AQ16",
+  "CHECK DÍGITO": "4F313A44603E41"
+ },
+ {
+  "COLUNA": "C01AQ17",
+  "CHECK DÍGITO": "4F313A44603E42"
+ },
+ {
+  "COLUNA": "C01AQ18",
+  "CHECK DÍGITO": "4F313A44603E43"
+ },
+ {
+  "COLUNA": "C01AQ19",
+  "CHECK DÍGITO": "4F313A44603E44"
+ },
+ {
+  "COLUNA": "C01AQ20",
+  "CHECK DÍGITO": "4F313A44603F3B"
+ },
+ {
+  "COLUNA": "C01AQ21",
+  "CHECK DÍGITO": "4F313A44603F3C"
+ },
+ {
+  "COLUNA": "C01AQ22",
+  "CHECK DÍGITO": "4F313A44603F3D"
+ },
+ {
+  "COLUNA": "C01AQ23",
+  "CHECK DÍGITO": "4F313A44603F3E"
+ },
+ {
+  "COLUNA": "C01AQ24",
+  "CHECK DÍGITO": "4F313A44603F3F"
+ },
+ {
+  "COLUNA": "C01AQ25",
+  "CHECK DÍGITO": "4F313A44603F40"
+ },
+ {
+  "COLUNA": "C01AQ26",
+  "CHECK DÍGITO": "4F313A44603F41"
+ },
+ {
+  "COLUNA": "C01AQ27",
+  "CHECK DÍGITO": "4F313A44603F42"
+ },
+ {
+  "COLUNA": "C01AQ28",
+  "CHECK DÍGITO": "4F313A44603F43"
+ },
+ {
+  "COLUNA": "C01AQ29",
+  "CHECK DÍGITO": "4F313A44603F44"
+ },
+ {
+  "COLUNA": "C01AQ30",
+  "CHECK DÍGITO": "4F313A4460403B"
+ },
+ {
+  "COLUNA": "C01AQ31",
+  "CHECK DÍGITO": "4F313A4460403C"
+ },
+ {
+  "COLUNA": "C01AQ32",
+  "CHECK DÍGITO": "4F313A4460403D"
+ },
+ {
+  "COLUNA": "C01AQ33",
+  "CHECK DÍGITO": "4F313A4460403E"
+ },
+ {
+  "COLUNA": "C01AQ34",
+  "CHECK DÍGITO": "4F313A4460403F"
+ },
+ {
+  "COLUNA": "C01BQ01",
+  "CHECK DÍGITO": "4F313A45603D3C"
+ },
+ {
+  "COLUNA": "C01BQ02",
+  "CHECK DÍGITO": "4F313A45603D3D"
+ },
+ {
+  "COLUNA": "C01BQ03",
+  "CHECK DÍGITO": "4F313A45603D3E"
+ },
+ {
+  "COLUNA": "C01BQ04",
+  "CHECK DÍGITO": "4F313A45603D3F"
+ },
+ {
+  "COLUNA": "C01BQ05",
+  "CHECK DÍGITO": "4F313A45603D40"
+ },
+ {
+  "COLUNA": "C01BQ06",
+  "CHECK DÍGITO": "4F313A45603D41"
+ },
+ {
+  "COLUNA": "C01BQ07",
+  "CHECK DÍGITO": "4F313A45603D42"
+ },
+ {
+  "COLUNA": "C01BQ08",
+  "CHECK DÍGITO": "4F313A45603D43"
+ },
+ {
+  "COLUNA": "C01BQ09",
+  "CHECK DÍGITO": "4F313A45603D44"
+ },
+ {
+  "COLUNA": "C01BQ10",
+  "CHECK DÍGITO": "4F313A45603E3B"
+ },
+ {
+  "COLUNA": "C01BQ11",
+  "CHECK DÍGITO": "4F313A45603E3C"
+ },
+ {
+  "COLUNA": "C01BQ12",
+  "CHECK DÍGITO": "4F313A45603E3D"
+ },
+ {
+  "COLUNA": "C01BQ13",
+  "CHECK DÍGITO": "4F313A45603E3E"
+ },
+ {
+  "COLUNA": "C01BQ14",
+  "CHECK DÍGITO": "4F313A45603E3F"
+ },
+ {
+  "COLUNA": "C01BQ15",
+  "CHECK DÍGITO": "4F313A45603E40"
+ },
+ {
+  "COLUNA": "C01BQ16",
+  "CHECK DÍGITO": "4F313A45603E41"
+ },
+ {
+  "COLUNA": "C01BQ17",
+  "CHECK DÍGITO": "4F313A45603E42"
+ },
+ {
+  "COLUNA": "C01BQ18",
+  "CHECK DÍGITO": "4F313A45603E43"
+ },
+ {
+  "COLUNA": "C01BQ19",
+  "CHECK DÍGITO": "4F313A45603E44"
+ },
+ {
+  "COLUNA": "C01BQ20",
+  "CHECK DÍGITO": "4F313A45603F3B"
+ },
+ {
+  "COLUNA": "C01BQ21",
+  "CHECK DÍGITO": "4F313A45603F3C"
+ },
+ {
+  "COLUNA": "C01BQ22",
+  "CHECK DÍGITO": "4F313A45603F3D"
+ },
+ {
+  "COLUNA": "C01BQ23",
+  "CHECK DÍGITO": "4F313A45603F3E"
+ },
+ {
+  "COLUNA": "C01BQ24",
+  "CHECK DÍGITO": "4F313A45603F3F"
+ },
+ {
+  "COLUNA": "C01BQ25",
+  "CHECK DÍGITO": "4F313A45603F40"
+ },
+ {
+  "COLUNA": "C01BQ26",
+  "CHECK DÍGITO": "4F313A45603F41"
+ },
+ {
+  "COLUNA": "C01BQ27",
+  "CHECK DÍGITO": "4F313A45603F42"
+ },
+ {
+  "COLUNA": "C01BQ28",
+  "CHECK DÍGITO": "4F313A45603F43"
+ },
+ {
+  "COLUNA": "C01BQ29",
+  "CHECK DÍGITO": "4F313A45603F44"
+ },
+ {
+  "COLUNA": "C01BQ30",
+  "CHECK DÍGITO": "4F313A4560403B"
+ },
+ {
+  "COLUNA": "C01BQ31",
+  "CHECK DÍGITO": "4F313A4560403C"
+ },
+ {
+  "COLUNA": "C01BQ32",
+  "CHECK DÍGITO": "4F313A4560403D"
+ },
+ {
+  "COLUNA": "C01BQ33",
+  "CHECK DÍGITO": "4F313A4560403E"
+ },
+ {
+  "COLUNA": "C01BQ34",
+  "CHECK DÍGITO": "4F313A4560403F"
+ },
+ {
+  "COLUNA": "C01BQ35",
+  "CHECK DÍGITO": "4F313A45604040"
+ },
+ {
+  "COLUNA": "C01BQ36",
+  "CHECK DÍGITO": "4F313A45604041"
+ },
+ {
+  "COLUNA": "C01BQ37",
+  "CHECK DÍGITO": "4F313A45604042"
+ },
+ {
+  "COLUNA": "C01BQ38",
+  "CHECK DÍGITO": "4F313A45604043"
+ },
+ {
+  "COLUNA": "C01CQ01",
+  "CHECK DÍGITO": "4F313A46603D3C"
+ },
+ {
+  "COLUNA": "C01CQ02",
+  "CHECK DÍGITO": "4F313A46603D3D"
+ },
+ {
+  "COLUNA": "C01CQ03",
+  "CHECK DÍGITO": "4F313A46603D3E"
+ },
+ {
+  "COLUNA": "C01CQ04",
+  "CHECK DÍGITO": "4F313A46603D3F"
+ },
+ {
+  "COLUNA": "C01CQ05",
+  "CHECK DÍGITO": "4F313A46603D40"
+ },
+ {
+  "COLUNA": "C01CQ06",
+  "CHECK DÍGITO": "4F313A46603D41"
+ },
+ {
+  "COLUNA": "C01CQ07",
+  "CHECK DÍGITO": "4F313A46603D42"
+ },
+ {
+  "COLUNA": "C01CQ08",
+  "CHECK DÍGITO": "4F313A46603D43"
+ },
+ {
+  "COLUNA": "C01CQ09",
+  "CHECK DÍGITO": "4F313A46603D44"
+ },
+ {
+  "COLUNA": "C01CQ10",
+  "CHECK DÍGITO": "4F313A46603E3B"
+ },
+ {
+  "COLUNA": "C01CQ11",
+  "CHECK DÍGITO": "4F313A46603E3C"
+ },
+ {
+  "COLUNA": "C01CQ12",
+  "CHECK DÍGITO": "4F313A46603E3D"
+ },
+ {
+  "COLUNA": "C01CQ13",
+  "CHECK DÍGITO": "4F313A46603E3E"
+ },
+ {
+  "COLUNA": "C01CQ14",
+  "CHECK DÍGITO": "4F313A46603E3F"
+ },
+ {
+  "COLUNA": "C01CQ15",
+  "CHECK DÍGITO": "4F313A46603E40"
+ },
+ {
+  "COLUNA": "C01CQ16",
+  "CHECK DÍGITO": "4F313A46603E41"
+ },
+ {
+  "COLUNA": "C01CQ17",
+  "CHECK DÍGITO": "4F313A46603E42"
+ },
+ {
+  "COLUNA": "C01CQ18",
+  "CHECK DÍGITO": "4F313A46603E43"
+ },
+ {
+  "COLUNA": "C01CQ19",
+  "CHECK DÍGITO": "4F313A46603E44"
+ },
+ {
+  "COLUNA": "C01CQ20",
+  "CHECK DÍGITO": "4F313A46603F3B"
+ },
+ {
+  "COLUNA": "C01CQ21",
+  "CHECK DÍGITO": "4F313A46603F3C"
+ },
+ {
+  "COLUNA": "C01CQ22",
+  "CHECK DÍGITO": "4F313A46603F3D"
+ },
+ {
+  "COLUNA": "C01CQ23",
+  "CHECK DÍGITO": "4F313A46603F3E"
+ },
+ {
+  "COLUNA": "C01CQ24",
+  "CHECK DÍGITO": "4F313A46603F3F"
+ },
+ {
+  "COLUNA": "C01CQ25",
+  "CHECK DÍGITO": "4F313A46603F40"
+ },
+ {
+  "COLUNA": "C01CQ26",
+  "CHECK DÍGITO": "4F313A46603F41"
+ },
+ {
+  "COLUNA": "C01CQ27",
+  "CHECK DÍGITO": "4F313A46603F42"
+ },
+ {
+  "COLUNA": "C01CQ28",
+  "CHECK DÍGITO": "4F313A46603F43"
+ },
+ {
+  "COLUNA": "C01CQ29",
+  "CHECK DÍGITO": "4F313A46603F44"
+ },
+ {
+  "COLUNA": "C01CQ30",
+  "CHECK DÍGITO": "4F313A4660403B"
+ },
+ {
+  "COLUNA": "C01CQ31",
+  "CHECK DÍGITO": "4F313A4660403C"
+ },
+ {
+  "COLUNA": "C01CQ32",
+  "CHECK DÍGITO": "4F313A4660403D"
+ },
+ {
+  "COLUNA": "C01CQ33",
+  "CHECK DÍGITO": "4F313A4660403E"
+ },
+ {
+  "COLUNA": "C01CQ34",
+  "CHECK DÍGITO": "4F313A4660403F"
+ },
+ {
+  "COLUNA": "C01CQ35",
+  "CHECK DÍGITO": "4F313A46604040"
+ },
+ {
+  "COLUNA": "C01CQ36",
+  "CHECK DÍGITO": "4F313A46604041"
+ },
+ {
+  "COLUNA": "C01CQ37",
+  "CHECK DÍGITO": "4F313A46604042"
+ },
+ {
+  "COLUNA": "C01CQ38",
+  "CHECK DÍGITO": "4F313A46604043"
+ },
+ {
+  "COLUNA": "C01CQ39",
+  "CHECK DÍGITO": "4F313A46604044"
+ },
+ {
+  "COLUNA": "C01CQ40",
+  "CHECK DÍGITO": "4F313A4660413B"
+ },
+ {
+  "COLUNA": "C01CQ41",
+  "CHECK DÍGITO": "4F313A4660413C"
+ },
+ {
+  "COLUNA": "C01CQ42",
+  "CHECK DÍGITO": "4F313A4660413D"
+ },
+ {
+  "COLUNA": "C01CQ43",
+  "CHECK DÍGITO": "4F313A4660413E"
+ },
+ {
+  "COLUNA": "C01CQ44",
+  "CHECK DÍGITO": "4F313A4660413F"
+ },
+ {
+  "COLUNA": "C01CQ45",
+  "CHECK DÍGITO": "4F313A46604140"
+ },
+ {
+  "COLUNA": "C01CQ46",
+  "CHECK DÍGITO": "4F313A46604141"
+ },
+ {
+  "COLUNA": "C01CQ47",
+  "CHECK DÍGITO": "4F313A46604142"
+ },
+ {
+  "COLUNA": "C01CQ48",
+  "CHECK DÍGITO": "4F313A46604143"
+ },
+ {
+  "COLUNA": "C01CQ49",
+  "CHECK DÍGITO": "4F313A46604144"
+ },
+ {
+  "COLUNA": "C01CQ50",
+  "CHECK DÍGITO": "4F313A4660423B"
+ },
+ {
+  "COLUNA": "C01CQ51",
+  "CHECK DÍGITO": "4F313A4660423C"
+ },
+ {
+  "COLUNA": "C01CQ52",
+  "CHECK DÍGITO": "4F313A4660423D"
+ },
+ {
+  "COLUNA": "C01DQ01",
+  "CHECK DÍGITO": "4F313A47603D3C"
+ },
+ {
+  "COLUNA": "C01DQ02",
+  "CHECK DÍGITO": "4F313A47603D3D"
+ },
+ {
+  "COLUNA": "C01DQ03",
+  "CHECK DÍGITO": "4F313A47603D3E"
+ },
+ {
+  "COLUNA": "C01DQ04",
+  "CHECK DÍGITO": "4F313A47603D3F"
+ },
+ {
+  "COLUNA": "C01DQ05",
+  "CHECK DÍGITO": "4F313A47603D40"
+ },
+ {
+  "COLUNA": "C01DQ06",
+  "CHECK DÍGITO": "4F313A47603D41"
+ },
+ {
+  "COLUNA": "C01DQ07",
+  "CHECK DÍGITO": "4F313A47603D42"
+ },
+ {
+  "COLUNA": "C01DQ08",
+  "CHECK DÍGITO": "4F313A47603D43"
+ },
+ {
+  "COLUNA": "C01DQ09",
+  "CHECK DÍGITO": "4F313A47603D44"
+ },
+ {
+  "COLUNA": "C01DQ10",
+  "CHECK DÍGITO": "4F313A47603E3B"
+ },
+ {
+  "COLUNA": "C01DQ11",
+  "CHECK DÍGITO": "4F313A47603E3C"
+ },
+ {
+  "COLUNA": "C01DQ12",
+  "CHECK DÍGITO": "4F313A47603E3D"
+ },
+ {
+  "COLUNA": "C01DQ13",
+  "CHECK DÍGITO": "4F313A47603E3E"
+ },
+ {
+  "COLUNA": "C01DQ14",
+  "CHECK DÍGITO": "4F313A47603E3F"
+ },
+ {
+  "COLUNA": "C01DQ15",
+  "CHECK DÍGITO": "4F313A47603E40"
+ },
+ {
+  "COLUNA": "C01DQ16",
+  "CHECK DÍGITO": "4F313A47603E41"
+ },
+ {
+  "COLUNA": "C01DQ17",
+  "CHECK DÍGITO": "4F313A47603E42"
+ },
+ {
+  "COLUNA": "C01DQ18",
+  "CHECK DÍGITO": "4F313A47603E43"
+ },
+ {
+  "COLUNA": "C01DQ19",
+  "CHECK DÍGITO": "4F313A47603E44"
+ },
+ {
+  "COLUNA": "C01DQ20",
+  "CHECK DÍGITO": "4F313A47603F3B"
+ },
+ {
+  "COLUNA": "C01DQ21",
+  "CHECK DÍGITO": "4F313A47603F3C"
+ },
+ {
+  "COLUNA": "C01DQ22",
+  "CHECK DÍGITO": "4F313A47603F3D"
+ },
+ {
+  "COLUNA": "C01DQ23",
+  "CHECK DÍGITO": "4F313A47603F3E"
+ },
+ {
+  "COLUNA": "C01DQ24",
+  "CHECK DÍGITO": "4F313A47603F3F"
+ },
+ {
+  "COLUNA": "C01DQ25",
+  "CHECK DÍGITO": "4F313A47603F40"
+ },
+ {
+  "COLUNA": "C01DQ26",
+  "CHECK DÍGITO": "4F313A47603F41"
+ },
+ {
+  "COLUNA": "C01DQ27",
+  "CHECK DÍGITO": "4F313A47603F42"
+ },
+ {
+  "COLUNA": "C01DQ28",
+  "CHECK DÍGITO": "4F313A47603F43"
+ },
+ {
+  "COLUNA": "C01DQ29",
+  "CHECK DÍGITO": "4F313A47603F44"
+ },
+ {
+  "COLUNA": "C01DQ30",
+  "CHECK DÍGITO": "4F313A4760403B"
+ },
+ {
+  "COLUNA": "C01DQ31",
+  "CHECK DÍGITO": "4F313A4760403C"
+ },
+ {
+  "COLUNA": "C01DQ32",
+  "CHECK DÍGITO": "4F313A4760403D"
+ },
+ {
+  "COLUNA": "C01DQ33",
+  "CHECK DÍGITO": "4F313A4760403E"
+ },
+ {
+  "COLUNA": "C01DQ34",
+  "CHECK DÍGITO": "4F313A4760403F"
+ },
+ {
+  "COLUNA": "C02AQ01",
+  "CHECK DÍGITO": "4F313B44603D3C"
+ },
+ {
+  "COLUNA": "C02AQ02",
+  "CHECK DÍGITO": "4F313B44603D3D"
+ },
+ {
+  "COLUNA": "C02AQ03",
+  "CHECK DÍGITO": "4F313B44603D3E"
+ },
+ {
+  "COLUNA": "C02AQ04",
+  "CHECK DÍGITO": "4F313B44603D3F"
+ },
+ {
+  "COLUNA": "C02AQ05",
+  "CHECK DÍGITO": "4F313B44603D40"
+ },
+ {
+  "COLUNA": "C02AQ06",
+  "CHECK DÍGITO": "4F313B44603D41"
+ },
+ {
+  "COLUNA": "C02AQ07",
+  "CHECK DÍGITO": "4F313B44603D42"
+ },
+ {
+  "COLUNA": "C02AQ08",
+  "CHECK DÍGITO": "4F313B44603D43"
+ },
+ {
+  "COLUNA": "C02AQ09",
+  "CHECK DÍGITO": "4F313B44603D44"
+ },
+ {
+  "COLUNA": "C02AQ10",
+  "CHECK DÍGITO": "4F313B44603E3B"
+ },
+ {
+  "COLUNA": "C02AQ11",
+  "CHECK DÍGITO": "4F313B44603E3C"
+ },
+ {
+  "COLUNA": "C02AQ12",
+  "CHECK DÍGITO": "4F313B44603E3D"
+ },
+ {
+  "COLUNA": "C02AQ13",
+  "CHECK DÍGITO": "4F313B44603E3E"
+ },
+ {
+  "COLUNA": "C02AQ14",
+  "CHECK DÍGITO": "4F313B44603E3F"
+ },
+ {
+  "COLUNA": "C02AQ15",
+  "CHECK DÍGITO": "4F313B44603E40"
+ },
+ {
+  "COLUNA": "C02AQ16",
+  "CHECK DÍGITO": "4F313B44603E41"
+ },
+ {
+  "COLUNA": "C02AQ17",
+  "CHECK DÍGITO": "4F313B44603E42"
+ },
+ {
+  "COLUNA": "C02AQ18",
+  "CHECK DÍGITO": "4F313B44603E43"
+ },
+ {
+  "COLUNA": "C02AQ19",
+  "CHECK DÍGITO": "4F313B44603E44"
+ },
+ {
+  "COLUNA": "C02AQ20",
+  "CHECK DÍGITO": "4F313B44603F3B"
+ },
+ {
+  "COLUNA": "C02AQ21",
+  "CHECK DÍGITO": "4F313B44603F3C"
+ },
+ {
+  "COLUNA": "C02AQ22",
+  "CHECK DÍGITO": "4F313B44603F3D"
+ },
+ {
+  "COLUNA": "C02AQ23",
+  "CHECK DÍGITO": "4F313B44603F3E"
+ },
+ {
+  "COLUNA": "C02AQ24",
+  "CHECK DÍGITO": "4F313B44603F3F"
+ },
+ {
+  "COLUNA": "C02AQ25",
+  "CHECK DÍGITO": "4F313B44603F40"
+ },
+ {
+  "COLUNA": "C02AQ26",
+  "CHECK DÍGITO": "4F313B44603F41"
+ },
+ {
+  "COLUNA": "C02AQ27",
+  "CHECK DÍGITO": "4F313B44603F42"
+ },
+ {
+  "COLUNA": "C02AQ28",
+  "CHECK DÍGITO": "4F313B44603F43"
+ },
+ {
+  "COLUNA": "C02AQ29",
+  "CHECK DÍGITO": "4F313B44603F44"
+ },
+ {
+  "COLUNA": "C02AQ30",
+  "CHECK DÍGITO": "4F313B4460403B"
+ },
+ {
+  "COLUNA": "C02AQ31",
+  "CHECK DÍGITO": "4F313B4460403C"
+ },
+ {
+  "COLUNA": "C02AQ32",
+  "CHECK DÍGITO": "4F313B4460403D"
+ },
+ {
+  "COLUNA": "C02BQ01",
+  "CHECK DÍGITO": "4F313B45603D3C"
+ },
+ {
+  "COLUNA": "C02BQ02",
+  "CHECK DÍGITO": "4F313B45603D3D"
+ },
+ {
+  "COLUNA": "C02BQ03",
+  "CHECK DÍGITO": "4F313B45603D3E"
+ },
+ {
+  "COLUNA": "C02BQ04",
+  "CHECK DÍGITO": "4F313B45603D3F"
+ },
+ {
+  "COLUNA": "C02BQ05",
+  "CHECK DÍGITO": "4F313B45603D40"
+ },
+ {
+  "COLUNA": "C02BQ06",
+  "CHECK DÍGITO": "4F313B45603D41"
+ },
+ {
+  "COLUNA": "C02BQ07",
+  "CHECK DÍGITO": "4F313B45603D42"
+ },
+ {
+  "COLUNA": "C02BQ08",
+  "CHECK DÍGITO": "4F313B45603D43"
+ },
+ {
+  "COLUNA": "C02BQ09",
+  "CHECK DÍGITO": "4F313B45603D44"
+ },
+ {
+  "COLUNA": "C02BQ10",
+  "CHECK DÍGITO": "4F313B45603E3B"
+ },
+ {
+  "COLUNA": "C02BQ11",
+  "CHECK DÍGITO": "4F313B45603E3C"
+ },
+ {
+  "COLUNA": "C02BQ12",
+  "CHECK DÍGITO": "4F313B45603E3D"
+ },
+ {
+  "COLUNA": "C02BQ13",
+  "CHECK DÍGITO": "4F313B45603E3E"
+ },
+ {
+  "COLUNA": "C02BQ14",
+  "CHECK DÍGITO": "4F313B45603E3F"
+ },
+ {
+  "COLUNA": "C02BQ15",
+  "CHECK DÍGITO": "4F313B45603E40"
+ },
+ {
+  "COLUNA": "C02BQ16",
+  "CHECK DÍGITO": "4F313B45603E41"
+ },
+ {
+  "COLUNA": "C02BQ17",
+  "CHECK DÍGITO": "4F313B45603E42"
+ },
+ {
+  "COLUNA": "C02BQ18",
+  "CHECK DÍGITO": "4F313B45603E43"
+ },
+ {
+  "COLUNA": "C02BQ19",
+  "CHECK DÍGITO": "4F313B45603E44"
+ },
+ {
+  "COLUNA": "C02BQ20",
+  "CHECK DÍGITO": "4F313B45603F3B"
+ },
+ {
+  "COLUNA": "C02BQ21",
+  "CHECK DÍGITO": "4F313B45603F3C"
+ },
+ {
+  "COLUNA": "C02BQ22",
+  "CHECK DÍGITO": "4F313B45603F3D"
+ },
+ {
+  "COLUNA": "C02BQ23",
+  "CHECK DÍGITO": "4F313B45603F3E"
+ },
+ {
+  "COLUNA": "C02BQ24",
+  "CHECK DÍGITO": "4F313B45603F3F"
+ },
+ {
+  "COLUNA": "C02BQ25",
+  "CHECK DÍGITO": "4F313B45603F40"
+ },
+ {
+  "COLUNA": "C02BQ26",
+  "CHECK DÍGITO": "4F313B45603F41"
+ },
+ {
+  "COLUNA": "C02BQ27",
+  "CHECK DÍGITO": "4F313B45603F42"
+ },
+ {
+  "COLUNA": "C02BQ28",
+  "CHECK DÍGITO": "4F313B45603F43"
+ },
+ {
+  "COLUNA": "C02BQ29",
+  "CHECK DÍGITO": "4F313B45603F44"
+ },
+ {
+  "COLUNA": "C02BQ30",
+  "CHECK DÍGITO": "4F313B4560403B"
+ },
+ {
+  "COLUNA": "C02BQ31",
+  "CHECK DÍGITO": "4F313B4560403C"
+ },
+ {
+  "COLUNA": "C02BQ32",
+  "CHECK DÍGITO": "4F313B4560403D"
+ },
+ {
+  "COLUNA": "C02BQ33",
+  "CHECK DÍGITO": "4F313B4560403E"
+ },
+ {
+  "COLUNA": "C02BQ34",
+  "CHECK DÍGITO": "4F313B4560403F"
+ },
+ {
+  "COLUNA": "C02BQ35",
+  "CHECK DÍGITO": "4F313B45604040"
+ },
+ {
+  "COLUNA": "C02BQ36",
+  "CHECK DÍGITO": "4F313B45604041"
+ },
+ {
+  "COLUNA": "C02BQ37",
+  "CHECK DÍGITO": "4F313B45604042"
+ },
+ {
+  "COLUNA": "C02BQ38",
+  "CHECK DÍGITO": "4F313B45604043"
+ },
+ {
+  "COLUNA": "C02CQ01",
+  "CHECK DÍGITO": "4F313B46603D3C"
+ },
+ {
+  "COLUNA": "C02CQ02",
+  "CHECK DÍGITO": "4F313B46603D3D"
+ },
+ {
+  "COLUNA": "C02CQ03",
+  "CHECK DÍGITO": "4F313B46603D3E"
+ },
+ {
+  "COLUNA": "C02CQ04",
+  "CHECK DÍGITO": "4F313B46603D3F"
+ },
+ {
+  "COLUNA": "C02CQ05",
+  "CHECK DÍGITO": "4F313B46603D40"
+ },
+ {
+  "COLUNA": "C02CQ06",
+  "CHECK DÍGITO": "4F313B46603D41"
+ },
+ {
+  "COLUNA": "C02CQ07",
+  "CHECK DÍGITO": "4F313B46603D42"
+ },
+ {
+  "COLUNA": "C02CQ08",
+  "CHECK DÍGITO": "4F313B46603D43"
+ },
+ {
+  "COLUNA": "C02CQ09",
+  "CHECK DÍGITO": "4F313B46603D44"
+ },
+ {
+  "COLUNA": "C02CQ10",
+  "CHECK DÍGITO": "4F313B46603E3B"
+ },
+ {
+  "COLUNA": "C02CQ11",
+  "CHECK DÍGITO": "4F313B46603E3C"
+ },
+ {
+  "COLUNA": "C02CQ12",
+  "CHECK DÍGITO": "4F313B46603E3D"
+ },
+ {
+  "COLUNA": "C02CQ13",
+  "CHECK DÍGITO": "4F313B46603E3E"
+ },
+ {
+  "COLUNA": "C02CQ14",
+  "CHECK DÍGITO": "4F313B46603E3F"
+ },
+ {
+  "COLUNA": "C02CQ15",
+  "CHECK DÍGITO": "4F313B46603E40"
+ },
+ {
+  "COLUNA": "C02CQ16",
+  "CHECK DÍGITO": "4F313B46603E41"
+ },
+ {
+  "COLUNA": "C02CQ17",
+  "CHECK DÍGITO": "4F313B46603E42"
+ },
+ {
+  "COLUNA": "C02CQ18",
+  "CHECK DÍGITO": "4F313B46603E43"
+ },
+ {
+  "COLUNA": "C02CQ19",
+  "CHECK DÍGITO": "4F313B46603E44"
+ },
+ {
+  "COLUNA": "C02CQ20",
+  "CHECK DÍGITO": "4F313B46603F3B"
+ },
+ {
+  "COLUNA": "C02CQ21",
+  "CHECK DÍGITO": "4F313B46603F3C"
+ },
+ {
+  "COLUNA": "C02CQ22",
+  "CHECK DÍGITO": "4F313B46603F3D"
+ },
+ {
+  "COLUNA": "C02CQ23",
+  "CHECK DÍGITO": "4F313B46603F3E"
+ },
+ {
+  "COLUNA": "C02CQ24",
+  "CHECK DÍGITO": "4F313B46603F3F"
+ },
+ {
+  "COLUNA": "C02CQ25",
+  "CHECK DÍGITO": "4F313B46603F40"
+ },
+ {
+  "COLUNA": "C02CQ26",
+  "CHECK DÍGITO": "4F313B46603F41"
+ },
+ {
+  "COLUNA": "C02CQ27",
+  "CHECK DÍGITO": "4F313B46603F42"
+ },
+ {
+  "COLUNA": "C02CQ28",
+  "CHECK DÍGITO": "4F313B46603F43"
+ },
+ {
+  "COLUNA": "C02CQ29",
+  "CHECK DÍGITO": "4F313B46603F44"
+ },
+ {
+  "COLUNA": "C02CQ30",
+  "CHECK DÍGITO": "4F313B4660403B"
+ },
+ {
+  "COLUNA": "C02CQ31",
+  "CHECK DÍGITO": "4F313B4660403C"
+ },
+ {
+  "COLUNA": "C02CQ32",
+  "CHECK DÍGITO": "4F313B4660403D"
+ },
+ {
+  "COLUNA": "C02CQ33",
+  "CHECK DÍGITO": "4F313B4660403E"
+ },
+ {
+  "COLUNA": "C02CQ34",
+  "CHECK DÍGITO": "4F313B4660403F"
+ },
+ {
+  "COLUNA": "C02CQ35",
+  "CHECK DÍGITO": "4F313B46604040"
+ },
+ {
+  "COLUNA": "C02CQ36",
+  "CHECK DÍGITO": "4F313B46604041"
+ },
+ {
+  "COLUNA": "C02CQ37",
+  "CHECK DÍGITO": "4F313B46604042"
+ },
+ {
+  "COLUNA": "C02CQ38",
+  "CHECK DÍGITO": "4F313B46604043"
+ },
+ {
+  "COLUNA": "C02DQ01",
+  "CHECK DÍGITO": "4F313B47603D3C"
+ },
+ {
+  "COLUNA": "C02DQ02",
+  "CHECK DÍGITO": "4F313B47603D3D"
+ },
+ {
+  "COLUNA": "C02DQ03",
+  "CHECK DÍGITO": "4F313B47603D3E"
+ },
+ {
+  "COLUNA": "C02DQ04",
+  "CHECK DÍGITO": "4F313B47603D3F"
+ },
+ {
+  "COLUNA": "C02DQ05",
+  "CHECK DÍGITO": "4F313B47603D40"
+ },
+ {
+  "COLUNA": "C02DQ06",
+  "CHECK DÍGITO": "4F313B47603D41"
+ },
+ {
+  "COLUNA": "C02DQ07",
+  "CHECK DÍGITO": "4F313B47603D42"
+ },
+ {
+  "COLUNA": "C02DQ08",
+  "CHECK DÍGITO": "4F313B47603D43"
+ },
+ {
+  "COLUNA": "C02DQ09",
+  "CHECK DÍGITO": "4F313B47603D44"
+ },
+ {
+  "COLUNA": "C02DQ10",
+  "CHECK DÍGITO": "4F313B47603E3B"
+ },
+ {
+  "COLUNA": "C02DQ11",
+  "CHECK DÍGITO": "4F313B47603E3C"
+ },
+ {
+  "COLUNA": "C02DQ12",
+  "CHECK DÍGITO": "4F313B47603E3D"
+ },
+ {
+  "COLUNA": "C02DQ13",
+  "CHECK DÍGITO": "4F313B47603E3E"
+ },
+ {
+  "COLUNA": "C02DQ14",
+  "CHECK DÍGITO": "4F313B47603E3F"
+ },
+ {
+  "COLUNA": "C02DQ15",
+  "CHECK DÍGITO": "4F313B47603E40"
+ },
+ {
+  "COLUNA": "C02DQ16",
+  "CHECK DÍGITO": "4F313B47603E41"
+ },
+ {
+  "COLUNA": "C02DQ17",
+  "CHECK DÍGITO": "4F313B47603E42"
+ },
+ {
+  "COLUNA": "C02DQ18",
+  "CHECK DÍGITO": "4F313B47603E43"
+ },
+ {
+  "COLUNA": "C02DQ19",
+  "CHECK DÍGITO": "4F313B47603E44"
+ },
+ {
+  "COLUNA": "C02DQ20",
+  "CHECK DÍGITO": "4F313B47603F3B"
+ },
+ {
+  "COLUNA": "C02DQ21",
+  "CHECK DÍGITO": "4F313B47603F3C"
+ },
+ {
+  "COLUNA": "C02DQ22",
+  "CHECK DÍGITO": "4F313B47603F3D"
+ },
+ {
+  "COLUNA": "C02DQ23",
+  "CHECK DÍGITO": "4F313B47603F3E"
+ },
+ {
+  "COLUNA": "C02DQ24",
+  "CHECK DÍGITO": "4F313B47603F3F"
+ },
+ {
+  "COLUNA": "C02DQ25",
+  "CHECK DÍGITO": "4F313B47603F40"
+ },
+ {
+  "COLUNA": "C02DQ26",
+  "CHECK DÍGITO": "4F313B47603F41"
+ },
+ {
+  "COLUNA": "C02DQ27",
+  "CHECK DÍGITO": "4F313B47603F42"
+ },
+ {
+  "COLUNA": "C02DQ28",
+  "CHECK DÍGITO": "4F313B47603F43"
+ },
+ {
+  "COLUNA": "C02DQ29",
+  "CHECK DÍGITO": "4F313B47603F44"
+ },
+ {
+  "COLUNA": "C02DQ30",
+  "CHECK DÍGITO": "4F313B4760403B"
+ },
+ {
+  "COLUNA": "C02DQ31",
+  "CHECK DÍGITO": "4F313B4760403C"
+ },
+ {
+  "COLUNA": "C02DQ32",
+  "CHECK DÍGITO": "4F313B4760403D"
+ },
+ {
+  "COLUNA": "C02DQ33",
+  "CHECK DÍGITO": "4F313B4760403E"
+ },
+ {
+  "COLUNA": "C02DQ34",
+  "CHECK DÍGITO": "4F313B4760403F"
+ },
+ {
+  "COLUNA": "C03AQ01",
+  "CHECK DÍGITO": "4F313C44603D3C"
+ },
+ {
+  "COLUNA": "C03AQ02",
+  "CHECK DÍGITO": "4F313C44603D3D"
+ },
+ {
+  "COLUNA": "C03AQ03",
+  "CHECK DÍGITO": "4F313C44603D3E"
+ },
+ {
+  "COLUNA": "C03AQ04",
+  "CHECK DÍGITO": "4F313C44603D3F"
+ },
+ {
+  "COLUNA": "C03AQ05",
+  "CHECK DÍGITO": "4F313C44603D40"
+ },
+ {
+  "COLUNA": "C03AQ06",
+  "CHECK DÍGITO": "4F313C44603D41"
+ },
+ {
+  "COLUNA": "C03AQ07",
+  "CHECK DÍGITO": "4F313C44603D42"
+ },
+ {
+  "COLUNA": "C03AQ08",
+  "CHECK DÍGITO": "4F313C44603D43"
+ },
+ {
+  "COLUNA": "C03AQ09",
+  "CHECK DÍGITO": "4F313C44603D44"
+ },
+ {
+  "COLUNA": "C03AQ10",
+  "CHECK DÍGITO": "4F313C44603E3B"
+ },
+ {
+  "COLUNA": "C03AQ11",
+  "CHECK DÍGITO": "4F313C44603E3C"
+ },
+ {
+  "COLUNA": "C03AQ12",
+  "CHECK DÍGITO": "4F313C44603E3D"
+ },
+ {
+  "COLUNA": "C03AQ13",
+  "CHECK DÍGITO": "4F313C44603E3E"
+ },
+ {
+  "COLUNA": "C03AQ14",
+  "CHECK DÍGITO": "4F313C44603E3F"
+ },
+ {
+  "COLUNA": "C03AQ15",
+  "CHECK DÍGITO": "4F313C44603E40"
+ },
+ {
+  "COLUNA": "C03AQ16",
+  "CHECK DÍGITO": "4F313C44603E41"
+ },
+ {
+  "COLUNA": "C03AQ17",
+  "CHECK DÍGITO": "4F313C44603E42"
+ },
+ {
+  "COLUNA": "C03AQ18",
+  "CHECK DÍGITO": "4F313C44603E43"
+ },
+ {
+  "COLUNA": "C03AQ19",
+  "CHECK DÍGITO": "4F313C44603E44"
+ },
+ {
+  "COLUNA": "C03AQ20",
+  "CHECK DÍGITO": "4F313C44603F3B"
+ },
+ {
+  "COLUNA": "C03AQ21",
+  "CHECK DÍGITO": "4F313C44603F3C"
+ },
+ {
+  "COLUNA": "C03AQ22",
+  "CHECK DÍGITO": "4F313C44603F3D"
+ },
+ {
+  "COLUNA": "C03AQ23",
+  "CHECK DÍGITO": "4F313C44603F3E"
+ },
+ {
+  "COLUNA": "C03AQ24",
+  "CHECK DÍGITO": "4F313C44603F3F"
+ },
+ {
+  "COLUNA": "C03AQ25",
+  "CHECK DÍGITO": "4F313C44603F40"
+ },
+ {
+  "COLUNA": "C03AQ26",
+  "CHECK DÍGITO": "4F313C44603F41"
+ },
+ {
+  "COLUNA": "C03AQ27",
+  "CHECK DÍGITO": "4F313C44603F42"
+ },
+ {
+  "COLUNA": "C03AQ28",
+  "CHECK DÍGITO": "4F313C44603F43"
+ },
+ {
+  "COLUNA": "C03AQ29",
+  "CHECK DÍGITO": "4F313C44603F44"
+ },
+ {
+  "COLUNA": "C03AQ30",
+  "CHECK DÍGITO": "4F313C4460403B"
+ },
+ {
+  "COLUNA": "C03AQ31",
+  "CHECK DÍGITO": "4F313C4460403C"
+ },
+ {
+  "COLUNA": "C03AQ32",
+  "CHECK DÍGITO": "4F313C4460403D"
+ },
+ {
+  "COLUNA": "C03BQ01",
+  "CHECK DÍGITO": "4F313C45603D3C"
+ },
+ {
+  "COLUNA": "C03BQ02",
+  "CHECK DÍGITO": "4F313C45603D3D"
+ },
+ {
+  "COLUNA": "C03BQ03",
+  "CHECK DÍGITO": "4F313C45603D3E"
+ },
+ {
+  "COLUNA": "C03BQ04",
+  "CHECK DÍGITO": "4F313C45603D3F"
+ },
+ {
+  "COLUNA": "C03BQ05",
+  "CHECK DÍGITO": "4F313C45603D40"
+ },
+ {
+  "COLUNA": "C03BQ06",
+  "CHECK DÍGITO": "4F313C45603D41"
+ },
+ {
+  "COLUNA": "C03BQ07",
+  "CHECK DÍGITO": "4F313C45603D42"
+ },
+ {
+  "COLUNA": "C03BQ08",
+  "CHECK DÍGITO": "4F313C45603D43"
+ },
+ {
+  "COLUNA": "C03BQ09",
+  "CHECK DÍGITO": "4F313C45603D44"
+ },
+ {
+  "COLUNA": "C03BQ10",
+  "CHECK DÍGITO": "4F313C45603E3B"
+ },
+ {
+  "COLUNA": "C03BQ11",
+  "CHECK DÍGITO": "4F313C45603E3C"
+ },
+ {
+  "COLUNA": "C03BQ12",
+  "CHECK DÍGITO": "4F313C45603E3D"
+ },
+ {
+  "COLUNA": "C03BQ13",
+  "CHECK DÍGITO": "4F313C45603E3E"
+ },
+ {
+  "COLUNA": "C03BQ14",
+  "CHECK DÍGITO": "4F313C45603E3F"
+ },
+ {
+  "COLUNA": "C03BQ15",
+  "CHECK DÍGITO": "4F313C45603E40"
+ },
+ {
+  "COLUNA": "C03BQ16",
+  "CHECK DÍGITO": "4F313C45603E41"
+ },
+ {
+  "COLUNA": "C03BQ17",
+  "CHECK DÍGITO": "4F313C45603E42"
+ },
+ {
+  "COLUNA": "C03BQ18",
+  "CHECK DÍGITO": "4F313C45603E43"
+ },
+ {
+  "COLUNA": "C03BQ19",
+  "CHECK DÍGITO": "4F313C45603E44"
+ },
+ {
+  "COLUNA": "C03BQ20",
+  "CHECK DÍGITO": "4F313C45603F3B"
+ },
+ {
+  "COLUNA": "C03BQ21",
+  "CHECK DÍGITO": "4F313C45603F3C"
+ },
+ {
+  "COLUNA": "C03BQ22",
+  "CHECK DÍGITO": "4F313C45603F3D"
+ },
+ {
+  "COLUNA": "C03BQ23",
+  "CHECK DÍGITO": "4F313C45603F3E"
+ },
+ {
+  "COLUNA": "C03BQ24",
+  "CHECK DÍGITO": "4F313C45603F3F"
+ },
+ {
+  "COLUNA": "C03BQ25",
+  "CHECK DÍGITO": "4F313C45603F40"
+ },
+ {
+  "COLUNA": "C03BQ26",
+  "CHECK DÍGITO": "4F313C45603F41"
+ },
+ {
+  "COLUNA": "C03BQ27",
+  "CHECK DÍGITO": "4F313C45603F42"
+ },
+ {
+  "COLUNA": "C03BQ28",
+  "CHECK DÍGITO": "4F313C45603F43"
+ },
+ {
+  "COLUNA": "C03BQ29",
+  "CHECK DÍGITO": "4F313C45603F44"
+ },
+ {
+  "COLUNA": "C03BQ30",
+  "CHECK DÍGITO": "4F313C4560403B"
+ },
+ {
+  "COLUNA": "C03BQ31",
+  "CHECK DÍGITO": "4F313C4560403C"
+ },
+ {
+  "COLUNA": "C03BQ32",
+  "CHECK DÍGITO": "4F313C4560403D"
+ },
+ {
+  "COLUNA": "C03BQ33",
+  "CHECK DÍGITO": "4F313C4560403E"
+ },
+ {
+  "COLUNA": "C03BQ34",
+  "CHECK DÍGITO": "4F313C4560403F"
+ },
+ {
+  "COLUNA": "C03BQ35",
+  "CHECK DÍGITO": "4F313C45604040"
+ },
+ {
+  "COLUNA": "C03BQ36",
+  "CHECK DÍGITO": "4F313C45604041"
+ },
+ {
+  "COLUNA": "C03BQ37",
+  "CHECK DÍGITO": "4F313C45604042"
+ },
+ {
+  "COLUNA": "C03BQ38",
+  "CHECK DÍGITO": "4F313C45604043"
+ },
+ {
+  "COLUNA": "C03CQ01",
+  "CHECK DÍGITO": "4F313C46603D3C"
+ },
+ {
+  "COLUNA": "C03CQ02",
+  "CHECK DÍGITO": "4F313C46603D3D"
+ },
+ {
+  "COLUNA": "C03CQ03",
+  "CHECK DÍGITO": "4F313C46603D3E"
+ },
+ {
+  "COLUNA": "C03CQ04",
+  "CHECK DÍGITO": "4F313C46603D3F"
+ },
+ {
+  "COLUNA": "C03CQ05",
+  "CHECK DÍGITO": "4F313C46603D40"
+ },
+ {
+  "COLUNA": "C03CQ06",
+  "CHECK DÍGITO": "4F313C46603D41"
+ },
+ {
+  "COLUNA": "C03CQ07",
+  "CHECK DÍGITO": "4F313C46603D42"
+ },
+ {
+  "COLUNA": "C03CQ08",
+  "CHECK DÍGITO": "4F313C46603D43"
+ },
+ {
+  "COLUNA": "C03CQ09",
+  "CHECK DÍGITO": "4F313C46603D44"
+ },
+ {
+  "COLUNA": "C03CQ10",
+  "CHECK DÍGITO": "4F313C46603E3B"
+ },
+ {
+  "COLUNA": "C03CQ11",
+  "CHECK DÍGITO": "4F313C46603E3C"
+ },
+ {
+  "COLUNA": "C03CQ12",
+  "CHECK DÍGITO": "4F313C46603E3D"
+ },
+ {
+  "COLUNA": "C03CQ13",
+  "CHECK DÍGITO": "4F313C46603E3E"
+ },
+ {
+  "COLUNA": "C03CQ14",
+  "CHECK DÍGITO": "4F313C46603E3F"
+ },
+ {
+  "COLUNA": "C03CQ15",
+  "CHECK DÍGITO": "4F313C46603E40"
+ },
+ {
+  "COLUNA": "C03CQ16",
+  "CHECK DÍGITO": "4F313C46603E41"
+ },
+ {
+  "COLUNA": "C03CQ17",
+  "CHECK DÍGITO": "4F313C46603E42"
+ },
+ {
+  "COLUNA": "C03CQ18",
+  "CHECK DÍGITO": "4F313C46603E43"
+ },
+ {
+  "COLUNA": "C03CQ19",
+  "CHECK DÍGITO": "4F313C46603E44"
+ },
+ {
+  "COLUNA": "C03CQ20",
+  "CHECK DÍGITO": "4F313C46603F3B"
+ },
+ {
+  "COLUNA": "C03CQ21",
+  "CHECK DÍGITO": "4F313C46603F3C"
+ },
+ {
+  "COLUNA": "C03CQ22",
+  "CHECK DÍGITO": "4F313C46603F3D"
+ },
+ {
+  "COLUNA": "C03CQ23",
+  "CHECK DÍGITO": "4F313C46603F3E"
+ },
+ {
+  "COLUNA": "C03CQ24",
+  "CHECK DÍGITO": "4F313C46603F3F"
+ },
+ {
+  "COLUNA": "C03CQ25",
+  "CHECK DÍGITO": "4F313C46603F40"
+ },
+ {
+  "COLUNA": "C03CQ26",
+  "CHECK DÍGITO": "4F313C46603F41"
+ },
+ {
+  "COLUNA": "C03CQ27",
+  "CHECK DÍGITO": "4F313C46603F42"
+ },
+ {
+  "COLUNA": "C03CQ28",
+  "CHECK DÍGITO": "4F313C46603F43"
+ },
+ {
+  "COLUNA": "C03CQ29",
+  "CHECK DÍGITO": "4F313C46603F44"
+ },
+ {
+  "COLUNA": "C03CQ30",
+  "CHECK DÍGITO": "4F313C4660403B"
+ },
+ {
+  "COLUNA": "C03CQ31",
+  "CHECK DÍGITO": "4F313C4660403C"
+ },
+ {
+  "COLUNA": "C03CQ32",
+  "CHECK DÍGITO": "4F313C4660403D"
+ },
+ {
+  "COLUNA": "C03CQ33",
+  "CHECK DÍGITO": "4F313C4660403E"
+ },
+ {
+  "COLUNA": "C03CQ34",
+  "CHECK DÍGITO": "4F313C4660403F"
+ },
+ {
+  "COLUNA": "C03CQ35",
+  "CHECK DÍGITO": "4F313C46604040"
+ },
+ {
+  "COLUNA": "C03CQ36",
+  "CHECK DÍGITO": "4F313C46604041"
+ },
+ {
+  "COLUNA": "C03CQ37",
+  "CHECK DÍGITO": "4F313C46604042"
+ },
+ {
+  "COLUNA": "C03CQ38",
+  "CHECK DÍGITO": "4F313C46604043"
+ },
+ {
+  "COLUNA": "C03DQ01",
+  "CHECK DÍGITO": "4F313C47603D3C"
+ },
+ {
+  "COLUNA": "C03DQ02",
+  "CHECK DÍGITO": "4F313C47603D3D"
+ },
+ {
+  "COLUNA": "C03DQ03",
+  "CHECK DÍGITO": "4F313C47603D3E"
+ },
+ {
+  "COLUNA": "C03DQ04",
+  "CHECK DÍGITO": "4F313C47603D3F"
+ },
+ {
+  "COLUNA": "C03DQ05",
+  "CHECK DÍGITO": "4F313C47603D40"
+ },
+ {
+  "COLUNA": "C03DQ06",
+  "CHECK DÍGITO": "4F313C47603D41"
+ },
+ {
+  "COLUNA": "C03DQ07",
+  "CHECK DÍGITO": "4F313C47603D42"
+ },
+ {
+  "COLUNA": "C03DQ08",
+  "CHECK DÍGITO": "4F313C47603D43"
+ },
+ {
+  "COLUNA": "C03DQ09",
+  "CHECK DÍGITO": "4F313C47603D44"
+ },
+ {
+  "COLUNA": "C03DQ10",
+  "CHECK DÍGITO": "4F313C47603E3B"
+ },
+ {
+  "COLUNA": "C03DQ11",
+  "CHECK DÍGITO": "4F313C47603E3C"
+ },
+ {
+  "COLUNA": "C03DQ12",
+  "CHECK DÍGITO": "4F313C47603E3D"
+ },
+ {
+  "COLUNA": "C03DQ13",
+  "CHECK DÍGITO": "4F313C47603E3E"
+ },
+ {
+  "COLUNA": "C03DQ14",
+  "CHECK DÍGITO": "4F313C47603E3F"
+ },
+ {
+  "COLUNA": "C03DQ15",
+  "CHECK DÍGITO": "4F313C47603E40"
+ },
+ {
+  "COLUNA": "C03DQ16",
+  "CHECK DÍGITO": "4F313C47603E41"
+ },
+ {
+  "COLUNA": "C03DQ17",
+  "CHECK DÍGITO": "4F313C47603E42"
+ },
+ {
+  "COLUNA": "C03DQ18",
+  "CHECK DÍGITO": "4F313C47603E43"
+ },
+ {
+  "COLUNA": "C03DQ19",
+  "CHECK DÍGITO": "4F313C47603E44"
+ },
+ {
+  "COLUNA": "C03DQ20",
+  "CHECK DÍGITO": "4F313C47603F3B"
+ },
+ {
+  "COLUNA": "C03DQ21",
+  "CHECK DÍGITO": "4F313C47603F3C"
+ },
+ {
+  "COLUNA": "C03DQ22",
+  "CHECK DÍGITO": "4F313C47603F3D"
+ },
+ {
+  "COLUNA": "C03DQ23",
+  "CHECK DÍGITO": "4F313C47603F3E"
+ },
+ {
+  "COLUNA": "C03DQ24",
+  "CHECK DÍGITO": "4F313C47603F3F"
+ },
+ {
+  "COLUNA": "C03DQ25",
+  "CHECK DÍGITO": "4F313C47603F40"
+ },
+ {
+  "COLUNA": "C03DQ26",
+  "CHECK DÍGITO": "4F313C47603F41"
+ },
+ {
+  "COLUNA": "C03DQ27",
+  "CHECK DÍGITO": "4F313C47603F42"
+ },
+ {
+  "COLUNA": "C03DQ28",
+  "CHECK DÍGITO": "4F313C47603F43"
+ },
+ {
+  "COLUNA": "C03DQ29",
+  "CHECK DÍGITO": "4F313C47603F44"
+ },
+ {
+  "COLUNA": "C03DQ30",
+  "CHECK DÍGITO": "4F313C4760403B"
+ },
+ {
+  "COLUNA": "C03DQ31",
+  "CHECK DÍGITO": "4F313C4760403C"
+ },
+ {
+  "COLUNA": "C03DQ32",
+  "CHECK DÍGITO": "4F313C4760403D"
+ },
+ {
+  "COLUNA": "C03DQ33",
+  "CHECK DÍGITO": "4F313C4760403E"
+ },
+ {
+  "COLUNA": "C03DQ34",
+  "CHECK DÍGITO": "4F313C4760403F"
+ },
+ {
+  "COLUNA": "C04AQ01",
+  "CHECK DÍGITO": "4F313D44603D3C"
+ },
+ {
+  "COLUNA": "C04AQ02",
+  "CHECK DÍGITO": "4F313D44603D3D"
+ },
+ {
+  "COLUNA": "C04AQ03",
+  "CHECK DÍGITO": "4F313D44603D3E"
+ },
+ {
+  "COLUNA": "C04AQ04",
+  "CHECK DÍGITO": "4F313D44603D3F"
+ },
+ {
+  "COLUNA": "C04AQ05",
+  "CHECK DÍGITO": "4F313D44603D40"
+ },
+ {
+  "COLUNA": "C04AQ06",
+  "CHECK DÍGITO": "4F313D44603D41"
+ },
+ {
+  "COLUNA": "C04AQ07",
+  "CHECK DÍGITO": "4F313D44603D42"
+ },
+ {
+  "COLUNA": "C04AQ08",
+  "CHECK DÍGITO": "4F313D44603D43"
+ },
+ {
+  "COLUNA": "C04AQ09",
+  "CHECK DÍGITO": "4F313D44603D44"
+ },
+ {
+  "COLUNA": "C04AQ10",
+  "CHECK DÍGITO": "4F313D44603E3B"
+ },
+ {
+  "COLUNA": "C04AQ11",
+  "CHECK DÍGITO": "4F313D44603E3C"
+ },
+ {
+  "COLUNA": "C04AQ12",
+  "CHECK DÍGITO": "4F313D44603E3D"
+ },
+ {
+  "COLUNA": "C04AQ13",
+  "CHECK DÍGITO": "4F313D44603E3E"
+ },
+ {
+  "COLUNA": "C04AQ14",
+  "CHECK DÍGITO": "4F313D44603E3F"
+ },
+ {
+  "COLUNA": "C04AQ15",
+  "CHECK DÍGITO": "4F313D44603E40"
+ },
+ {
+  "COLUNA": "C04AQ16",
+  "CHECK DÍGITO": "4F313D44603E41"
+ },
+ {
+  "COLUNA": "C04AQ17",
+  "CHECK DÍGITO": "4F313D44603E42"
+ },
+ {
+  "COLUNA": "C04AQ18",
+  "CHECK DÍGITO": "4F313D44603E43"
+ },
+ {
+  "COLUNA": "C04AQ19",
+  "CHECK DÍGITO": "4F313D44603E44"
+ },
+ {
+  "COLUNA": "C04AQ20",
+  "CHECK DÍGITO": "4F313D44603F3B"
+ },
+ {
+  "COLUNA": "C04AQ21",
+  "CHECK DÍGITO": "4F313D44603F3C"
+ },
+ {
+  "COLUNA": "C04AQ22",
+  "CHECK DÍGITO": "4F313D44603F3D"
+ },
+ {
+  "COLUNA": "C04AQ23",
+  "CHECK DÍGITO": "4F313D44603F3E"
+ },
+ {
+  "COLUNA": "C04AQ24",
+  "CHECK DÍGITO": "4F313D44603F3F"
+ },
+ {
+  "COLUNA": "C04AQ25",
+  "CHECK DÍGITO": "4F313D44603F40"
+ },
+ {
+  "COLUNA": "C04AQ26",
+  "CHECK DÍGITO": "4F313D44603F41"
+ },
+ {
+  "COLUNA": "C04AQ27",
+  "CHECK DÍGITO": "4F313D44603F42"
+ },
+ {
+  "COLUNA": "C04AQ28",
+  "CHECK DÍGITO": "4F313D44603F43"
+ },
+ {
+  "COLUNA": "C04AQ29",
+  "CHECK DÍGITO": "4F313D44603F44"
+ },
+ {
+  "COLUNA": "C04AQ30",
+  "CHECK DÍGITO": "4F313D4460403B"
+ },
+ {
+  "COLUNA": "C04AQ31",
+  "CHECK DÍGITO": "4F313D4460403C"
+ },
+ {
+  "COLUNA": "C04AQ32",
+  "CHECK DÍGITO": "4F313D4460403D"
+ },
+ {
+  "COLUNA": "C04BQ01",
+  "CHECK DÍGITO": "4F313D45603D3C"
+ },
+ {
+  "COLUNA": "C04BQ02",
+  "CHECK DÍGITO": "4F313D45603D3D"
+ },
+ {
+  "COLUNA": "C04BQ03",
+  "CHECK DÍGITO": "4F313D45603D3E"
+ },
+ {
+  "COLUNA": "C04BQ04",
+  "CHECK DÍGITO": "4F313D45603D3F"
+ },
+ {
+  "COLUNA": "C04BQ05",
+  "CHECK DÍGITO": "4F313D45603D40"
+ },
+ {
+  "COLUNA": "C04BQ06",
+  "CHECK DÍGITO": "4F313D45603D41"
+ },
+ {
+  "COLUNA": "C04BQ07",
+  "CHECK DÍGITO": "4F313D45603D42"
+ },
+ {
+  "COLUNA": "C04BQ08",
+  "CHECK DÍGITO": "4F313D45603D43"
+ },
+ {
+  "COLUNA": "C04BQ09",
+  "CHECK DÍGITO": "4F313D45603D44"
+ },
+ {
+  "COLUNA": "C04BQ10",
+  "CHECK DÍGITO": "4F313D45603E3B"
+ },
+ {
+  "COLUNA": "C04BQ11",
+  "CHECK DÍGITO": "4F313D45603E3C"
+ },
+ {
+  "COLUNA": "C04BQ12",
+  "CHECK DÍGITO": "4F313D45603E3D"
+ },
+ {
+  "COLUNA": "C04BQ13",
+  "CHECK DÍGITO": "4F313D45603E3E"
+ },
+ {
+  "COLUNA": "C04BQ14",
+  "CHECK DÍGITO": "4F313D45603E3F"
+ },
+ {
+  "COLUNA": "C04BQ15",
+  "CHECK DÍGITO": "4F313D45603E40"
+ },
+ {
+  "COLUNA": "C04BQ16",
+  "CHECK DÍGITO": "4F313D45603E41"
+ },
+ {
+  "COLUNA": "C04BQ17",
+  "CHECK DÍGITO": "4F313D45603E42"
+ },
+ {
+  "COLUNA": "C04BQ18",
+  "CHECK DÍGITO": "4F313D45603E43"
+ },
+ {
+  "COLUNA": "C04BQ19",
+  "CHECK DÍGITO": "4F313D45603E44"
+ },
+ {
+  "COLUNA": "C04BQ20",
+  "CHECK DÍGITO": "4F313D45603F3B"
+ },
+ {
+  "COLUNA": "C04BQ21",
+  "CHECK DÍGITO": "4F313D45603F3C"
+ },
+ {
+  "COLUNA": "C04BQ22",
+  "CHECK DÍGITO": "4F313D45603F3D"
+ },
+ {
+  "COLUNA": "C04BQ23",
+  "CHECK DÍGITO": "4F313D45603F3E"
+ },
+ {
+  "COLUNA": "C04BQ24",
+  "CHECK DÍGITO": "4F313D45603F3F"
+ },
+ {
+  "COLUNA": "C04BQ25",
+  "CHECK DÍGITO": "4F313D45603F40"
+ },
+ {
+  "COLUNA": "C04BQ26",
+  "CHECK DÍGITO": "4F313D45603F41"
+ },
+ {
+  "COLUNA": "C04BQ27",
+  "CHECK DÍGITO": "4F313D45603F42"
+ },
+ {
+  "COLUNA": "C04BQ28",
+  "CHECK DÍGITO": "4F313D45603F43"
+ },
+ {
+  "COLUNA": "C04BQ29",
+  "CHECK DÍGITO": "4F313D45603F44"
+ },
+ {
+  "COLUNA": "C04BQ30",
+  "CHECK DÍGITO": "4F313D4560403B"
+ },
+ {
+  "COLUNA": "C04BQ31",
+  "CHECK DÍGITO": "4F313D4560403C"
+ },
+ {
+  "COLUNA": "C04BQ32",
+  "CHECK DÍGITO": "4F313D4560403D"
+ },
+ {
+  "COLUNA": "C04BQ33",
+  "CHECK DÍGITO": "4F313D4560403E"
+ },
+ {
+  "COLUNA": "C04BQ34",
+  "CHECK DÍGITO": "4F313D4560403F"
+ },
+ {
+  "COLUNA": "C04BQ35",
+  "CHECK DÍGITO": "4F313D45604040"
+ },
+ {
+  "COLUNA": "C04BQ36",
+  "CHECK DÍGITO": "4F313D45604041"
+ },
+ {
+  "COLUNA": "C04BQ37",
+  "CHECK DÍGITO": "4F313D45604042"
+ },
+ {
+  "COLUNA": "C04BQ38",
+  "CHECK DÍGITO": "4F313D45604043"
+ },
+ {
+  "COLUNA": "C04CQ01",
+  "CHECK DÍGITO": "4F313D46603D3C"
+ },
+ {
+  "COLUNA": "C04CQ02",
+  "CHECK DÍGITO": "4F313D46603D3D"
+ },
+ {
+  "COLUNA": "C04CQ03",
+  "CHECK DÍGITO": "4F313D46603D3E"
+ },
+ {
+  "COLUNA": "C04CQ04",
+  "CHECK DÍGITO": "4F313D46603D3F"
+ },
+ {
+  "COLUNA": "C04CQ05",
+  "CHECK DÍGITO": "4F313D46603D40"
+ },
+ {
+  "COLUNA": "C04CQ06",
+  "CHECK DÍGITO": "4F313D46603D41"
+ },
+ {
+  "COLUNA": "C04CQ07",
+  "CHECK DÍGITO": "4F313D46603D42"
+ },
+ {
+  "COLUNA": "C04CQ08",
+  "CHECK DÍGITO": "4F313D46603D43"
+ },
+ {
+  "COLUNA": "C04CQ09",
+  "CHECK DÍGITO": "4F313D46603D44"
+ },
+ {
+  "COLUNA": "C04CQ10",
+  "CHECK DÍGITO": "4F313D46603E3B"
+ },
+ {
+  "COLUNA": "C04CQ11",
+  "CHECK DÍGITO": "4F313D46603E3C"
+ },
+ {
+  "COLUNA": "C04CQ12",
+  "CHECK DÍGITO": "4F313D46603E3D"
+ },
+ {
+  "COLUNA": "C04CQ13",
+  "CHECK DÍGITO": "4F313D46603E3E"
+ },
+ {
+  "COLUNA": "C04CQ14",
+  "CHECK DÍGITO": "4F313D46603E3F"
+ },
+ {
+  "COLUNA": "C04CQ15",
+  "CHECK DÍGITO": "4F313D46603E40"
+ },
+ {
+  "COLUNA": "C04CQ16",
+  "CHECK DÍGITO": "4F313D46603E41"
+ },
+ {
+  "COLUNA": "C04CQ17",
+  "CHECK DÍGITO": "4F313D46603E42"
+ },
+ {
+  "COLUNA": "C04CQ18",
+  "CHECK DÍGITO": "4F313D46603E43"
+ },
+ {
+  "COLUNA": "C04CQ19",
+  "CHECK DÍGITO": "4F313D46603E44"
+ },
+ {
+  "COLUNA": "C04CQ20",
+  "CHECK DÍGITO": "4F313D46603F3B"
+ },
+ {
+  "COLUNA": "C04CQ21",
+  "CHECK DÍGITO": "4F313D46603F3C"
+ },
+ {
+  "COLUNA": "C04CQ22",
+  "CHECK DÍGITO": "4F313D46603F3D"
+ },
+ {
+  "COLUNA": "C04CQ23",
+  "CHECK DÍGITO": "4F313D46603F3E"
+ },
+ {
+  "COLUNA": "C04CQ24",
+  "CHECK DÍGITO": "4F313D46603F3F"
+ },
+ {
+  "COLUNA": "C04CQ25",
+  "CHECK DÍGITO": "4F313D46603F40"
+ },
+ {
+  "COLUNA": "C04CQ26",
+  "CHECK DÍGITO": "4F313D46603F41"
+ },
+ {
+  "COLUNA": "C04CQ27",
+  "CHECK DÍGITO": "4F313D46603F42"
+ },
+ {
+  "COLUNA": "C04CQ28",
+  "CHECK DÍGITO": "4F313D46603F43"
+ },
+ {
+  "COLUNA": "C04CQ29",
+  "CHECK DÍGITO": "4F313D46603F44"
+ },
+ {
+  "COLUNA": "C04CQ30",
+  "CHECK DÍGITO": "4F313D4660403B"
+ },
+ {
+  "COLUNA": "C04CQ31",
+  "CHECK DÍGITO": "4F313D4660403C"
+ },
+ {
+  "COLUNA": "C04CQ32",
+  "CHECK DÍGITO": "4F313D4660403D"
+ },
+ {
+  "COLUNA": "C04CQ33",
+  "CHECK DÍGITO": "4F313D4660403E"
+ },
+ {
+  "COLUNA": "C04CQ34",
+  "CHECK DÍGITO": "4F313D4660403F"
+ },
+ {
+  "COLUNA": "C04CQ35",
+  "CHECK DÍGITO": "4F313D46604040"
+ },
+ {
+  "COLUNA": "C04CQ36",
+  "CHECK DÍGITO": "4F313D46604041"
+ },
+ {
+  "COLUNA": "C04CQ37",
+  "CHECK DÍGITO": "4F313D46604042"
+ },
+ {
+  "COLUNA": "C04CQ38",
+  "CHECK DÍGITO": "4F313D46604043"
+ },
+ {
+  "COLUNA": "C04DQ01",
+  "CHECK DÍGITO": "4F313D47603D3C"
+ },
+ {
+  "COLUNA": "C04DQ02",
+  "CHECK DÍGITO": "4F313D47603D3D"
+ },
+ {
+  "COLUNA": "C04DQ03",
+  "CHECK DÍGITO": "4F313D47603D3E"
+ },
+ {
+  "COLUNA": "C04DQ04",
+  "CHECK DÍGITO": "4F313D47603D3F"
+ },
+ {
+  "COLUNA": "C04DQ05",
+  "CHECK DÍGITO": "4F313D47603D40"
+ },
+ {
+  "COLUNA": "C04DQ06",
+  "CHECK DÍGITO": "4F313D47603D41"
+ },
+ {
+  "COLUNA": "C04DQ07",
+  "CHECK DÍGITO": "4F313D47603D42"
+ },
+ {
+  "COLUNA": "C04DQ08",
+  "CHECK DÍGITO": "4F313D47603D43"
+ },
+ {
+  "COLUNA": "C04DQ09",
+  "CHECK DÍGITO": "4F313D47603D44"
+ },
+ {
+  "COLUNA": "C04DQ10",
+  "CHECK DÍGITO": "4F313D47603E3B"
+ },
+ {
+  "COLUNA": "C04DQ11",
+  "CHECK DÍGITO": "4F313D47603E3C"
+ },
+ {
+  "COLUNA": "C04DQ12",
+  "CHECK DÍGITO": "4F313D47603E3D"
+ },
+ {
+  "COLUNA": "C04DQ13",
+  "CHECK DÍGITO": "4F313D47603E3E"
+ },
+ {
+  "COLUNA": "C04DQ14",
+  "CHECK DÍGITO": "4F313D47603E3F"
+ },
+ {
+  "COLUNA": "C04DQ15",
+  "CHECK DÍGITO": "4F313D47603E40"
+ },
+ {
+  "COLUNA": "C04DQ16",
+  "CHECK DÍGITO": "4F313D47603E41"
+ },
+ {
+  "COLUNA": "C04DQ17",
+  "CHECK DÍGITO": "4F313D47603E42"
+ },
+ {
+  "COLUNA": "C04DQ18",
+  "CHECK DÍGITO": "4F313D47603E43"
+ },
+ {
+  "COLUNA": "C04DQ19",
+  "CHECK DÍGITO": "4F313D47603E44"
+ },
+ {
+  "COLUNA": "C04DQ20",
+  "CHECK DÍGITO": "4F313D47603F3B"
+ },
+ {
+  "COLUNA": "C04DQ21",
+  "CHECK DÍGITO": "4F313D47603F3C"
+ },
+ {
+  "COLUNA": "C04DQ22",
+  "CHECK DÍGITO": "4F313D47603F3D"
+ },
+ {
+  "COLUNA": "C04DQ23",
+  "CHECK DÍGITO": "4F313D47603F3E"
+ },
+ {
+  "COLUNA": "C04DQ24",
+  "CHECK DÍGITO": "4F313D47603F3F"
+ },
+ {
+  "COLUNA": "C04DQ25",
+  "CHECK DÍGITO": "4F313D47603F40"
+ },
+ {
+  "COLUNA": "C04DQ26",
+  "CHECK DÍGITO": "4F313D47603F41"
+ },
+ {
+  "COLUNA": "C04DQ27",
+  "CHECK DÍGITO": "4F313D47603F42"
+ },
+ {
+  "COLUNA": "C04DQ28",
+  "CHECK DÍGITO": "4F313D47603F43"
+ },
+ {
+  "COLUNA": "C04DQ29",
+  "CHECK DÍGITO": "4F313D47603F44"
+ },
+ {
+  "COLUNA": "C04DQ30",
+  "CHECK DÍGITO": "4F313D4760403B"
+ },
+ {
+  "COLUNA": "C04DQ31",
+  "CHECK DÍGITO": "4F313D4760403C"
+ },
+ {
+  "COLUNA": "C04DQ32",
+  "CHECK DÍGITO": "4F313D4760403D"
+ }
+];
+
+    // Elementos do DOM
+    const input       = document.getElementById('search');
+    const suggestions = document.getElementById('suggestions');
+    const details     = document.getElementById('details');
+
+    // Gera todas as posições N1–N5
+    function allPositions() {
+      const out = [];
+      data.forEach(item => {
+        const base = item.COLUNA.toUpperCase();
+        const chk  = item['CHECK DÍGITO'];
+        for (let i = 1; i <= 5; i++) {
+          out.push({ base, pos: `${base}N${i}`, check: chk });
+        }
+      });
+      return out;
+    }
+
+    // Atualiza sugestões conforme digita
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toUpperCase();
+      suggestions.innerHTML = '';
+      details.innerHTML = '';
+      if (!q) return;
+      allPositions()
+        .filter(o => o.pos.includes(q))
+        .forEach(o => {
+          const li = document.createElement('li');
+          li.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${o.pos}`;
+          li.onclick = () => selectPosition(o);
+          suggestions.appendChild(li);
+        });
+    });
+
+    // Ao clicar em uma posição: gera dois QRs corretos
+    function selectPosition({ base, pos, check }) {
+      // limpa tudo
+      suggestions.innerHTML = '';
+      details.innerHTML = '';
+
+      // monta card
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      // título
+      const title = document.createElement('h2');
+      title.innerHTML = `<i class="fa-solid fa-location-crosshairs"></i> ${pos}`;
+      card.appendChild(title);
+
+      // info check
+      const info = document.createElement('p');
+      info.innerHTML = `<i class="fa-solid fa-fingerprint"></i> ${check}`;
+      card.appendChild(info);
+
+      // Container para o QR da posição
+      const qrPosContainer = document.createElement('div');
+      qrPosContainer.className = 'qr-container';
+      card.appendChild(qrPosContainer);
+      
+      // QR da posição selecionada (pos)
+      const qrPos = document.createElement('div');
+      qrPos.className = 'qr';
+      qrPosContainer.appendChild(qrPos);
+      
+      // Texto exato sem espaços extras
+      new QRCode(qrPos, {
+        text: pos,
+        width: 150,
+        height: 150,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      
+      const lbl1 = document.createElement('div');
+      lbl1.className = 'label';
+      lbl1.innerHTML = `<i class="fa-solid fa-tag"></i> QR Code da Posição <i class="fa-solid fa-up"></i>`;
+      card.appendChild(lbl1);
+
+      // Container para o QR do check dígito
+      const qrChkContainer = document.createElement('div');
+      qrChkContainer.className = 'qr-container';
+      card.appendChild(qrChkContainer);
+      
+      // QR do check dígito (check)
+      const qrChk = document.createElement('div');
+      qrChk.className = 'qr';
+      qrChkContainer.appendChild(qrChk);
+      
+      new QRCode(qrChk, {
+        text: check,
+        width: 150,
+        height: 150,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      
+      const lbl2 = document.createElement('div');
+      lbl2.className = 'label';
+      lbl2.innerHTML = `<i class="fa-solid fa-shield-check"></i> QR Code do Check Dígito <i class="fa-solid fa-up"></i>`;
+      card.appendChild(lbl2);
+
+      details.appendChild(card);
+    }
+
+    // Foco automático no campo de pesquisa ao carregar a página
+    window.addEventListener('load', () => {
+      input.focus();
+    });
+  </script>
+</body>
+</html>
