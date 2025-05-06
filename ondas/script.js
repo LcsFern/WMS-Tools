@@ -44,7 +44,7 @@ function atualizarStorageOndas() {
       "QTD PALLETS": c[5].textContent,
       DESTINO: c[6].textContent,
       STATUS: c[7].textContent,
-      "QTDE CXS": row.dataset.qtdeCx || "0"  // Preserva o valor de caixas
+      "QTDE CXS": row.dataset.qtdeCx || "0"
     };
   });
   localStorage.setItem('ondas', JSON.stringify(dados));
@@ -81,28 +81,20 @@ function showImportPopup() {
   // Preencher o dropdown de ondas no popup de importação
   const selectOndas = document.getElementById('ondaImportacaoSelect');
   selectOndas.innerHTML = '';
-  
   // Lista única de ondas
   const listaOndas = [];
-  for (let i = 1; i <= 10; i++) {
-    listaOndas.push(`${i}ª ONDA`);
-  }
-  
   // Adicionar ondas existentes na tabela
+  for (let i = 1; i <= 10; i++) listaOndas.push(`${i}ª ONDA`);
   document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
     const ondaText = c.textContent.trim();
-    if (ondaText && !listaOndas.includes(ondaText)) {
-      listaOndas.push(ondaText);
-    }
+    if (ondaText && !listaOndas.includes(ondaText)) listaOndas.push(ondaText);
   });
-  
   // Ordenar ondas
   listaOndas.sort((a, b) => {
     const numA = parseInt(a) || 999;
     const numB = parseInt(b) || 999;
     return numA - numB;
   });
-  
   // Adicionar ao dropdown sem duplicatas
   const ondasAdicionadas = new Set();
   listaOndas.forEach(onda => {
@@ -114,7 +106,6 @@ function showImportPopup() {
       ondasAdicionadas.add(onda);
     }
   });
-  
   document.getElementById('importPopup').classList.add('show');
 }
 function closeImportPopup() {
@@ -133,7 +124,6 @@ function processarImportacao() {
   const cab = linhas[0];
   const separador = cab.includes('\t') ? /\t/ : /\s{2,}/;
   const colunas = cab.split(separador);
-  
   // Procurar índices das colunas necessárias (case-insensitive)
   // Com prioridade para PESO PREVISTO sobre PESO LIQ.
   const indices = {
@@ -143,85 +133,42 @@ function processarImportacao() {
     pesoPrevisto: colunas.findIndex(col => /peso\s+previsto/i.test(col)),
     pesoLiq: colunas.findIndex(col => /peso\s+liq/i.test(col)),
     cx: colunas.findIndex(col => /cx|caixas|qtd\s+cx|qtde\s+cx/i.test(col)) // Adiciona detecção de coluna CX
+    cx: colunas.findIndex(col => /cx|caixas|qtd\s+cx|qtde\s+cx/i.test(col))
   };
-  
-  // Priorizar PESO PREVISTO se existir, caso contrário usar PESO LIQ.
-  const indicePeso = indices.pesoPrevisto !== -1 ? indices.pesoPrevisto : indices.pesoLiq;
-  indices.peso = indicePeso;
-  
-  // Verificar se encontrou as colunas necessárias
-  const colunasNaoEncontradas = [];
-  if (indices.oe === -1) colunasNaoEncontradas.push("OE/VIAGEM");
-  if (indices.placa === -1) colunasNaoEncontradas.push("PLACA");
-  if (indices.doca === -1) colunasNaoEncontradas.push("DOCA");
-  if (indices.peso === -1) colunasNaoEncontradas.push("PESO PREVISTO ou PESO LIQ.");
-  
-  if (colunasNaoEncontradas.length > 0) {
-    showInfoPopup(`Colunas não encontradas: ${colunasNaoEncontradas.join(', ')}`);
-    return;
-  }
+  indices.peso = indices.pesoPrevisto !== -1 ? indices.pesoPrevisto : indices.pesoLiq;
+  const faltam = [];
+  if (indices.oe === -1) faltam.push("OE/VIAGEM");
+  if (indices.placa === -1) faltam.push("PLACA");
+  if (indices.doca === -1) faltam.push("DOCA");
+  if (indices.peso === -1) faltam.push("PESO PREVISTO ou PESO LIQ.");
+  if (faltam.length) { showInfoPopup(`Colunas não encontradas: ${faltam.join(', ')}`); return; }
 
-  // Obter onda selecionada para importação
   const ondaSelecionada = document.getElementById('ondaImportacaoSelect').value;
-  
   let sucessos = 0, falhas = 0;
   const tbody = document.getElementById('ondasTableBody');
   const frag = document.createDocumentFragment();
 
   for (let i = 1; i < linhas.length; i++) {
-    const l = linhas[i].trim();
-    if (!l) continue;
-    
-    // Dividir linha usando o mesmo separador do cabeçalho
+    const l = linhas[i].trim(); if (!l) continue;
     const cols = l.split(separador);
-    if (cols.length < Math.max(indices.oe, indices.placa, indices.doca, indices.peso) + 1) { 
-      falhas++; 
-      continue; 
-    }
-
-    // Extrair dados usando os índices detectados
+    if (cols.length < Math.max(indices.oe, indices.placa, indices.doca, indices.peso) + 1) { falhas++; continue; }
     const oe = cols[indices.oe]?.trim() || '';
     const placa = cols[indices.placa]?.trim() || '';
     const doca = cols[indices.doca]?.trim() || '';
-    
-    // Tratamento do valor do peso
     let peso = cols[indices.peso]?.trim() || '';
-    // Garantir que o peso seja um número formatado corretamente
     if (peso) {
-      // Remove pontos de milhares e substitui vírgula por ponto para decimal
       peso = peso.replace(/\./g, '').replace(',', '.');
-      // Se for um número válido, formata como número
       if (!isNaN(parseFloat(peso))) {
-        peso = parseFloat(peso).toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
+        peso = parseFloat(peso).toLocaleString('pt-BR',{ minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
     }
-    
-    // Extrair quantidade de caixas (CX) - NOVA FUNCIONALIDADE
     let qtdeCx = indices.cx !== -1 ? cols[indices.cx]?.trim() || '0' : '0';
-    // Garantir que seja um número inteiro
-    if (qtdeCx) {
-      qtdeCx = qtdeCx.replace(/\./g, '').replace(',', '.');
-      if (!isNaN(parseInt(qtdeCx))) {
-        qtdeCx = parseInt(qtdeCx).toString();
-      } else {
-        qtdeCx = '0';
-      }
-    }
-    
-    // Se algum campo obrigatório estiver vazio, pula
-    if (!oe || !placa || !doca) {
-      falhas++;
-      continue;
-    }
-    
+    qtdeCx = qtdeCx ? (isNaN(parseInt(qtdeCx.replace(/\./g,'').replace(',', '.'))) ? '0' : parseInt(qtdeCx.replace(/\./g,'')).toString()) : '0';
+    if (!oe || !placa || !doca) { falhas++; continue; }
     const v = veiculosData.find(x => x["PLACA ROTEIRIZADA"] === placa) || {};
     const pallets = v["QTD PALLETS"] || '';
     const destino = v["DESTINO"] || '';
 
-    // Criar a linha na tabela
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="checkbox" class="linha-checkbox"></td>
@@ -229,33 +176,27 @@ function processarImportacao() {
       <td class="editable" onclick="editarCelula(this,'placa')">${placa}</td>
       <td class="editable" onclick="editarCelula(this,'doca')">${doca}</td>
       <td>${peso}</td>
-      <td>${pallets}</td>
+      <td ${!pallets ? 'class="editable pallets-cell" onclick="editarCelula(this,\'pallets\')"' : ''}>${pallets}</td>
       <td class="editable" onclick="editarCelula(this,'destino')">${destino}</td>
       <td class="editable" onclick="editarCelula(this,'status')">${ondaSelecionada}</td>
       <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
     `;
-    
-    // Armazena a quantidade de caixas como atributo de dados para uso posterior
-    // Isso não afeta a UI, mas mantém o dado para uso ao salvar como grade
     tr.dataset.qtdeCx = qtdeCx;
-    
     frag.appendChild(tr);
     sucessos++;
   }
 
   if (sucessos) {
     tbody.appendChild(frag);
-    ordenarTabelaPorOnda(); // Ordena a tabela após adicionar novas linhas
+    ordenarTabelaPorOnda();
     showInfoPopup(`Importados: ${sucessos} | Ignorados: ${falhas}`);
     document.getElementById('importTextarea').value = '';
     closeImportPopup();
     debouncedAtualizarStorageOndas();
-  } else {
-    showInfoPopup('Nenhum veículo importado.');
-  }
+  } else showInfoPopup('Nenhum veículo importado.');
 }
 
-// 4. Adiciona linha manual e atualiza storage
+// 4. Adiciona linha manual
 function adicionarLinhaTabelaOnda(oe, placa, doca, peso, pallets, destino, status) {
   const tbody = document.getElementById('ondasTableBody');
   const tr = document.createElement('tr');
@@ -265,17 +206,17 @@ function adicionarLinhaTabelaOnda(oe, placa, doca, peso, pallets, destino, statu
     <td class="editable" onclick="editarCelula(this,'placa')">${placa}</td>
     <td class="editable" onclick="editarCelula(this,'doca')">${doca}</td>
     <td>${peso}</td>
-    <td>${pallets}</td>
+    <td ${!pallets ? 'class="editable pallets-cell" onclick="editarCelula(this,\'pallets\')"' : ''}>${pallets}</td>
     <td class="editable" onclick="editarCelula(this,'destino')">${destino}</td>
     <td class="editable" onclick="editarCelula(this,'status')">${status}</td>
     <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
   `;
   tbody.appendChild(tr);
-  ordenarTabelaPorOnda(); // Reordenar após adicionar linha
+  ordenarTabelaPorOnda();
   debouncedAtualizarStorageOndas();
 }
 
-// 5. Edição in-place; repuxa ao editar placa
+// 5. Edição in‑place (inclui tipo 'pallets')
 function editarCelula(cel, tipo) {
   const orig = cel.textContent;
   const tr = cel.parentElement;
@@ -286,32 +227,23 @@ function editarCelula(cel, tipo) {
     let opts = '';
     const atual = orig;
     const ondasSet = new Set();
-    
-    // Adicionar ondas existentes na tabela
     document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
-      const t = c.textContent.trim(); 
-      if (t) ondasSet.add(t);
+      const t = c.textContent.trim(); if (t) ondasSet.add(t);
     });
-    
-    // Adicionar ondas padrão
-    for (let i = 1; i <= 10; i++) {
-      ondasSet.add(`${i}ª ONDA`);
-    }
-    
-    // Ordenar ondas
-    const listaOndas = Array.from(ondasSet);
-    listaOndas.sort((a, b) => {
-      const numA = parseInt(a.match(/\d+/)?.[0] || "999");
-      const numB = parseInt(b.match(/\d+/)?.[0] || "999");
-      return numA - numB;
-    });
-    
-    listaOndas.forEach(v => {
+    for (let i = 1; i <= 10; i++) ondasSet.add(`${i}ª ONDA`);
+    Array.from(ondasSet).sort((a,b) => parseInt(a) - parseInt(b)).forEach(v => {
       opts += `<option value="${v}" ${v===atual?'selected':''}>${v}</option>`;
     });
-    
     cel.innerHTML = `<select>${opts}</select>`;
-  } else {
+  }
+  else if (tipo === 'pallets') {
+    let opts = '<option value="">(selecione)</option>';
+    const sugestoes = Array.from(new Set(veiculosData.map(x => x['QTD PALLETS']).filter(v => v)));
+    sugestoes.sort((a,b) => parseInt(a) - parseInt(b));
+    sugestoes.forEach(v => opts += `<option value="${v}">${v}</option>`);
+    cel.innerHTML = `<select>${opts}</select>`;
+  }
+  else {
     cel.innerHTML = `<input type="text" value="${orig}">`;
   }
 
@@ -325,13 +257,12 @@ function editarCelula(cel, tipo) {
     if (tipo === 'placa') {
       const v = veiculosData.find(x => x["PLACA ROTEIRIZADA"] === val) || {};
       const cells = tr.querySelectorAll('td');
-      cells[5].textContent = v["QTD PALLETS"] || '';
+      const novoPallets = v["QTD PALLETS"] || '';
+      cells[5].textContent = novoPallets;
       cells[6].textContent = v["DESTINO"] || '';
+      if (!novoPallets) cells[5].classList.add('editable','pallets-cell');
     }
-    if (tipo === 'status') {
-      // Reordenar a tabela quando mudar o status/onda
-      ordenarTabelaPorOnda();
-    }
+    if (tipo === 'status') ordenarTabelaPorOnda();
     debouncedAtualizarStorageOndas();
   }
   function cancelar() {
@@ -355,7 +286,6 @@ function removerOnda(btn) {
 // 7. Salvar ondas como Grade
 function salvarOndas() {
   const rows = document.querySelectorAll('#ondasTableBody tr');
-  const hoje = new Date().toLocaleDateString('pt-BR');
   const grade = Array.from(rows).map(row => {
     const c = row.querySelectorAll('td');
     const reg = {
@@ -367,8 +297,7 @@ function salvarOndas() {
       "QTD PALLETS": c[5].textContent,
       DESTINO: c[6].textContent,
       STATUS: c[7].textContent,
-      DATA: hoje,
-      // Usar o valor de dataset.qtdeCx se existir, senão usar "0"
+      DATA: new Date().toLocaleDateString('pt-BR'),
       "QTDE CXS": row.dataset.qtdeCx || "0",
       TRANSPORTADORA: "",
       "QUANT. ENTREGAS": "1"
@@ -379,22 +308,15 @@ function salvarOndas() {
   });
   localStorage.setItem('gradeCompleta', JSON.stringify(grade));
   localStorage.setItem('ondas', JSON.stringify(grade));
-  localStorage.removeItem('gradeCarregadaExternamente'); // Remove a flag de carregamento externo
   showInfoPopup('Ondas salvas como Grade!');
 }
 
-// 8. Carrega ondas ao iniciar
+// 8. Carrega ondas ou detecta grade externa
 function carregarOndas() {
   const o = localStorage.getItem('ondas');
-  if (o) {
-    carregarDadosNaTabela(JSON.parse(o));
-    return;
-  }
+  if (o) { carregarDadosNaTabela(JSON.parse(o)); return; }
   const g = localStorage.getItem('gradeCompleta');
-  if (g) {
-    const grade = JSON.parse(g);
-    if (grade.length) carregarDadosNaTabela(grade);
-  }
+  if (g) { carregarDadosNaTabela(JSON.parse(g)); }
 }
 function carregarDadosNaTabela(dados) {
   const tbody = document.getElementById('ondasTableBody');
@@ -406,43 +328,27 @@ function carregarDadosNaTabela(dados) {
       <td class="editable" onclick="editarCelula(this,'placa')">${item["PLACA ROTEIRIZADA"]||''}</td>
       <td class="editable" onclick="editarCelula(this,'doca')">${item.DOCA||''}</td>
       <td>${item["PESO TOTAL"]||item["PESO ENTREGAS"]||''}</td>
-      <td>${item["QTD PALLETS"]||''}</td>
+      <td ${!item["QTD PALLETS"] ? 'class="editable pallets-cell" onclick="editarCelula(this,\'pallets\')"' : ''}>${item["QTD PALLETS"]||''}</td>
       <td class="editable" onclick="editarCelula(this,'destino')">${item.DESTINO||''}</td>
       <td class="editable" onclick="editarCelula(this,'status')">${item.STATUS||''}</td>
       <td><button onclick="removerOnda(this)" style="background:#dc3545"><i class="fa-solid fa-trash"></i></button></td>
     `;
-    // Preservar o valor de QTDE CXS caso exista
-    if (item["QTDE CXS"]) {
-      tr.dataset.qtdeCx = item["QTDE CXS"];
-    }
+    if (item["QTDE CXS"]) tr.dataset.qtdeCx = item["QTDE CXS"];
     tbody.appendChild(tr);
   });
-  ordenarTabelaPorOnda(); // Ordenar após carregar dados
+  ordenarTabelaPorOnda();
 }
 
 // 9. Confirmar e limpar
-function confirmarLimparOndas() {
-  showConfirmationPopup('Deseja limpar todas as ondas?', limparOndas);
+function confirmarLimparOndas() { showConfirmationPopup('Deseja limpar todas as ondas?', limparOndas); }
+function limparOndas() {
+  const tbody = document.getElementById('ondasTableBody');
+  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+  localStorage.removeItem('ondas');
+  localStorage.removeItem('gradeCompleta');
+  showInfoPopup('Todas as ondas foram removidas com sucesso.');
 }
 
-function limparOndas() {
-  try {
-    // Abordagem mais robusta para remoção de linhas
-    const tbody = document.getElementById('ondasTableBody');
-    while (tbody.firstChild) {
-      tbody.removeChild(tbody.firstChild);
-    }
-    
-    // Limpar dados do localStorage em uma operação separada
-    localStorage.removeItem('ondas');
-    localStorage.removeItem('gradeCompleta');
-    
-    showInfoPopup('Todas as ondas foram removidas com sucesso.');
-  } catch (error) {
-    console.error('Erro ao limpar ondas:', error);
-    showInfoPopup('Ocorreu um erro ao limpar as ondas. Tente recarregar a página.');
-  }
-}
 // 10. Popup de confirmação
 function showConfirmationPopup(msg, fn) {
   const pop = document.getElementById('confirmPopup');
@@ -456,29 +362,32 @@ function showConfirmationPopup(msg, fn) {
   pop.classList.add('show');
 }
 
-// 11. Verifica grade carregada
+// 11. Verifica grade carregada via formato de DATA
 function verificarGradeCarregada() {
   const g = localStorage.getItem('gradeCompleta');
-  const o = localStorage.getItem('ondas');
-  
-  // Se temos uma grade completa
-  if (g && JSON.parse(g).length) {
-    // Se não temos ondas salvas OU temos uma flag indicando que a grade foi carregada externamente
-    if (!o || localStorage.getItem('gradeCarregadaExternamente') === 'true') {
+  if (g) {
+    const grade = JSON.parse(g);
+    if (grade.length && grade[0].DATA) {
+      const data = grade[0].DATA;
+      // Se dd/MM/yyyy → salvo via Ondas
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
+        document.getElementById('ondasSection').classList.remove('hidden');
+        document.getElementById('gradeAlert').classList.add('hidden');
+        return false;
+      }
+      // Se outro (ex: dd/mai) → grade externa
       document.getElementById('ondasSection').classList.add('hidden');
       document.getElementById('gradeAlert').classList.remove('hidden');
       return true;
     }
   }
-  
-  // Marcamos que qualquer grade carregada a partir daqui é do próprio Ondas
-  localStorage.removeItem('gradeCarregadaExternamente');
+  // Sem grade → mostrar Ondas
   document.getElementById('ondasSection').classList.remove('hidden');
   document.getElementById('gradeAlert').classList.add('hidden');
   return false;
 }
 
-// 12. Exportar PDF com bordas mais grossas
+// 12. Exportar PDF (jsPDF + autotable)
 function exportarPDF() {
   if (!window.jspdf || typeof window.jsPDF !== 'function') {
     showInfoPopup('Biblioteca jsPDF não carregada.'); return;
@@ -536,6 +445,7 @@ function exportarPDF() {
   }, 0);
 }
 
+
 // 13. Exportar CSV
 function exportarCSV() {
   const rows = document.querySelectorAll('#ondasTableBody tr');
@@ -580,7 +490,8 @@ function exportarCSV() {
   document.body.removeChild(link);
 }
 
-// 14. Popup para escolher formato de exportação
+
+// 14. Popup de exportação
 function showExportOptions() {
   const pop = document.getElementById('confirmPopup');
   document.getElementById('popupMessage').innerHTML = 'Escolha o formato de exportação:';
@@ -589,13 +500,12 @@ function showExportOptions() {
     <button onclick="exportarPDF(); closePopup();" class="btn-yes">
       <i class="fa-solid fa-file-pdf"></i> PDF
     </button>
-    <button onclick="exportarCSV(); closePopup();" class="btn-yes" style="background: #4a72da;">
+    <button onclick="exportarCSV(); closePopup();" class="btn-yes" style="background:#4a72da">
       <i class="fa-solid fa-file-csv"></i> CSV
     </button>
     <button class="btn-no" onclick="closePopup()">
       <i class="fa-solid fa-times"></i> Cancelar
-    </button>
-  `;
+    </button>`;
   pop.classList.add('show');
 }
 
@@ -604,34 +514,13 @@ function alterarStatusEmMassa() {
   document.getElementById('alterarStatusPopup').classList.add('show');
   const sel = document.getElementById('statusEmMassaSelect');
   sel.innerHTML = '';
-  
-  // Usar Set para evitar duplicatas
-  const ondasSet = new Set();
-  
-  // Adicionar ondas existentes
+  const setO = new Set();
   document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
-    const t = c.textContent.trim(); 
-    if (t) ondasSet.add(t);
+    const t = c.textContent.trim(); if (t) setO.add(t);
   });
-  
-  // Adicionar ondas padrão
-  for (let i = 1; i <= 10; i++) {
-    ondasSet.add(`${i}ª ONDA`);
-  }
-  
-  // Converter para array, ordenar e adicionar ao dropdown
-  const listaOndas = Array.from(ondasSet);
-  listaOndas.sort((a, b) => {
-    const numA = parseInt(a.match(/\d+/)?.[0] || "999");
-    const numB = parseInt(b.match(/\d+/)?.[0] || "999");
-    return numA - numB;
-  });
-  
-  listaOndas.forEach(o => {
-    const opt = document.createElement('option'); 
-    opt.value = o; 
-    opt.textContent = o;
-    sel.appendChild(opt);
+  for (let i=1; i<=10; i++) setO.add(`${i}ª ONDA`);
+  Array.from(setO).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(o=>{
+    const opt=document.createElement('option'); opt.value=o; opt.textContent=o; sel.appendChild(opt);
   });
 }
 
@@ -641,7 +530,7 @@ function aplicarAlteracaoStatusEmMassa() {
   const chks = document.querySelectorAll('.linha-checkbox:checked');
   if (!chks.length) { showInfoPopup('Selecione ao menos um veículo.'); return; }
   chks.forEach(cb => {
-    const c = cb.closest('tr').querySelector('td:nth-child(8)'); 
+    const c = cb.closest('tr').querySelector('td:nth-child(8)');
     c.textContent = novo;
     cb.checked = false;
   });
@@ -657,29 +546,16 @@ function selecionarTodosCheckboxes() {
   document.querySelectorAll('.linha-checkbox').forEach(cb => cb.checked = all);
 }
 
-// 18. Função para ordenar a tabela por onda
+// 18. Ordenar tabela por onda
 function ordenarTabelaPorOnda() {
   const tbody = document.getElementById('ondasTableBody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  
-  // Função para extrair o número da onda
-  function extrairNumeroOnda(texto) {
-    const match = texto.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 999; // Se não for numérico, coloca no final
-  }
-  
-  // Ordenar linhas por número de onda
-  rows.sort((a, b) => {
-    const ondaA = a.querySelector('td:nth-child(8)').textContent;
-    const ondaB = b.querySelector('td:nth-child(8)').textContent;
-    return extrairNumeroOnda(ondaA) - extrairNumeroOnda(ondaB);
+  rows.sort((a,b)=>{
+    const nA = parseInt(a.querySelector('td:nth-child(8)').textContent.match(/\d+/)||[999]);
+    const nB = parseInt(b.querySelector('td:nth-child(8)').textContent.match(/\d+/)||[999]);
+    return nA-nB;
   });
-  
-  // Remover todas as linhas
-  rows.forEach(row => tbody.removeChild(row));
-  
-  // Adicionar linhas ordenadas
-  rows.forEach(row => tbody.appendChild(row));
+  rows.forEach(r=>tbody.appendChild(r));
 }
 
 // Inicialização
