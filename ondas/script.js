@@ -78,24 +78,19 @@ function carregarVeiculos() {
 
 // 2. Mostrar e fechar popup de importação
 function showImportPopup() {
-  // Preencher o dropdown de ondas no popup de importação
   const selectOndas = document.getElementById('ondaImportacaoSelect');
   selectOndas.innerHTML = '';
-  // Lista única de ondas
   const listaOndas = [];
-  // Adicionar ondas existentes na tabela
   for (let i = 1; i <= 10; i++) listaOndas.push(`${i}ª ONDA`);
   document.querySelectorAll('#ondasTableBody td:nth-child(8)').forEach(c => {
     const ondaText = c.textContent.trim();
     if (ondaText && !listaOndas.includes(ondaText)) listaOndas.push(ondaText);
   });
-  // Ordenar ondas
   listaOndas.sort((a, b) => {
     const numA = parseInt(a) || 999;
     const numB = parseInt(b) || 999;
     return numA - numB;
   });
-  // Adicionar ao dropdown sem duplicatas
   const ondasAdicionadas = new Set();
   listaOndas.forEach(onda => {
     if (!ondasAdicionadas.has(onda)) {
@@ -120,19 +115,15 @@ function processarImportacao() {
   const linhas = txt.split('\n');
   if (linhas.length < 2) { showInfoPopup('Dados insuficientes.'); return; }
 
-  // Obter cabeçalho e separar em colunas (detecta se usa tab ou múltiplos espaços)
   const cab = linhas[0];
   const separador = cab.includes('\t') ? /\t/ : /\s{2,}/;
   const colunas = cab.split(separador);
-  // Procurar índices das colunas necessárias (case-insensitive)
-  // Com prioridade para PESO PREVISTO sobre PESO LIQ.
   const indices = {
     oe: colunas.findIndex(col => /oe|viagem/i.test(col)),
     placa: colunas.findIndex(col => /placa/i.test(col)),
     doca: colunas.findIndex(col => /doca/i.test(col)),
     pesoPrevisto: colunas.findIndex(col => /peso\s+previsto/i.test(col)),
     pesoLiq: colunas.findIndex(col => /peso\s+liq/i.test(col)),
-    cx: colunas.findIndex(col => /cx|caixas|qtd\s+cx|qtde\s+cx/i.test(col)) // Adiciona detecção de coluna CX
     cx: colunas.findIndex(col => /cx|caixas|qtd\s+cx|qtde\s+cx/i.test(col))
   };
   indices.peso = indices.pesoPrevisto !== -1 ? indices.pesoPrevisto : indices.pesoLiq;
