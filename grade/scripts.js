@@ -47,20 +47,54 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function getCoordinates(destino) {
-  if (destinosCoordenadas[destino]) return destinosCoordenadas[destino];
-  try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destino + ", SC, Brasil")}&format=json&limit=1`);
-    const data = await response.json();
-    if (data.length > 0) {
-      const coord = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-      destinosCoordenadas[destino] = coord;
-      return coord;
-    }
-  } catch (error) {
-    console.error(`Erro ao buscar coordenadas para ${destino}:`, error);
+  const chave = destino.trim().toUpperCase();
+
+  // Se já está em cache, retorna imediatamente
+  if (destinosCoordenadas[chave]) {
+    return destinosCoordenadas[chave];
   }
+
+  // Função auxiliar que força SC na busca
+  async function consultaSC(query) {
+    try {
+      const fullQuery = `${query}, Santa Catarina, Brasil`;
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data.length > 0) {
+        const coord = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+        destinosCoordenadas[chave] = coord; // cacheia
+        return coord;
+      }
+    } catch (e) {
+      console.warn(`Erro ao consultar Nominatim para "${query}":`, e);
+    }
+    return null;
+  }
+
+  // 1) Tenta com o destino completo + ", SC"
+  const tentativa1 = await consultaSC(destino);
+  if (tentativa1) return tentativa1;
+
+  // 2) Se falhar, tenta por palavras-chave relevantes
+  const palavras = destino
+    .toUpperCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .split(/\s+/)
+    .filter(p => p.length >= 4); // ignora palavras curtas
+
+  for (const palavra of palavras) {
+    const tentativa2 = await consultaSC(palavra);
+    if (tentativa2) return tentativa2;
+  }
+
+  // 3) Falhou completamente
+  destinosCoordenadas[chave] = null;
+  console.error(`❌ Coordenadas não encontradas para destino: "${destino}"`);
   return null;
 }
+
+
+
 
 // Gera o SVG da placa no padrão Mercosul
 function getSVGPlaca(placa) {
