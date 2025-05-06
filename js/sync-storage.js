@@ -27,17 +27,34 @@ let lastModifiedMap = {};
 // ────────────────────────────────────────────────────────────
 // HELPERS DE UI (loading + popups)
 // ────────────────────────────────────────────────────────────
-function showLoading(msg = 'Restaurando dados...') {
+// ────────────────────────────────────────────────────────────
+// HELPERS DE UI (loading + popups)
+// ────────────────────────────────────────────────────────────
+function showLoading() {
+  // não duplica overlay se já existir
   if (document.getElementById('loading-overlay')) return;
+
+  // cria container de overlay
   const d = document.createElement('div');
   Object.assign(d.style, {
-    position:'fixed',top:0,left:0,width:'100%',height:'100%',
-    backgroundColor:'rgba(0,0,0,0.7)',display:'flex',
-    alignItems:'center',justifyContent:'center',
-    font:'24px Arial',color:'#fff',zIndex:9999
+    position:      'fixed',
+    top:           0,
+    left:          0,
+    width:         '100%',
+    height:        '100%',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    display:       'flex',
+    alignItems:    'center',
+    justifyContent:'center',
+    zIndex:        9999
   });
   d.id = 'loading-overlay';
-  d.textContent = msg;
+
+  // cria o ícone foguete com classe de animação
+  const icon = document.createElement('i');
+  icon.className = 'fas fa-rocket rocket-spinner';
+  d.appendChild(icon);
+
   document.body.appendChild(d);
 }
 function hideLoading() {
@@ -80,7 +97,9 @@ function showPopup(msg, type = 'info') {
 // ────────────────────────────────────────────────────────────
 try {
   lastModifiedMap = JSON.parse(localStorage.getItem(LAST_MODIFIED_KEY)) || {};
-} catch { lastModifiedMap = {}; }
+} catch {
+  lastModifiedMap = {};
+}
 
 // ────────────────────────────────────────────────────────────
 // INTERCEPT LOCALSTORAGE.SETITEM
@@ -89,9 +108,10 @@ const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const old = localStorage.getItem(key);
   originalSetItem(key, value);
+  // só conta mudanças nas chaves que interessam
   if (chaves.includes(key) && old !== value) {
     lastModifiedMap[key] = Date.now();
-    // atualiza o mapa sem recursão
+    // grava o mapa atualizado sem disparar intercept
     originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
     scheduleSync();
   }
@@ -103,11 +123,83 @@ localStorage.setItem = (key, value) => {
 function scheduleSync() {
   needSync = true;
   if (debounceId) clearTimeout(debounceId);
-  debounceId = setTimeout(() => { if (needSync) saveStorage(); }, DEBOUNCE_DELAY);
+  debounceId = setTimeout(() => {
+    if (needSync) saveStorage();
+  }, DEBOUNCE_DELAY);
 }
 
 // ────────────────────────────────────────────────────────────
-// FETCH COM FALLBACK ENTRE WORKER E PHP
+// FETCH MÚLTIPLO E MERGE DE RESPOSTAS
+// ────────────────────────────────────────────────────────────
+async function fetchAllEndpoints(queryStr) {
+  const urls = [
+    WORKER_URL + queryStr,
+    SERVER_LOAD_PHP + queryStr
+  ];
+  // dispara todas as requests em paralelo, mesmo que uma falhe
+  const results = await Promise.allSettled(
+    urls.map(url =>
+      fetch(url, { method: 'GET', cache: 'no-store' })
+        .then(res => res.ok ? res.json() : Promise.reject(res.status))
+    )
+  );
+
+  // junta todos os dados, escolhendo para cada chave o timestamp mais alto
+  const merged = {};
+  for (let r of results) {
+    if (r.status === 'fulfilled' && r.value?.dados) {
+      const srv = JSON.parse(r.value.dados);
+      for (let key in srv) {
+        const { value, timestamp } = srv[key];
+        if (!merged[key] || merged[key].timestamp < timestamp) {
+          merged[key] = { value, timestamp };
+        }
+      }
+    }
+  }
+  return merged;
+}
+
+// ────────────────────────────────────────────────────────────
+// RESTAURAR servidor → localStorage (COM MERGE)
+//────────────────────────────────────────────────────────────
+async function restoreStorage() {
+  if (syncing) return;
+  syncing = true;
+  showLoading();
+
+  try {
+    const queryStr = `?userId=${encodeURIComponent(userId)}`;
+    const serverData = await fetchAllEndpoints(queryStr);
+
+    let count = 0;
+    for (let key in serverData) {
+      if (!chaves.includes(key)) continue;
+      const { value, timestamp } = serverData[key];
+      // se o servidor tiver versão mais nova do que local
+      if ((lastModifiedMap[key] || 0) < timestamp) {
+        // aplica sem disparar intercept
+        originalSetItem(key, value);
+        lastModifiedMap[key] = timestamp;
+        count++;
+      }
+    }
+    // salva o novo mapa de timestamps
+    originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
+
+    if (count) showPopup(`${count} itens restaurados`, 'success');
+  } catch (e) {
+    console.error('❌ Erro ao restaurar:', e);
+    showPopup('Falha ao restaurar dados', 'error');
+  } finally {
+    hasRestored = true;
+    syncing = false;
+    hideLoading();
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// FETCH COM FALLBACK ENTRE WORKER E PHP (apenas para salvar)
 // ────────────────────────────────────────────────────────────
 async function fetchWithFallback(urls, options) {
   for (let url of urls) {
@@ -134,18 +226,29 @@ async function saveStorage() {
   chaves.forEach(key => {
     const v = localStorage.getItem(key);
     if (v !== null) {
-      payload[key] = { value: v, timestamp: lastModifiedMap[key] || Date.now() };
+      payload[key] = {
+        value: v,
+        timestamp: lastModifiedMap[key] || Date.now()
+      };
     }
   });
   if (!Object.keys(payload).length) return;
+
   syncing = true;
   needSync = false;
 
   try {
-    const body = JSON.stringify({ userId, dados: JSON.stringify(payload) });
+    const body = JSON.stringify({
+      userId,
+      dados: JSON.stringify(payload)
+    });
     await fetchWithFallback(
       [WORKER_URL, SERVER_PHP],
-      { method: 'POST', headers: { 'Content-Type':'application/json' }, body }
+      {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body
+      }
     );
     console.log('✅ Sincronizado com sucesso');
     showPopup('Dados sincronizados com sucesso', 'success');
@@ -155,49 +258,6 @@ async function saveStorage() {
     needSync = true; // re-tentar depois
   } finally {
     syncing = false;
-  }
-}
-
-// ────────────────────────────────────────────────────────────
-// RESTAURAR servidor → localStorage
-// ────────────────────────────────────────────────────────────
-async function restoreStorage() {
-  if (syncing) return;
-  syncing = true;
-  showLoading();
-
-  try {
-    const query = `?userId=${encodeURIComponent(userId)}`;
-    const res = await fetchWithFallback(
-      [WORKER_URL + query, SERVER_LOAD_PHP + query],
-      { method: 'GET' }
-    );
-    const data = await res.json();
-    if (data?.dados) {
-      const serverData = JSON.parse(data.dados);
-      let count = 0;
-      for (let key in serverData) {
-        if (!chaves.includes(key)) continue;
-        const { value, timestamp } = serverData[key];
-        if ((lastModifiedMap[key] || 0) < timestamp) {
-          // aplica sem disparar sync
-          const skip = originalSetItem;
-          skip.call(localStorage, key, value);
-          lastModifiedMap[key] = timestamp;
-          count++;
-        }
-      }
-      // salva novo mapa
-      originalSetItem(LAST_MODIFIED_KEY, JSON.stringify(lastModifiedMap));
-      if (count) showPopup(`${count} itens restaurados`, 'success');
-    }
-  } catch (e) {
-    console.error('❌ Erro ao restaurar:', e);
-    showPopup('Falha ao restaurar dados', 'error');
-  } finally {
-    hasRestored = true;
-    syncing = false;
-    hideLoading();
   }
 }
 
@@ -216,7 +276,11 @@ window.addEventListener('beforeunload', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  navigator.onLine ? restoreStorage() : (hasRestored = true);
+  if (navigator.onLine) {
+    restoreStorage();
+  } else {
+    hasRestored = true;
+  }
   // re-restaura em iframes após carregarem
   document.querySelectorAll('iframe').forEach(frm =>
     frm.addEventListener('load', () => {

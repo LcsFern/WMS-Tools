@@ -9,7 +9,7 @@
   <link rel="manifest" href="site.webmanifest" />  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
   <title>{{ page.title }}</title>
   <style>
   /* Barra de rolagem personalizada */
@@ -35,6 +35,17 @@
       background-color: rgba(0, 0, 0, 0.1); /* Fundo suave */
       border-radius: 10px;
     }
+
+      /* --- 2) Definição da animação de giro --- */
+  @keyframes spin-rocket {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .rocket-spinner {
+    font-size: 3rem;              /* tamanho do ícone */
+    color: #008d4c;                  /* cor do foguete */
+    animation: spin-rocket 1s linear infinite;
+  }
     </style>
   <!-- Autenticação -->
   <script src="{{ site.baseurl }}/js/auth.js" defer></script>
