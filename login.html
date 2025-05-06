@@ -270,5 +270,21 @@ style.textContent = `
 document.head.appendChild(style);
 
   </script>
+   <script>
+    // Quando a página terminar de carregar completamente
+    window.addEventListener('load', () => {
+      // Verifica se há dados no localStorage
+      if (localStorage.length > 0) {
+        console.log("Dados encontrados no localStorage. Limpando...");
+        
+        // Apaga todos os dados do localStorage
+        localStorage.clear();
+
+        console.log("localStorage foi limpo com sucesso.");
+      } else {
+        console.log("localStorage já está vazio.");
+      }
+    });
+  </script>
 </body>
 </html>

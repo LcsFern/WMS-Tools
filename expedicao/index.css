@@ -203,3 +203,25 @@ h1 {
       grid-template-columns: 1fr;
   }
 }
+/* --- Estilos de input inline para edição --- */
+.edit-input {
+  background: rgba(255, 255, 255, 0.05);      /* glass */
+  color: #f8fafc;                             /* texto principal */
+  border: none;
+  border-bottom: 1px solid #34c759;           /* accent */
+  border-radius: 4px;
+  padding: 2px 4px;
+  font: inherit;
+  width: auto;
+  min-width: 3rem;
+  transition: box-shadow 0.2s;
+}
+.edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(52, 199, 89, 0.7); /* sombra accent */
+}
+
+/* Ajuste do ícone de editar (se quiser manter o lápis) */
+.edit-oe {
+  color: #34c759;     /* accent */
+}
