@@ -25,6 +25,7 @@ body {
   border-radius: 24px;
   padding: 2rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  overflow: visible;
 }
 
 h1 {
@@ -379,24 +380,53 @@ input[type="checkbox"]:checked:after {
 
 .custom-tooltip {
   position: absolute;
-  bottom: 100%; /* posiciona acima */
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%) translateY(-10px);
   background: linear-gradient(45deg, var(--primary), var(--secondary));
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  padding: 8px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  padding: 16px 40px; /* mais largo para os lados */
   color: var(--text);
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 1000;
+  font-size: 1rem;
+  max-width: 500px; /* aumenta a largura */
+  white-space: normal;
+  text-align: left; /* texto mais natural para leitura */
+  z-index: 99999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s, transform 0.3s;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  animation: tooltipFadeUp 0.4s ease forwards;
+  pointer-events: none;
 }
 
+/* Só aplicar a animação quando visível */
 .separador-tooltip-wrapper:hover .custom-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+  animation: tooltipFadeUp 0.4s ease forwards;
+  pointer-events: auto;
+}
+
+@keyframes tooltipFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+/* Correção para garantir que o tooltip apareça acima da tabela */
+table,
+thead,
+tbody,
+tr,
+th,
+td {
+  overflow: visible !important; /* Permite que elementos filhos ultrapassem */
+  position: relative; /* Necessário para que z-index funcione corretamente */
+  z-index: auto;
 }
