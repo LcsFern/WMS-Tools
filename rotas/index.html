@@ -361,7 +361,7 @@ title: "Rotas e Padrões"
           if (!i.OE || seen.has(i.OE)) continue;
           const dUp = (i.DESTINO||'').toUpperCase();
           for (const r of rotasArr) {
-            if (dUp.includes(r.CIDADE.toUpperCase()) && kmNum(r.KM) > 90) {
+            if (dUp.includes(r.CIDADE.toUpperCase()) && kmNum(r.KM) > 100) {
               seen.add(i.OE);
               cntR++;
               arrO.push(i.OE);
