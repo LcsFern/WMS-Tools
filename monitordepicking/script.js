@@ -419,13 +419,13 @@
     function updateEmptyLoads(emptyLoads) {
       const tbody = document.querySelector('#emptyLoadsTable tbody');
       tbody.innerHTML = '';
-
+    
       if (emptyLoads.length === 0) {
         document.getElementById('emptyLoadsCount').textContent = `(Total: 0)`;
         tbody.innerHTML = '<tr><td colspan="9">Nenhuma carga vazia encontrada</td></tr>';
         return;
       }
-
+    
       let gradeCompleta = localStorage.getItem('gradeCompleta');
       let gradeMap = {};
       if (gradeCompleta) {
@@ -444,7 +444,7 @@
           console.error('Erro ao parsear gradeCompleta', e);
         }
       }
-
+    
       const grouped = {};
       emptyLoads.forEach(load => {
         const key = `${load.oe}|${load.grupo}|${load.tipoOperacao}|${load.temperatura}`;
@@ -464,33 +464,45 @@
           grouped[key].prioridade = Math.min(grouped[key].prioridade, load.prioridade);
         }
       });
-
+    
       let groups = Object.values(grouped);
       groups.sort((a, b) => a.prioridade - b.prioridade);
-
+    
       document.getElementById('emptyLoadsCount').textContent = `Total: ${groups.length}`;
-
+    
       const totalCaixas = groups.reduce((sum, g) => sum + g.caixas, 0);
       const totalPosicao = groups.reduce((sum, g) => sum + g.posicao, 0);
       const mediaCaixas = groups.length > 0 ? totalCaixas / groups.length : 0;
       const mediaPosicao = groups.length > 0 ? totalPosicao / groups.length : 0;
-
+    
+      // Função para gerar cor entre verde, amarelo e vermelho conforme o valor em relação à média
+      function getColorGradient(value, media) {
+        const diff = value - media;
+        const ratio = Math.min(Math.abs(diff) / media, 1); // normaliza entre 0 e 1
+        let r = 0, g = 0;
+    
+        if (diff < 0) {
+          // Entre verde (0,255,0) e amarelo (255,255,0)
+          r = Math.round(255 * ratio); // aumenta o vermelho
+          g = 255;
+        } else {
+          // Entre amarelo (255,255,0) e vermelho (255,0,0)
+          r = 255;
+          g = Math.round(255 * (1 - ratio)); // diminui o verde
+        }
+    
+        return `background: rgba(${r},${g},0,0.5)`;
+      }
+    
       groups.forEach(group => {
-        let caixasStyle = group.caixas > mediaCaixas ? 
-          `background: rgba(255,0,0,${Math.min((group.caixas - mediaCaixas) / mediaCaixas, 1)})` : 
-          group.caixas < mediaCaixas ? 
-          `background: rgba(0,255,0,${Math.min((mediaCaixas - group.caixas) / mediaCaixas, 1)})` : '';
-        
-        let posicaoStyle = group.posicao < mediaPosicao ? 
-          `background: rgba(0,255,0,${Math.min((mediaPosicao - group.posicao) / mediaPosicao, 1)})` : 
-          group.posicao > mediaPosicao ? 
-          `background: rgba(255,0,0,${Math.min((group.posicao - mediaPosicao) / mediaPosicao, 1)})` : '';
-
+        let caixasStyle = getColorGradient(group.caixas, mediaCaixas);
+        let posicaoStyle = getColorGradient(group.posicao, mediaPosicao);
+    
         let prioridadeStyle = group.prioridade < 10 ? 'color: green; font-weight: bold;' : '';
-
+    
         let placa = gradeMap[group.oe]?.PLACAS?.[0] || '';
         let destino = gradeMap[group.oe]?.DESTINO || '';
-
+    
         tbody.innerHTML += `
           <tr>
             <td>${placa}</td>
@@ -505,9 +517,11 @@
           </tr>
         `;
       });
+    
       // Aplica o filtro de temperatura para as cargas, se definido
       filterLoadTable();
     }
+    
 
     // Função para copiar texto para a área de transferência (sem popup)
     function copyToClipboard(text) {

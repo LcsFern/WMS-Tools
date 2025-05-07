@@ -204,13 +204,24 @@ title: "WMS Tools"
         </a>
       </div>
 
-      <button class="nav-btn" data-page="grade/index.html">
-        <i class="fa-solid fa-table-cells"></i> <span>Grade</span>
-      </button>
-      <button class="nav-btn" data-page="ondas/index.html">
-        <i class="fa-solid fa-list-tree"></i> <span>Ondas</span>
-      </button>
 
+      <button class="nav-btn dropdown-btn">
+        <i class="fa-solid fa-warehouse-full"></i> <span>Gestão de Frotas</span>
+      </button>
+      <div class="dropdown-content">
+        <button class="nav-btn" data-page="grade/index.html">
+          <i class="fa-solid fa-table-cells"></i> <span>Grade</span>
+        </button>
+        <button class="nav-btn" data-page="ondas/index.html">
+          <i class="fa-solid fa-list-tree"></i> <span>Ondas</span>
+        </button>
+        <button class="nav-btn" data-page="rotas/index.html">
+          <i class="fa-solid fa-pen-ruler"></i> <span>Rotas e Padrões</span>
+        </button>
+      </div>
+
+
+      
       <button class="nav-btn dropdown-btn">
         <i class="fa-solid fa-forklift"></i> <span>Fluxo Operacional</span>
       </button>
@@ -353,11 +364,24 @@ title: "WMS Tools"
       });
     });
 
-    const dropdownBtn = document.querySelector('.dropdown-btn');
-    dropdownBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      dropdownBtn.classList.toggle('dropdown-open');
+// Seleciona todos os botões com dropdown
+const dropdownButtons = document.querySelectorAll('.dropdown-btn');
+
+dropdownButtons.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // Alterna a classe para abrir ou fechar o dropdown correspondente
+    btn.classList.toggle('dropdown-open');
+
+    // Fecha todos os outros dropdowns abertos (opcional)
+    dropdownButtons.forEach(otherBtn => {
+      if (otherBtn !== btn) {
+        otherBtn.classList.remove('dropdown-open');
+      }
     });
+  });
+});
   </script>
 </body>
 </html>

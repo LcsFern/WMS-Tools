@@ -1,0 +1,314 @@
+[
+ {
+  "No": 1,
+  "CIDADE": "CHAPECÓ",
+  "KM": "529 km",
+  "TEMPO": "08 horas"
+ },
+ {
+  "No": 2,
+  "CIDADE": "FINCO",
+  "KM": "478 km",
+  "TEMPO": "07 horas"
+ },
+ {
+    "No": 2,
+    "CIDADE": "TSP SEARA",
+    "KM": "478 km",
+    "TEMPO": "07 horas"
+   },
+ {
+  "No": 3,
+  "CIDADE": "COCAL DO SUL",
+  "KM": "285 km",
+  "TEMPO": "04 horas"
+ },
+ {
+  "No": 4,
+  "CIDADE": "CRICIÚMA",
+  "KM": "282 km",
+  "TEMPO": "03 horas"
+ },
+ {
+  "No": 5,
+  "CIDADE": "LAGES",
+  "KM": "275 km",
+  "TEMPO": "04 horas"
+ },
+ {
+  "No": 6,
+  "CIDADE": "IÇARA",
+  "KM": "268 km",
+  "TEMPO": "03 horas"
+ },
+ {
+  "No": 7,
+  "CIDADE": "TSP IÇARA",
+  "KM": "268 km",
+  "TEMPO": "03 horas"
+ },
+ {
+  "No": 8,
+  "CIDADE": "BRAÇO DO NORTE",
+  "KM": "249 km",
+  "TEMPO": "03 horas"
+ },
+ {
+  "No": 9,
+  "CIDADE": "TUBARAO",
+  "KM": "218 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 10,
+  "CIDADE": "CAPIVARI DE BAIXO",
+  "KM": "212 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 11,
+  "CIDADE": "MAFRA",
+  "KM": "204 km",
+  "TEMPO": "03 horas"
+ },
+ {
+  "No": 12,
+  "CIDADE": "LAGUNA",
+  "KM": "202 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 13,
+  "CIDADE": "FORT SAO BENTO DO SUL",
+  "KM": "174 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 14,
+  "CIDADE": "SAO BENTO DO SUL",
+  "KM": "174 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 15,
+  "CIDADE": "IMBITUBA",
+  "KM": "171 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 16,
+  "CIDADE": "RIO DO SUL",
+  "KM": "148 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 17,
+  "CIDADE": "ARNALDO RIO DO SUL",
+  "KM": "148 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 18,
+  "CIDADE": "FORT VARGEM GRANDE",
+  "KM": "139 km",
+  "TEMPO": "02 horas"
+ },
+ {
+  "No": 19,
+  "CIDADE": "FLOPIS NORTE",
+  "KM": "131 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 20,
+  "CIDADE": "FLOPIS SUL",
+  "KM": "118 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 21,
+  "CIDADE": "GARUVA",
+  "KM": "118 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 22,
+  "CIDADE": "FORT STO ANTONIO LISBOA",
+  "KM": "112 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 23,
+  "CIDADE": "FORT CAMPECHE",
+  "KM": "110 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 24,
+  "CIDADE": "OESA JARAGUA",
+  "KM": "107 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 25,
+  "CIDADE": "SAO FRANCISCO",
+  "KM": "107 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 26,
+  "CIDADE": "FLOPIS CONTINENTE",
+  "KM": "103 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 27,
+  "CIDADE": "FORT BUCAREIN",
+  "KM": "99 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 28,
+  "CIDADE": "FLOPIS CENTRO",
+  "KM": "97,7 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 29,
+  "CIDADE": "PALHOÇA",
+  "KM": "97,2 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 30,
+  "CIDADE": "FORT PALHOCA PASSA VINTE",
+  "KM": "97,2 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 31,
+  "CIDADE": "JARAGUA DO SUL",
+  "KM": "96,6 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 32,
+  "CIDADE": "SAO JOSE",
+  "KM": "91,1 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 33,
+  "CIDADE": "JOINVILLE",
+  "KM": "85,8 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 34,
+  "CIDADE": "INDAIAL",
+  "KM": "77,4 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 35,
+  "CIDADE": "BIGUAÇU",
+  "KM": "76,8 km",
+  "TEMPO": "01 hora"
+ },
+ {
+  "No": 36,
+  "CIDADE": "BLUMENAU",
+  "KM": "57,6 km",
+  "TEMPO": "56 minutos"
+ },
+ {
+  "No": 37,
+  "CIDADE": "COOP BLUMENAU",
+  "KM": "57,6 km",
+  "TEMPO": "56 minutos"
+ },
+ {
+  "No": 38,
+  "CIDADE": "ATACADAO BLUMENAU",
+  "KM": "57,6 km",
+  "TEMPO": "56 minutos"
+ },
+ {
+  "No": 39,
+  "CIDADE": "TIJUCAS",
+  "KM": "56,1 km",
+  "TEMPO": "43 minutos"
+ },
+ {
+  "No": 40,
+  "CIDADE": "BARRA VELHA",
+  "KM": "52,8 km",
+  "TEMPO": "39 minutos"
+ },
+ {
+  "No": 41,
+  "CIDADE": "KOCH TIJUCAS",
+  "KM": "47,7 km",
+  "TEMPO": "40 minutos"
+ },
+ {
+  "No": 42,
+  "CIDADE": "ANGELONI PORTO BELO",
+  "KM": "42,2 km",
+  "TEMPO": "38 minutos"
+ },
+ {
+  "No": 43,
+  "CIDADE": "FORT PORTO BELO",
+  "KM": "42,2 km",
+  "TEMPO": "38 minutos"
+ },
+ {
+  "No": 44,
+  "CIDADE": "SEGALAS GASPAR",
+  "KM": "40,1 km",
+  "TEMPO": "40 minutos"
+ },
+ {
+  "No": 45,
+  "CIDADE": "ITAPEMA",
+  "KM": "38,7 km",
+  "TEMPO": "31 minutos"
+ },
+ {
+  "No": 46,
+  "CIDADE": "BRUSQUE",
+  "KM": "35,1 km",
+  "TEMPO": "38 minutos"
+ },
+ {
+  "No": 47,
+  "CIDADE": "GASPAR",
+  "KM": "28,9 km",
+  "TEMPO": "31 minutos"
+ },
+ {
+  "No": 48,
+  "CIDADE": "NAVEGANTES",
+  "KM": "22 km",
+  "TEMPO": "25 minutos"
+ },
+ {
+  "No": 49,
+  "CIDADE": "BALNEARIO CAMBORIU",
+  "KM": "18,7 km",
+  "TEMPO": "19 minutos"
+ },
+ {
+  "No": 50,
+  "CIDADE": "ATACADAO CIDADE NOVA",
+  "KM": "8 km",
+  "TEMPO": "09 minutos"
+ },
+ {
+  "No": 51,
+  "CIDADE": "REDE TOP",
+  "KM": "8 km",
+  "TEMPO": "09 minutos"
+ }
+]
