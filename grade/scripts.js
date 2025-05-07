@@ -63,32 +63,47 @@ const destinosCoordenadas = {
 
 const baseItajai = { lat: -26.947144, lon: -48.739698 };
 
+// Função para parsear o peso vindo como string tipo "1.234,56"
 function parsePeso(valor) {
   return parseFloat(valor.toString().replace(/[\.]/g, '').replace(/[,]/g, '.'));
 }
 
-// Calcula a distância haversine entre dois pontos
+// Função de distância Haversine para calcular distância entre dois pontos (em km)
 function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Raio da Terra em km
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
+// Função para obter coordenadas de um destino
 async function getCoordinates(destino) {
   const chave = destino.trim().toUpperCase();
 
-  // Se já está em cache, retorna imediatamente
+  // 1) Se já está em cache, retorna imediatamente
   if (destinosCoordenadas[chave]) {
     return destinosCoordenadas[chave];
   }
 
-  // Função auxiliar que força SC na busca
+  // 2) Se não estiver, tenta encontrar uma cidade conhecida dentro do nome
+  for (const nomeSalvo in destinosCoordenadas) {
+    if (
+      chave.includes(nomeSalvo) &&               // destino contém o nome da cidade
+      !destinosCoordenadas[chave] &&             // ainda não resolvido
+      nomeSalvo !== chave                        // não é o mesmo nome exatamente
+    ) {
+      console.log(`✔️ Usando coordenada de "${nomeSalvo}" para "${destino}"`);
+      destinosCoordenadas[chave] = destinosCoordenadas[nomeSalvo];
+      return destinosCoordenadas[nomeSalvo];
+    }
+  }
+
+  // 3) Caso nenhuma cidade conhecida esteja no nome, tenta Nominatim
   async function consultaSC(query) {
     try {
       const fullQuery = `${query}, Santa Catarina, Brasil`;
@@ -105,29 +120,26 @@ async function getCoordinates(destino) {
     return null;
   }
 
-  // 1) Tenta com o destino completo + ", SC"
+  // 4) Tenta busca direta com o destino completo
   const tentativa1 = await consultaSC(destino);
   if (tentativa1) return tentativa1;
 
-  // 2) Se falhar, tenta por palavras-chave relevantes
-  const palavras = destino
-    .toUpperCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+  // 5) Tenta por palavras-chave do nome (sem acento, com mínimo de 4 letras)
+  const palavras = chave
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove acentos
     .split(/\s+/)
-    .filter(p => p.length >= 4); // ignora palavras curtas
+    .filter(p => p.length >= 4);
 
   for (const palavra of palavras) {
     const tentativa2 = await consultaSC(palavra);
     if (tentativa2) return tentativa2;
   }
 
-  // 3) Falhou completamente
+  // 6) Falha completa — retorna null e marca como não encontrado
   destinosCoordenadas[chave] = null;
   console.error(`❌ Coordenadas não encontradas para destino: "${destino}"`);
   return null;
 }
-
-
 
 
 // Gera o SVG da placa no padrão Mercosul
