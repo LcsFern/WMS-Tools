@@ -1,31 +1,65 @@
 const destinosCoordenadas = {
+  // Locais TSP e principais cidades
   "TSP IÇARA": [-28.7133, -49.3044],
   "TSP SEARA": [-27.1333, -52.3167],
   "TSP PALHOÇA": [-27.6428, -48.6694],
+  "SEARA": [-27.1486, -52.3186],
+  "LAGES": [-27.8157, -50.3264],
+  "IÇARA": [-28.7133, -49.3044],
+  "PALHOÇA": [-27.6428, -48.6694],
+  "CHAPECÓ": [-27.0964, -52.6182],
+  "CRICIÚMA": [-28.6775, -49.3697],
+  "COCAL DO SUL": [-28.6008, -49.3258],
+  "BRAÇO DO NORTE": [-28.2750, -49.1658],
+  "TUBARAO": [-28.4667, -49.0069],
+  "CAPIVARI DE BAIXO": [-28.4452, -48.9583],
+  "MAFRA": [-26.1114, -49.8052],
+  "LAGUNA": [-28.4825, -48.7808],
+  "SAO BENTO DO SUL": [-26.2506, -49.3787],
+  "IMBITUBA": [-28.2333, -48.6667],
+  "RIO DO SUL": [-27.2142, -49.6430],
+  "ARNALDO RIO DO SUL": [-27.2142, -49.6430], // mesma coordenada da cidade
+  "JOINVILLE": [-26.3045, -48.8487],
+  "JARAGUA DO SUL": [-26.4852, -49.0713],
+  "SAO FRANCISCO": [-26.2394, -48.6408],
+  "SAO JOSE": [-27.6136, -48.6276],
+  "BIGUAÇU": [-27.4942, -48.6597],
+  "INDAIAL": [-26.8978, -49.2317],
+  "BLUMENAU": [-26.9194, -49.0661],
+  "COOP BLUMENAU": [-26.9194, -49.0661],
+  "ATACADAO BLUMENAU": [-26.9153, -49.0650], // endereço real aproximado do Atacadão Blumenau
   "ITAPEMA": [-27.0903, -48.6114],
   "BRUSQUE": [-27.0979, -48.9172],
-  "SAO BENTO DO SUL": [-26.2506, -49.3787],
-  "LAGES": [-27.8157, -50.3264],
-  "RIO DO SUL": [-27.2142, -49.6430],
-  "MAFRA": [-26.1114, -49.8052],
-  "COOP BLUMENAU": [-26.9194, -49.0661],
-  "INDAIAL": [-26.8978, -49.2317],
+  "GASPAR": [-26.9316, -48.9586],
+  "NAVEGANTES": [-26.8988, -48.6542],
+  "TIJUCAS": [-27.2414, -48.6336],
+  "KOCH TIJUCAS": [-27.2414, -48.6336],
+  "BALNEARIO CAMBORIU": [-26.9906, -48.6348],
+  "BARRA VELHA": [-26.6371, -48.6842],
+
+  // Fort Atacadistas
+  "FORT PALHOCA PASSA VINTE": [-27.6143, -48.6348], // unidade próxima ao bairro Passa Vinte
+  "FORT VARGEM GRANDE": [-27.4726, -48.5053], // bairro Vargem Grande, Florianópolis
+  "FORT CAMPECHE": [-27.6765, -48.4830],
+  "FORT STO ANTONIO LISBOA": [-27.5069, -48.5196],
+  "FORT BUCAREIN": [-26.3125, -48.8478], // bairro Bucarein, Joinville
+  "FORT PORTO BELO": [-27.1600, -48.5460],
+
+  // Outros estabelecimentos
+  "FINCO": [-27.1495, -52.3035], // Finco Alimentos, Seara
+  "OESA JARAGUA": [-26.4810, -49.0616], // OESA - Av. Prefeito Waldemar Grubba, Jaraguá do Sul
+  "ANGELONI PORTO BELO": [-27.1547, -48.5147], // endereço aproximado
+  "SEGALAS GASPAR": [-26.9333, -48.9500], // estimativa - bairro Bela Vista
+  "ATACADAO CIDADE NOVA": [-26.9150, -48.6547], // unidade no bairro Cidade Nova, Itajaí
+  "REDE TOP": [-26.9194, -49.0661], // assume Blumenau como base
+
+  // Filiais Flóripa
   "FLOPIS NORTE": [-27.5935, -48.5447],
   "FLOPIS SUL": [-27.6799, -48.5477],
   "FLOPIS CENTRO": [-27.5954, -48.5482],
-  "FLOPIS CONTINENTE": [-27.5949, -48.5895],
-  "SAO FRANCISCO": [-26.2394, -48.6408],
-  "JOINVILLE": [-26.3045, -48.8487],
-  "TIJUCAS": [-27.2414, -48.6336],
-  "SAO JOSE": [-27.6136, -48.6276],
-  "BLUMENAU": [-26.9194, -49.0661],
-  "NAVEGANTES": [-26.8988, -48.6542],
-  "GASPAR": [-26.9316, -48.9586],
-  "KOCH TIJUCAS": [-27.2414, -48.6336],
-  "ITAJAI": [-26.9078, -48.6619],
-  "BALNEARIO CAMBORIU": [-26.9906, -48.6348],
-  "SEARA": [-27.1486, -52.3186]
+  "FLOPIS CONTINENTE": [-27.5949, -48.5895]
 };
+
 
 const baseItajai = { lat: -26.947144, lon: -48.739698 };
 
