@@ -3,7 +3,7 @@
 // ────────────────────────────────────────────────────────────
 const SERVER_PHP      = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD_PHP = 'https://labsuaideia.store/api/load.php';
-const WORKER_URL      = 'https://dry-scene-2df7.tjslucasvl.workers.dev/'; // fallback
+const WORKER_URL      = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
 const FETCH_TIMEOUT   = 10000;
 const MAX_RETRIES     = 3;
@@ -160,7 +160,9 @@ async function flushQueue() {
     const { value, timestamp } = batchMap[key];
     payloadDados[key] = { value, timestamp };
   }
-  const body = JSON.stringify({ userId, dados: JSON.stringify(payloadDados) });
+
+  // CORRIGIDO: remover JSON.stringify(payloadDados)
+  const body = JSON.stringify({ userId, dados: payloadDados });
 
   try {
     await fetchWithFallback(
