@@ -3,7 +3,7 @@
 // ────────────────────────────────────────────────────────────
 const SERVER_PHP      = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD_PHP = 'https://labsuaideia.store/api/load.php';
-const WORKER_URL      = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
+const WORKER_URL      = 'https://dry-scene-2df7.tjslucasvl.workers.dev/'; // fallback
 
 const FETCH_TIMEOUT   = 10000;
 const MAX_RETRIES     = 3;
@@ -22,22 +22,14 @@ const chaves = [
 ];
 
 let lastModifiedMap = {};
-let queue = [];
-let flushing = false;
+let queue            = [];
+let flushing         = false;
+
+try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
+try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; } catch {}
 
 // ────────────────────────────────────────────────────────────
-// INICIALIZAÇÃO: carrega fila e timestamps do localStorage
-// ────────────────────────────────────────────────────────────
-try {
-  lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {};
-} catch { lastModifiedMap = {}; }
-
-try {
-  queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-} catch { queue = []; }
-
-// ────────────────────────────────────────────────────────────
-// HELPERS DE UI (loading + popups) COM ANIMAÇÕES
+// HELPERS DE UI
 // ────────────────────────────────────────────────────────────
 function showLoading() {
   if (document.getElementById('loading-overlay')) return;
@@ -45,15 +37,14 @@ function showLoading() {
   overlay.id = 'loading-overlay';
   Object.assign(overlay.style, {
     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
+    alignItems: 'center', justifyContent: 'center',
     zIndex: 10000, opacity: '0', transition: 'opacity 0.3s ease'
   });
   const icon = document.createElement('i');
   icon.className = 'fas fa-rocket rocket-spinner';
   Object.assign(icon.style, {
-    fontSize: '3rem', color: '#008d4c',
-    animation: 'spin 1s linear infinite'
+    fontSize: '3rem', color: '#008d4c', animation: 'spin 1s linear infinite'
   });
   overlay.appendChild(icon);
   document.body.appendChild(overlay);
@@ -66,23 +57,20 @@ function hideLoading() {
   overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
 }
 function showPopup(msg, type = 'info') {
-  const COLORS = {
-    success: '#4CAF50', error: '#F44336', info: '#2196F3'
-  };
+  const COLORS = { success: '#4CAF50', error: '#F44336', info: '#2196F3' };
   let popup = document.getElementById('sync-notification-popup');
   if (popup) popup.remove();
+
   popup = document.createElement('div');
   popup.id = 'sync-notification-popup';
   popup.textContent = msg;
   Object.assign(popup.style, {
-    position: 'fixed', right: '20px', bottom: '20px',
-    padding: '15px 20px', borderRadius: '6px',
-    backgroundColor: COLORS[type] || COLORS.info,
+    position: 'fixed', right: '20px', bottom: '20px', padding: '15px 20px',
+    borderRadius: '6px', backgroundColor: COLORS[type] || COLORS.info,
     color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
     font: '14px Arial, sans-serif',
     transition: 'transform 0.4s ease, opacity 0.4s',
-    transform: 'translateY(20px)', opacity: '0',
-    zIndex: '10001', pointerEvents: 'auto'
+    transform: 'translateY(20px)', opacity: '0', zIndex: '10001'
   });
   document.body.appendChild(popup);
   requestAnimationFrame(() => {
@@ -103,14 +91,10 @@ style.textContent = `@keyframes spin { from { transform: rotate(0deg) } to { tra
 document.head.appendChild(style);
 
 // ────────────────────────────────────────────────────────────
-// FUNÇÕES AUXILIARES DE PERSISTÊNCIA
+// FUNÇÕES DE PERSISTÊNCIA
 // ────────────────────────────────────────────────────────────
-function saveTsMap() {
-  localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap));
-}
-function saveQueue() {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-}
+function saveTsMap()   { localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap)); }
+function saveQueue()   { localStorage.setItem(QUEUE_KEY, JSON.stringify(queue)); }
 
 // ────────────────────────────────────────────────────────────
 // FETCH COM TIMEOUT E FALLBACK
@@ -120,7 +104,6 @@ async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
   const id = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(id);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res;
   } finally { clearTimeout(id); }
@@ -142,45 +125,53 @@ async function fetchWithFallback(urls, options) {
 }
 
 // ────────────────────────────────────────────────────────────
-// INTERCEPTA LOCALSTORAGE.SETITEM
+// INTERCEPTA localStorage.setItem
 // ────────────────────────────────────────────────────────────
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const currentValue = localStorage.getItem(key);
   if (currentValue === value) return;
+
   originalSetItem(key, value);
   if (!chaves.includes(key)) return;
+
   const ts = Date.now();
   lastModifiedMap[key] = ts;
   saveTsMap();
+
   queue.push({ key, value, timestamp: ts });
   saveQueue();
+
   showLoading();
   flushQueue().finally(hideLoading);
 };
 
 // ────────────────────────────────────────────────────────────
-// ENVIO DAS OPERAÇÕES PENDENTES (formato antigo, por chave)
+// ENVIA FILA DE ALTERAÇÕES PARA O SERVIDOR
 // ────────────────────────────────────────────────────────────
 async function flushQueue() {
   if (flushing || !navigator.onLine || queue.length === 0) return;
   flushing = true;
+
   const batchMap = {};
   queue.forEach(op => batchMap[op.key] = op);
-  const payloads = Object.values(batchMap);
+  const payloadDados = {};
+  for (let key in batchMap) {
+    const { value, timestamp } = batchMap[key];
+    payloadDados[key] = { value, timestamp };
+  }
+  const body = JSON.stringify({ userId, dados: JSON.stringify(payloadDados) });
 
   try {
-    for (const { key, value, timestamp } of payloads) {
-      const body = JSON.stringify({ userId, key, value, timestamp });
-      await fetchWithFallback(
-        [SERVER_PHP, WORKER_URL],
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
-      );
-      lastModifiedMap[key] = Date.now();
-    }
-    saveTsMap();
+    await fetchWithFallback(
+      [SERVER_PHP, WORKER_URL],
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+    );
     queue = [];
     saveQueue();
+    const now = Date.now();
+    for (let key in payloadDados) lastModifiedMap[key] = now;
+    saveTsMap();
     showPopup('Dados sincronizados com sucesso', 'success');
   } catch (e) {
     console.error('❌ Falha no flush:', e);
@@ -191,7 +182,7 @@ async function flushQueue() {
 }
 
 // ────────────────────────────────────────────────────────────
-// RESTAURAR DADOS DO SERVIDOR (se mais novos)
+// RESTAURA DADOS DO SERVIDOR PARA O LOCALSTORAGE
 // ────────────────────────────────────────────────────────────
 async function fetchAllEndpoints(query) {
   const urls = [WORKER_URL + query, SERVER_LOAD_PHP + query];
@@ -201,7 +192,13 @@ async function fetchAllEndpoints(query) {
   const merged = {};
   for (let r of results) {
     if (r.status === 'fulfilled' && r.value?.dados) {
-      const srv = JSON.parse(r.value.dados);
+      let srv;
+      try {
+        srv = typeof r.value.dados === 'string' ? JSON.parse(r.value.dados) : r.value.dados;
+      } catch (e) {
+        console.error("Erro ao interpretar resposta do servidor:", r.value.dados, e);
+        continue;
+      }
       for (let key in srv) {
         const { value, timestamp } = srv[key];
         if (!merged[key] || merged[key].timestamp < timestamp) {
@@ -243,11 +240,9 @@ async function restoreStorage() {
 // ────────────────────────────────────────────────────────────
 // EVENTOS DE CICLO DE VIDA
 // ────────────────────────────────────────────────────────────
-window.addEventListener('online', () => {
-  showPopup('Online', 'info');
-  restoreStorage();
-});
+window.addEventListener('online',  () => { showPopup('Online', 'info'); restoreStorage(); });
 window.addEventListener('offline', () => showPopup('Offline', 'error'));
+
 window.addEventListener('beforeunload', () => {
   if (navigator.onLine) flushQueue();
 });
@@ -257,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ────────────────────────────────────────────────────────────
-// DEBUG MANUAL
+// FUNÇÃO MANUAL DE DEBUG
 // ────────────────────────────────────────────────────────────
 window.sincronizarAgora = async () => {
   if (!navigator.onLine) return showPopup('Sem conexão', 'error');
