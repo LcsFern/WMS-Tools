@@ -69,7 +69,6 @@ function showLoading() {
   });
   overlay.appendChild(icon);
   document.body.appendChild(overlay);
-  // trigger animação de fade-in
   requestAnimationFrame(() => overlay.style.opacity = '1');
 }
 function hideLoading() {
@@ -105,16 +104,12 @@ function showPopup(msg, type = 'info') {
     pointerEvents:  'auto'
   });
   document.body.appendChild(popup);
-
-  // animação de entrada em dois frames
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       popup.style.transform = 'translateY(0)';
       popup.style.opacity   = '1';
     });
   });
-
-  // saída após 3s
   setTimeout(() => {
     popup.style.transform = 'translateY(20px)';
     popup.style.opacity   = '0';
@@ -123,9 +118,6 @@ function showPopup(msg, type = 'info') {
   }, 3000);
 }
 
-
-
-// adiciona estilos de animação global
 const style = document.createElement('style');
 style.textContent = `
 @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
@@ -179,15 +171,11 @@ async function fetchWithFallback(urls, options) {
 // ────────────────────────────────────────────────────────────
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
-  // Verificar se o valor foi realmente alterado antes de adicionar ao buffer
   const currentValue = localStorage.getItem(key);
-
-  // Se o valor não mudou, não adiciona ao buffer nem envia
-  if (currentValue === value) return;
+  if (currentValue === value) return; // sem alteração = nada a fazer
 
   originalSetItem(key, value);
-
-  if (!chaves.includes(key)) return;
+  if (!chaves.includes(key)) return;  // só faz sync das "chaves" definidas
 
   const ts = Date.now();
   lastModifiedMap[key] = ts;
@@ -210,22 +198,35 @@ async function flushQueue() {
   // agrupa pela última operação de cada chave
   const batchMap = {};
   queue.forEach(op => batchMap[op.key] = op);
+
+  // payloadDados agora é um objeto plano, sem stringificação dupla
   const payloadDados = {};
   for (let key in batchMap) {
     const { value, timestamp } = batchMap[key];
     payloadDados[key] = { value, timestamp };
   }
-  const body = JSON.stringify({ userId, dados: JSON.stringify(payloadDados) });
+
+  // montamos o corpo diretamente
+  const body = JSON.stringify({
+    userId,
+    dados: payloadDados
+  });
 
   try {
     await fetchWithFallback(
       [SERVER_PHP, WORKER_URL],
-      { method:'POST', headers:{'Content-Type':'application/json'}, body }
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      }
     );
+
+    // limpa fila e atualiza timestamps locais
     queue = [];
     saveQueue();
     const now = Date.now();
-    for (let key in payloadDados) lastModifiedMap[key] = now;
+    Object.keys(payloadDados).forEach(k => lastModifiedMap[k] = now);
     saveTsMap();
 
     showPopup('Dados sincronizados com sucesso', 'success');
@@ -243,12 +244,18 @@ async function flushQueue() {
 async function fetchAllEndpoints(query) {
   const urls = [WORKER_URL + query, SERVER_LOAD_PHP + query];
   const results = await Promise.allSettled(
-    urls.map(u => fetchWithTimeout(u, {method:'GET',cache:'no-store'}).then(r=>r.json()))
+    urls.map(u =>
+      fetchWithTimeout(u, { method: 'GET', cache: 'no-store' })
+        .then(r => r.json())
+    )
   );
+
+  // merge inteligente, pega o timestamp mais alto por chave
   const merged = {};
   for (let r of results) {
     if (r.status === 'fulfilled' && r.value?.dados) {
-      const srv = JSON.parse(r.value.dados);
+      // espera que dados já seja um objeto (JSON parse feito no PHP)
+      const srv = r.value.dados;
       for (let key in srv) {
         const { value, timestamp } = srv[key];
         if (!merged[key] || merged[key].timestamp < timestamp) {
@@ -259,22 +266,26 @@ async function fetchAllEndpoints(query) {
   }
   return merged;
 }
+
 async function restoreStorage() {
   showLoading();
   try {
     const qs = `?userId=${encodeURIComponent(userId)}`;
     const serverData = await fetchAllEndpoints(qs);
     let applied = 0;
+
     for (let key in serverData) {
       if (!chaves.includes(key)) continue;
       const { value, timestamp } = serverData[key];
       const localTs = lastModifiedMap[key] || 0;
+
       if (timestamp > localTs) {
-        originalSetItem(key, value);
+        originalSetItem(key, value);      // seta direto sem re-enfileirar
         lastModifiedMap[key] = timestamp;
         applied++;
       }
     }
+
     if (applied) showPopup(`${applied} itens restaurados`, 'info');
     saveTsMap();
   } catch (e) {
@@ -282,7 +293,6 @@ async function restoreStorage() {
     showPopup('Falha ao restaurar dados', 'error');
   } finally {
     hideLoading();
-    // após restaurar, tenta enviar qualquer mudança
     flushing = false;
     flushQueue();
   }
