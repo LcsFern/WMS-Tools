@@ -64,7 +64,7 @@ function showLoading() {
   icon.className = 'fas fa-rocket rocket-spinner';
   Object.assign(icon.style, {
     fontSize: '3rem',
-    color:    '#fff',
+    color:    '#008d4c',
     animation:'spin 1s linear infinite'
   });
   overlay.appendChild(icon);
