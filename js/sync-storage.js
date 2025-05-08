@@ -56,7 +56,7 @@ function showLoading() {
     display:       'flex',
     alignItems:    'center',
     justifyContent:'center',
-    zIndex:        9999,
+    zIndex:        20000,
     opacity:       '0',
     transition:    'opacity 0.3s ease'
   });
