@@ -80,47 +80,54 @@ function hideLoading() {
 }
 function showPopup(msg, type = 'info') {
   const COLORS = {
-    success: '#4CAF50', error: '#F44336', info: '#2196F3'
+    success: '#4CAF50',
+    error: '#F44336',
+    info: '#2196F3'
   };
-  let popup = document.getElementById('sync-notification-popup');
-  if (popup) popup.remove(); // remove popup anterior se existir
 
-  popup = document.createElement('div');
+  // Remove popup anterior se existir
+  let oldPopup = document.getElementById('sync-notification-popup');
+  if (oldPopup) oldPopup.remove();
+
+  // Cria novo popup
+  const popup = document.createElement('div');
   popup.id = 'sync-notification-popup';
   popup.textContent = msg;
 
-  // Estilo com !important para garantir visibilidade
   popup.style.cssText = `
     position: fixed !important;
     right: 20px !important;
-    bottom: -100px !important;
+    bottom: 20px !important;
     padding: 15px 20px !important;
     border-radius: 6px !important;
     background-color: ${COLORS[type] || COLORS.info} !important;
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     font: 14px Arial, sans-serif !important;
-    transition: transform 0.4s cubic-bezier(.25,.8,.25,1), opacity 0.4s !important;
-    transform: translateY(0) !important;
+    z-index: 2147483647 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     opacity: 0 !important;
-    z-index: 2147483647 !important; /* valor máximo possível */
+    transform: translateY(20px) !important;
+    transition: opacity 0.4s ease, transform 0.4s ease !important;
+    pointer-events: none !important;
   `;
 
   document.body.appendChild(popup);
 
-  // entry animation
-  requestAnimationFrame(() => {
-    popup.style.transform = 'translateY(-20px)';
-    popup.style.opacity = '1';
-  });
+  // Força reflow antes de animar
+  void popup.offsetWidth;
 
-  // exit após 3s
+  // Inicia animação
+  popup.style.opacity = '1';
+  popup.style.transform = 'translateY(0)';
+
+  // Remove após 3 segundos
   setTimeout(() => {
-    popup.style.transform = 'translateY(0)';
     popup.style.opacity = '0';
-    popup.addEventListener('transitionend', () => popup.remove(), { once: true });
+    popup.style.transform = 'translateY(20px)';
+    setTimeout(() => popup.remove(), 400); // garante remoção mesmo se 'transitionend' falhar
   }, 3000);
 }
+
 
 
 // adiciona estilos de animação global
