@@ -245,6 +245,17 @@ title: "Controle de Logs"
   </div>
 
   <script>
+    // Função para carregar o iframe com os logs do servidor
+        window.addEventListener('load', () => {
+      // Verificar se a página está dentro de um iframe
+      if (window.self !== window.top) {
+        // Página está dentro de um iframe, esconder o loading overlay
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+          overlay.style.display = 'none'; // Esconde o overlay
+        }
+      }
+    });
     // Funções para abrir e fechar os modais
     function openModal(modalId) {
       document.getElementById(modalId).style.display = "block";
@@ -276,18 +287,6 @@ title: "Controle de Logs"
             modals[i].style.display = "none";
             document.body.style.overflow = "auto";
           }
-        }
-      }
-    });
-  </script>
-  <script>
-    window.addEventListener('load', () => {
-      // Verificar se a página está dentro de um iframe
-      if (window.self !== window.top) {
-        // Página está dentro de um iframe, esconder o loading overlay
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) {
-          overlay.style.display = 'none'; // Esconde o overlay
         }
       }
     });
