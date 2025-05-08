@@ -34,5 +34,17 @@ title: "Log do Servidor"
   </section>
 
   <script src="script.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      // Verificar se a página está dentro de um iframe
+      if (window.self !== window.top) {
+        // Página está dentro de um iframe, esconder o loading overlay
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+          overlay.style.display = 'none'; // Esconde o overlay
+        }
+      }
+    });
+  </script>
 </body>
 </html>
