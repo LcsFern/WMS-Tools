@@ -175,7 +175,14 @@ async function fetchWithFallback(urls, options) {
 // ────────────────────────────────────────────────────────────
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
+  // Verificar se o valor foi realmente alterado antes de adicionar ao buffer
+  const currentValue = localStorage.getItem(key);
+
+  // Se o valor não mudou, não adiciona ao buffer nem envia
+  if (currentValue === value) return;
+
   originalSetItem(key, value);
+
   if (!chaves.includes(key)) return;
 
   const ts = Date.now();
