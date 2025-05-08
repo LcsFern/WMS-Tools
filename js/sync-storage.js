@@ -83,7 +83,7 @@ function showPopup(msg, type = 'info') {
     success: '#4CAF50', error: '#F44336', info: '#2196F3'
   };
   let popup = document.getElementById('sync-notification-popup');
-  if (popup) popup.remove(); // remove popup anterior se existir
+  if (popup) popup.remove();
 
   popup = document.createElement('div');
   popup.id = 'sync-notification-popup';
@@ -91,33 +91,37 @@ function showPopup(msg, type = 'info') {
   Object.assign(popup.style, {
     position:       'fixed',
     right:          '20px',
-    bottom:         '-100px',
+    bottom:         '20px',
     padding:        '15px 20px',
     borderRadius:   '6px',
     backgroundColor: COLORS[type] || COLORS.info,
     color:          '#fff',
     boxShadow:      '0 4px 12px rgba(0,0,0,0.15)',
     font:           '14px Arial, sans-serif',
-    transition:     'transform 0.4s cubic-bezier(.25,.8,.25,1), opacity 0.4s',
-    transform:      'translateY(0)',
+    transition:     'transform 0.4s ease, opacity 0.4s',
+    transform:      'translateY(20px)',
     opacity:        '0',
-    zIndex:         '10001'  // Garantir que o popup aparece acima do confirmBox
+    zIndex:         '10001',
+    pointerEvents:  'auto'
   });
   document.body.appendChild(popup);
 
-  // entry animation
+  // animação de entrada em dois frames
   requestAnimationFrame(() => {
-    popup.style.transform = 'translateY(-20px)';
-    popup.style.opacity   = '1';
+    requestAnimationFrame(() => {
+      popup.style.transform = 'translateY(0)';
+      popup.style.opacity   = '1';
+    });
   });
-  // exit após 3s
+
+  // saída após 3s
   setTimeout(() => {
-    popup.style.transform = 'translateY(0)';
+    popup.style.transform = 'translateY(20px)';
     popup.style.opacity   = '0';
+    popup.style.pointerEvents = 'none';
     popup.addEventListener('transitionend', () => popup.remove(), { once: true });
   }, 3000);
 }
-
 
 
 
