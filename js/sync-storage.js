@@ -3,12 +3,12 @@
 // ────────────────────────────────────────────────────────────
 const SERVER_PHP      = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD_PHP = 'https://labsuaideia.store/api/load.php';
-const WORKER_URL      = 'https://dry-scene-2df7.tjslucasvl.workers.dev/'; // fallback
+const WORKER_URL      = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
-const FETCH_TIMEOUT   = 10000;  // ms para abortar fetch
-const MAX_RETRIES     = 3;      // tentativas por endpoint
-const QUEUE_KEY       = 'syncQueue';        // fila no localStorage
-const TS_MAP_KEY      = 'syncLastModified'; // mapa timestamps no localStorage
+const FETCH_TIMEOUT   = 10000;
+const MAX_RETRIES     = 3;
+const QUEUE_KEY       = 'syncQueue';
+const TS_MAP_KEY      = 'syncLastModified';
 
 // ────────────────────────────────────────────────────────────
 // VARIÁVEIS DE ESTADO
@@ -21,23 +21,20 @@ const chaves = [
   'pickingData','pickingTimestamp'
 ];
 
-let lastModifiedMap = {};     // { key: timestamp }
-let queue            = [];    // [ { key, value, timestamp }, … ]
-let flushing         = false; // flag para não duplicar envios
+let lastModifiedMap = {};
+let queue = [];
+let flushing = false;
 
 // ────────────────────────────────────────────────────────────
 // INICIALIZAÇÃO: carrega fila e timestamps do localStorage
 // ────────────────────────────────────────────────────────────
 try {
   lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {};
-} catch {
-  lastModifiedMap = {};
-}
+} catch { lastModifiedMap = {}; }
+
 try {
   queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-} catch {
-  queue = [];
-}
+} catch { queue = []; }
 
 // ────────────────────────────────────────────────────────────
 // HELPERS DE UI (loading + popups) COM ANIMAÇÕES
@@ -47,25 +44,16 @@ function showLoading() {
   const overlay = document.createElement('div');
   overlay.id = 'loading-overlay';
   Object.assign(overlay.style, {
-    position:      'fixed',
-    top:           0,
-    left:          0,
-    width:         '100%',
-    height:        '100%',
+    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
     backgroundColor: 'rgba(0,0,0,0.7)',
-    display:       'flex',
-    alignItems:    'center',
-    justifyContent:'center',
-    zIndex:        10000,
-    opacity:       '0',
-    transition:    'opacity 0.3s ease'
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 10000, opacity: '0', transition: 'opacity 0.3s ease'
   });
   const icon = document.createElement('i');
   icon.className = 'fas fa-rocket rocket-spinner';
   Object.assign(icon.style, {
-    fontSize: '3rem',
-    color:    '#008d4c',
-    animation:'spin 1s linear infinite'
+    fontSize: '3rem', color: '#008d4c',
+    animation: 'spin 1s linear infinite'
   });
   overlay.appendChild(icon);
   document.body.appendChild(overlay);
@@ -83,46 +71,35 @@ function showPopup(msg, type = 'info') {
   };
   let popup = document.getElementById('sync-notification-popup');
   if (popup) popup.remove();
-
   popup = document.createElement('div');
   popup.id = 'sync-notification-popup';
   popup.textContent = msg;
   Object.assign(popup.style, {
-    position:       'fixed',
-    right:          '20px',
-    bottom:         '20px',
-    padding:        '15px 20px',
-    borderRadius:   '6px',
+    position: 'fixed', right: '20px', bottom: '20px',
+    padding: '15px 20px', borderRadius: '6px',
     backgroundColor: COLORS[type] || COLORS.info,
-    color:          '#fff',
-    boxShadow:      '0 4px 12px rgba(0,0,0,0.15)',
-    font:           '14px Arial, sans-serif',
-    transition:     'transform 0.4s ease, opacity 0.4s',
-    transform:      'translateY(20px)',
-    opacity:        '0',
-    zIndex:         '10001',
-    pointerEvents:  'auto'
+    color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    font: '14px Arial, sans-serif',
+    transition: 'transform 0.4s ease, opacity 0.4s',
+    transform: 'translateY(20px)', opacity: '0',
+    zIndex: '10001', pointerEvents: 'auto'
   });
   document.body.appendChild(popup);
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       popup.style.transform = 'translateY(0)';
-      popup.style.opacity   = '1';
+      popup.style.opacity = '1';
     });
   });
   setTimeout(() => {
     popup.style.transform = 'translateY(20px)';
-    popup.style.opacity   = '0';
+    popup.style.opacity = '0';
     popup.style.pointerEvents = 'none';
     popup.addEventListener('transitionend', () => popup.remove(), { once: true });
   }, 3000);
 }
-
 const style = document.createElement('style');
-style.textContent = `
-@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-.rocket-spinner { /* caso queira classe extra */ }
-`;
+style.textContent = `@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`;
 document.head.appendChild(style);
 
 // ────────────────────────────────────────────────────────────
@@ -136,7 +113,7 @@ function saveQueue() {
 }
 
 // ────────────────────────────────────────────────────────────
-// FETCH COM TIMEOUT, FALLBACK E RETRIES
+// FETCH COM TIMEOUT E FALLBACK
 // ────────────────────────────────────────────────────────────
 async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
   const controller = new AbortController();
@@ -146,9 +123,7 @@ async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
     clearTimeout(id);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res;
-  } finally {
-    clearTimeout(id);
-  }
+  } finally { clearTimeout(id); }
 }
 async function fetchWithFallback(urls, options) {
   let err;
@@ -167,68 +142,45 @@ async function fetchWithFallback(urls, options) {
 }
 
 // ────────────────────────────────────────────────────────────
-// INTERCEPT LOCALSTORAGE.SETITEM → ENFILEIRA OPERAÇÃO
+// INTERCEPTA LOCALSTORAGE.SETITEM
 // ────────────────────────────────────────────────────────────
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const currentValue = localStorage.getItem(key);
-  if (currentValue === value) return; // sem alteração = nada a fazer
-
+  if (currentValue === value) return;
   originalSetItem(key, value);
-  if (!chaves.includes(key)) return;  // só faz sync das "chaves" definidas
-
+  if (!chaves.includes(key)) return;
   const ts = Date.now();
   lastModifiedMap[key] = ts;
   saveTsMap();
-
   queue.push({ key, value, timestamp: ts });
   saveQueue();
-
   showLoading();
   flushQueue().finally(hideLoading);
 };
 
 // ────────────────────────────────────────────────────────────
-// ENVIO DAS OPERAÇÕES PENDENTES (FIFO, atomic batch)
+// ENVIO DAS OPERAÇÕES PENDENTES (formato antigo, por chave)
 // ────────────────────────────────────────────────────────────
 async function flushQueue() {
   if (flushing || !navigator.onLine || queue.length === 0) return;
   flushing = true;
-
-  // agrupa pela última operação de cada chave
   const batchMap = {};
   queue.forEach(op => batchMap[op.key] = op);
-
-  // payloadDados agora é um objeto plano, sem stringificação dupla
-  const payloadDados = {};
-  for (let key in batchMap) {
-    const { value, timestamp } = batchMap[key];
-    payloadDados[key] = { value, timestamp };
-  }
-
-  // montamos o corpo diretamente
-  const body = JSON.stringify({
-    userId,
-    dados: payloadDados
-  });
+  const payloads = Object.values(batchMap);
 
   try {
-    await fetchWithFallback(
-      [SERVER_PHP, WORKER_URL],
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
-      }
-    );
-
-    // limpa fila e atualiza timestamps locais
+    for (const { key, value, timestamp } of payloads) {
+      const body = JSON.stringify({ userId, key, value, timestamp });
+      await fetchWithFallback(
+        [SERVER_PHP, WORKER_URL],
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+      );
+      lastModifiedMap[key] = Date.now();
+    }
+    saveTsMap();
     queue = [];
     saveQueue();
-    const now = Date.now();
-    Object.keys(payloadDados).forEach(k => lastModifiedMap[k] = now);
-    saveTsMap();
-
     showPopup('Dados sincronizados com sucesso', 'success');
   } catch (e) {
     console.error('❌ Falha no flush:', e);
@@ -239,23 +191,17 @@ async function flushQueue() {
 }
 
 // ────────────────────────────────────────────────────────────
-// RESTAURAR servidor → localStorage (só se mais novo)
+// RESTAURAR DADOS DO SERVIDOR (se mais novos)
 // ────────────────────────────────────────────────────────────
 async function fetchAllEndpoints(query) {
   const urls = [WORKER_URL + query, SERVER_LOAD_PHP + query];
   const results = await Promise.allSettled(
-    urls.map(u =>
-      fetchWithTimeout(u, { method: 'GET', cache: 'no-store' })
-        .then(r => r.json())
-    )
+    urls.map(u => fetchWithTimeout(u, { method: 'GET', cache: 'no-store' }).then(r => r.json()))
   );
-
-  // merge inteligente, pega o timestamp mais alto por chave
   const merged = {};
   for (let r of results) {
     if (r.status === 'fulfilled' && r.value?.dados) {
-      // espera que dados já seja um objeto (JSON parse feito no PHP)
-      const srv = r.value.dados;
+      const srv = JSON.parse(r.value.dados);
       for (let key in srv) {
         const { value, timestamp } = srv[key];
         if (!merged[key] || merged[key].timestamp < timestamp) {
@@ -266,26 +212,22 @@ async function fetchAllEndpoints(query) {
   }
   return merged;
 }
-
 async function restoreStorage() {
   showLoading();
   try {
     const qs = `?userId=${encodeURIComponent(userId)}`;
     const serverData = await fetchAllEndpoints(qs);
     let applied = 0;
-
     for (let key in serverData) {
       if (!chaves.includes(key)) continue;
       const { value, timestamp } = serverData[key];
       const localTs = lastModifiedMap[key] || 0;
-
       if (timestamp > localTs) {
-        originalSetItem(key, value);      // seta direto sem re-enfileirar
+        originalSetItem(key, value);
         lastModifiedMap[key] = timestamp;
         applied++;
       }
     }
-
     if (applied) showPopup(`${applied} itens restaurados`, 'info');
     saveTsMap();
   } catch (e) {
@@ -299,22 +241,23 @@ async function restoreStorage() {
 }
 
 // ────────────────────────────────────────────────────────────
-// EVENTOS DE REDE E CICLO DE VIDA
+// EVENTOS DE CICLO DE VIDA
 // ────────────────────────────────────────────────────────────
-window.addEventListener('online',  () => { showPopup('Online', 'info'); restoreStorage(); });
+window.addEventListener('online', () => {
+  showPopup('Online', 'info');
+  restoreStorage();
+});
 window.addEventListener('offline', () => showPopup('Offline', 'error'));
-
 window.addEventListener('beforeunload', () => {
   if (navigator.onLine) flushQueue();
 });
-
 document.addEventListener('DOMContentLoaded', () => {
   if (navigator.onLine) restoreStorage();
   else showPopup('Iniciado offline; aguardando conexão', 'info');
 });
 
 // ────────────────────────────────────────────────────────────
-// FUNÇÃO MANUAL PARA DEBUG
+// DEBUG MANUAL
 // ────────────────────────────────────────────────────────────
 window.sincronizarAgora = async () => {
   if (!navigator.onLine) return showPopup('Sem conexão', 'error');
