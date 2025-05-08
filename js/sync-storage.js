@@ -80,53 +80,44 @@ function hideLoading() {
 }
 function showPopup(msg, type = 'info') {
   const COLORS = {
-    success: '#4CAF50',
-    error: '#F44336',
-    info: '#2196F3'
+    success: '#4CAF50', error: '#F44336', info: '#2196F3'
   };
+  let popup = document.getElementById('sync-notification-popup');
+  if (popup) popup.remove(); // remove popup anterior se existir
 
-  // Remove popup anterior se existir
-  let oldPopup = document.getElementById('sync-notification-popup');
-  if (oldPopup) oldPopup.remove();
-
-  // Cria novo popup
-  const popup = document.createElement('div');
+  popup = document.createElement('div');
   popup.id = 'sync-notification-popup';
   popup.textContent = msg;
-
-  popup.style.cssText = `
-    position: fixed !important;
-    right: 20px !important;
-    bottom: 20px !important;
-    padding: 15px 20px !important;
-    border-radius: 6px !important;
-    background-color: ${COLORS[type] || COLORS.info} !important;
-    color: #fff !important;
-    font: 14px Arial, sans-serif !important;
-    z-index: 2147483647 !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-    opacity: 0 !important;
-    transform: translateY(20px) !important;
-    transition: opacity 0.4s ease, transform 0.4s ease !important;
-    pointer-events: none !important;
-  `;
-
+  Object.assign(popup.style, {
+    position:       'fixed',
+    right:          '20px',
+    bottom:         '-100px',
+    padding:        '15px 20px',
+    borderRadius:   '6px',
+    backgroundColor: COLORS[type] || COLORS.info,
+    color:          '#fff',
+    boxShadow:      '0 4px 12px rgba(0,0,0,0.15)',
+    font:           '14px Arial, sans-serif',
+    transition:     'transform 0.4s cubic-bezier(.25,.8,.25,1), opacity 0.4s',
+    transform:      'translateY(0)',
+    opacity:        '0',
+    zIndex:         '10001'  // Garantir que o popup aparece acima do confirmBox
+  });
   document.body.appendChild(popup);
 
-  // Força reflow antes de animar
-  void popup.offsetWidth;
-
-  // Inicia animação
-  popup.style.opacity = '1';
-  popup.style.transform = 'translateY(0)';
-
-  // Remove após 3 segundos
+  // entry animation
+  requestAnimationFrame(() => {
+    popup.style.transform = 'translateY(-20px)';
+    popup.style.opacity   = '1';
+  });
+  // exit após 3s
   setTimeout(() => {
-    popup.style.opacity = '0';
-    popup.style.transform = 'translateY(20px)';
-    setTimeout(() => popup.remove(), 400); // garante remoção mesmo se 'transitionend' falhar
+    popup.style.transform = 'translateY(0)';
+    popup.style.opacity   = '0';
+    popup.addEventListener('transitionend', () => popup.remove(), { once: true });
   }, 3000);
 }
+
 
 
 
