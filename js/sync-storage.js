@@ -88,35 +88,40 @@ function showPopup(msg, type = 'info') {
   popup = document.createElement('div');
   popup.id = 'sync-notification-popup';
   popup.textContent = msg;
-  Object.assign(popup.style, {
-    position:       'fixed',
-    right:          '20px',
-    bottom:         '-100px',
-    padding:        '15px 20px',
-    borderRadius:   '6px',
-    backgroundColor: COLORS[type] || COLORS.info,
-    color:          '#fff',
-    boxShadow:      '0 4px 12px rgba(0,0,0,0.15)',
-    font:           '14px Arial, sans-serif',
-    transition:     'transform 0.4s cubic-bezier(.25,.8,.25,1), opacity 0.4s',
-    transform:      'translateY(0)',
-    opacity:        '0',
-    zIndex:         10000
-  });
+
+  // Estilo com !important para garantir visibilidade
+  popup.style.cssText = `
+    position: fixed !important;
+    right: 20px !important;
+    bottom: -100px !important;
+    padding: 15px 20px !important;
+    border-radius: 6px !important;
+    background-color: ${COLORS[type] || COLORS.info} !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    font: 14px Arial, sans-serif !important;
+    transition: transform 0.4s cubic-bezier(.25,.8,.25,1), opacity 0.4s !important;
+    transform: translateY(0) !important;
+    opacity: 0 !important;
+    z-index: 2147483647 !important; /* valor máximo possível */
+  `;
+
   document.body.appendChild(popup);
 
   // entry animation
   requestAnimationFrame(() => {
     popup.style.transform = 'translateY(-20px)';
-    popup.style.opacity   = '1';
+    popup.style.opacity = '1';
   });
+
   // exit após 3s
   setTimeout(() => {
     popup.style.transform = 'translateY(0)';
-    popup.style.opacity   = '0';
+    popup.style.opacity = '0';
     popup.addEventListener('transitionend', () => popup.remove(), { once: true });
   }, 3000);
 }
+
 
 // adiciona estilos de animação global
 const style = document.createElement('style');
