@@ -131,19 +131,20 @@ const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const prev = localStorage.getItem(key);
   originalSetItem(key, value);
-  if (key === prev || !SYNC_KEYS.includes(key)) return;
 
-  // marcou alteração local
+  // 🛠️ Correção aqui: só salva se o valor mudou de verdade
+  if (value === prev || !SYNC_KEYS.includes(key)) return;
+
   const ts = Date.now();
   lastModifiedMap[key] = ts;
   queue.push({ userId, key, value, timestamp: ts });
   saveTsMap();
   saveQueue();
 
-  // dispara envio imediato
   showLoading();
   flushQueue().finally(hideLoading);
 };
+
 
 /* ─── ENVIA CADA OPERAÇÃO AO SERVIDOR ─────────────────────────────────────── */
 async function flushQueue() {
