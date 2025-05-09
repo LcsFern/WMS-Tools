@@ -407,7 +407,7 @@ title: "Rotas e Padrões"
             theme: 'grid',
             margin: { left:10, right:10 },
             headStyles: {
-              fillColor:[179,0,0], // vermelho
+              fillColor:[0, 60, 20], // verde escuro
               textColor:255,
               fontStyle:'bold',
               lineWidth: 1.5,
@@ -426,7 +426,7 @@ title: "Rotas e Padrões"
             didParseCell: data => {
               // Ajuste: mantém QTD PALLETS com mesma fonte que as outras colunas, removida a customização
               if (data.section==='head' && data.column.index===2) {
-                data.cell.styles.fillColor = [31,41,55]; // cinza-800 para cabeçalho QTD PALLETS
+                data.cell.styles.fillColor = [0, 60, 20]; // verde escuro para cabeçalho QTD PALLETS
               }
             },
             pageBreak: 'avoid'

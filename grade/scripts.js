@@ -52,6 +52,8 @@ const destinosCoordenadas = {
   "SEGALAS GASPAR": [-26.9333, -48.9500], // estimativa - bairro Bela Vista
   "ATACADAO CIDADE NOVA": [-26.9150, -48.6547], // unidade no bairro Cidade Nova, Itajaí
   "REDE TOP": [-26.9194, -49.0661], // assume Blumenau como base
+  "SAO MIGUEL": [-26.7258, -53.5181], // São Miguel do Oeste
+  "REDE TOP ITAJAI": [-26.9063, -48.6619], // unidade em Itajaí
 
   // Filiais Flóripa
   "FLOPIS NORTE": [-27.5935, -48.5447],
