@@ -412,146 +412,188 @@ function exibirBotaoPDF() {
 
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: true
+  });
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 10;
-  const availableWidth = pageWidth - 2 * margin;
-  const startX = margin;
-  const startY = margin + 12;
+  // --- CONFIGURAÇÕES INICIAIS DE MARGENS E LAYOUT ---
+  const paginaLargura  = doc.internal.pageSize.getWidth();
+  const paginaAltura   = doc.internal.pageSize.getHeight();
+  const margem         = 10;
+  const larguraUtil    = paginaLargura - 2 * margem;
+  const startX         = margem;
+  const startY         = margem + 12; // onde começa o cabeçalho
+  const colWidths      = [20, 20, 25, 30, 30, 15, 20, 20];
+  const headers        = ["Placa","OE","Destino","Sep Congel.","Sep Resf.","Caixas","Peso","%"];
+  const headerHeight   = 10;
+  const cellPadding    = 2;
+  const lineHeight     = 7;
 
-  const colWidths = [20, 20, 25, 30, 30, 15, 20, 20];
-  const headers = ["Placa", "OE", "Destino", "Sep Congelado", "Sep Resfriado", "Caixas", "Peso Total", "%"];
-  const headerHeight = 10;
-  const cellPadding = 2;
-  const lineHeight = 7;
+  // Helper para desenhar o título e o cabeçalho das colunas
+  function desenharCabecalho(yPos) {
+    // TÍTULO (somente na primeira chamada, mas podemos reaplicar sem problema)
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.setTextColor(0,0,0);
+    const agora = new Date();
+    const dataStr = agora.toLocaleDateString();
+    const horaStr = agora.toLocaleTimeString();
+    doc.text(`RELATÓRIO DE PICKING - ${dataStr} ${horaStr}`, startX, margem + 5);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(0, 0, 0);
-  const title = `RELATÓRIO DE PICKING - ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
-  doc.text(title, startX, margin + 5);
+    // CONFIGURAÇÕES DO CABEÇALHO DE COLUNAS
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.setTextColor(0,0,0);
+    doc.setDrawColor(0,0,0);
+    doc.setFillColor(200,200,200); // cinza claro
 
-  doc.setFontSize(10);
-  let currentX = startX;
-  for (let i = 0; i < headers.length; i++) {
-      doc.setFillColor(200, 200, 200);
-      doc.rect(currentX, startY, colWidths[i], headerHeight, 'F');
-      doc.setTextColor(0, 0, 0);
-      doc.text(headers[i], currentX + colWidths[i] / 2, startY + headerHeight / 2 + 3, { align: 'center' });
-      currentX += colWidths[i];
+    let x = startX;
+    for (let i = 0; i < headers.length; i++) {
+      // Desenha retângulo preenchido
+      doc.rect(x, yPos, colWidths[i], headerHeight, 'F');
+      // Centraliza o texto
+      doc.text(
+        headers[i],
+        x + colWidths[i]/2,
+        yPos + headerHeight/2 + 3,
+        { align: 'center' }
+      );
+      x += colWidths[i];
+    }
   }
 
-  let y = startY + headerHeight;
+  // Primeiro cabeçalho na página 1
+  let cursorY = startY;
+  desenharCabecalho(cursorY);
+  cursorY += headerHeight;
+
+  // Prepara dados (exemplo: já filtrado e ordenado)
+  const dadosPDF = registrosCombinados
+    .filter(r => !r.emConferencia)
+    .sort((a,b) => b.percentual - a.percentual);
+
   doc.setFontSize(9);
 
-  const dadosPDF = registrosCombinados
-                    .filter(reg => !reg.emConferencia)
-                    .sort((a, b) => b.percentual - a.percentual);
-
-  dadosPDF.forEach((reg) => {
-    let sepCongeladoPDF = "";
-    if (reg.sepCongeladoFull && Object.keys(reg.congeladoPercentuais).length > 0) {
-      sepCongeladoPDF = reg.sepCongeladoFull.split(", ").map(sep => {
-          let percentual = reg.congeladoPercentuais[sep] || 0;
-          let percentualExibicao = Math.round(percentual);
-          return `${sep.split(" ")[0]} (${percentualExibicao}%)`;
-      }).join(", ");
+  // Percorre cada registro e desenha as linhas
+  dadosPDF.forEach(reg => {
+    // --- Monta strings de sepCongelado e sepResfriado conforme seu código original ---
+    let sepCongelado = "";
+    if (reg.sepCongeladoFull && Object.keys(reg.congeladoPercentuais).length) {
+      sepCongelado = reg.sepCongeladoFull
+        .split(", ")
+        .map(item => {
+          const pct = Math.round(reg.congeladoPercentuais[item]||0);
+          return `${item.split(" ")[0]} (${pct}%)`;
+        })
+        .join(", ");
     }
     if (reg.pendentesCongelado > 0) {
-      if (sepCongeladoPDF) {
-         sepCongeladoPDF += ", ";
-      }
-      sepCongeladoPDF += `${reg.pendentesCongelado} CARGAS PENDENTES`;
+      sepCongelado += (sepCongelado ? ", " : "") + `${reg.pendentesCongelado} PEND.`;
     }
 
-    let sepResfriadoPDF = "";
-    if (reg.sepResfriadoFull && Object.keys(reg.resfriadoPercentuais).length > 0) {
-      sepResfriadoPDF = reg.sepResfriadoFull.split(", ").map(sep => {
-          let percentual = reg.resfriadoPercentuais[sep] || 0;
-          let percentualExibicao = Math.round(percentual);
-          return `${sep.split(" ")[0]} (${percentualExibicao}%)`;
-      }).join(", ");
+    let sepResfriado = "";
+    if (reg.sepResfriadoFull && Object.keys(reg.resfriadoPercentuais).length) {
+      sepResfriado = reg.sepResfriadoFull
+        .split(", ")
+        .map(item => {
+          const pct = Math.round(reg.resfriadoPercentuais[item]||0);
+          return `${item.split(" ")[0]} (${pct}%)`;
+        })
+        .join(", ");
     }
     if (reg.pendentesResfriado > 0) {
-      if (sepResfriadoPDF) {
-         sepResfriadoPDF += ", ";
-      }
-      sepResfriadoPDF += `${reg.pendentesResfriado} CARGAS PENDENTES`;
+      sepResfriado += (sepResfriado ? ", " : "") + `${reg.pendentesResfriado} PEND.`;
     }
 
-    let percentualOE = reg.percentual;
-    let percentualOEExibicao = percentualOE === 100 ? 100 : Math.floor(percentualOE);
+    const pctOE = reg.percentual === 100
+      ? 100
+      : Math.floor(reg.percentual);
 
-    const content = [
+    const linha = [
       reg.placa,
       reg.oe,
       reg.destino,
-      sepCongeladoPDF,
-      sepResfriadoPDF,
+      sepCongelado,
+      sepResfriado,
       reg.qtdeCxs,
       reg.pesoTotal,
-      `${percentualOEExibicao}%`
+      `${pctOE}%`
     ];
 
-    let maxLines = 1;
-    for (let i = 0; i < content.length; i++) {
-      const textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
-      maxLines = Math.max(maxLines, textLines.length);
-    }
-    const rowHeight = maxLines * lineHeight + 2 * cellPadding;
+    // Calcula altura de linha dinâmica
+    let maxLinhas = 1;
+    linha.forEach((txt, i) => {
+      const q = doc.splitTextToSize(txt.toString(), colWidths[i] - 2*cellPadding);
+      maxLinhas = Math.max(maxLinhas, q.length);
+    });
+    const alturaLinha = maxLinhas * lineHeight + 2*cellPadding;
 
-    if (y + rowHeight > pageHeight - margin) {
+    // Se ultrapassar limite da página, cria uma nova e redesenha cabeçalho
+    if (cursorY + alturaLinha > paginaAltura - margem) {
       doc.addPage();
-      y = margin;
-      currentX = startX;
-      doc.setFillColor(200, 200, 200);
-      for (let i = 0; i < headers.length; i++) {
-        doc.rect(currentX, y, colWidths[i], headerHeight, 'F');
-        doc.setTextColor(0, 0, 0);
-        doc.text(headers[i], currentX + colWidths[i] / 2, y + headerHeight / 2 + 3, { align: 'center' });
-        currentX += colWidths[i];
-      }
-      y += headerHeight;
+      cursorY = startY;                     // reset Y
+      desenharCabecalho(cursorY);          // cabeçalho na nova página
+      cursorY += headerHeight;
     }
-    currentX = startX;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(currentX, y, availableWidth, rowHeight, 'F');
 
-    for (let i = 0; i < content.length; i++) {
-      if (i === 0 || i === 1 || i === 7) {
-        doc.setFillColor(240, 240, 240);
-        doc.rect(currentX, y, colWidths[i], rowHeight, 'F');
-        doc.setFont('helvetica', 'bold');
+    // Desenha fundo branco da linha inteira (opcional)
+    doc.setFillColor(255,255,255);
+    doc.setDrawColor(0,0,0);
+
+    // Desenha cada célula
+    let x = startX;
+    for (let i = 0; i < linha.length; i++) {
+      // fundo cinza claro nas colunas 0,1 e 7
+      if ([0,1,7].includes(i)) {
+        doc.setFillColor(240,240,240);
+        doc.setFont('helvetica','bold');
       } else {
-        doc.setFont('helvetica', 'normal');
+        doc.setFillColor(255,255,255);
+        doc.setFont('helvetica','normal');
       }
-      doc.rect(currentX, y, colWidths[i], rowHeight);
-      doc.setTextColor(0, 0, 0);
-      let textLines = doc.splitTextToSize(content[i].toString(), colWidths[i] - 2 * cellPadding);
-      for (let j = 0; j < textLines.length; j++) {
-        let textY = y + cellPadding + (j + 1) * lineHeight - (lineHeight / 2);
-        if (i === 0 || i === 1 || i === 7) {
-          doc.text(textLines[j], currentX + colWidths[i] / 2, textY, { align: 'center' });
+      // desenha retângulo com preenchimento e borda
+      doc.rect(x, cursorY, colWidths[i], alturaLinha, 'FD');
+
+      // escreve o texto, alinhado
+      const linhasTxt = doc.splitTextToSize(linha[i].toString(), colWidths[i] - 2*cellPadding);
+      linhasTxt.forEach((t, idx) => {
+        const yText = cursorY + cellPadding + (idx+1)*lineHeight - (lineHeight/2);
+        if ([0,1,7].includes(i)) {
+          doc.text(t, x + colWidths[i]/2, yText, { align: 'center' });
         } else {
-          doc.text(textLines[j], currentX + cellPadding, textY);
+          doc.text(t, x + cellPadding, yText);
         }
-      }
-      currentX += colWidths[i];
+      });
+
+      x += colWidths[i];
     }
-    y += rowHeight;
+
+    cursorY += alturaLinha;
   });
 
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.text(`Página ${i} de ${pageCount}`, margin, pageHeight - 5);
+  // Numeração de páginas
+  const totalPaginas = doc.getNumberOfPages();
+  doc.setFontSize(8);
+  for (let p = 1; p <= totalPaginas; p++) {
+    doc.setPage(p);
+    doc.text(
+      `Página ${p} de ${totalPaginas}`,
+      margem,
+      paginaAltura - 5
+    );
   }
 
-  doc.save(`Picking_${new Date().toISOString().slice(0, 16).replace(/[-T:]/g, '')}.pdf`);
+  // Salva o PDF
+  const timestamp = new Date()
+    .toISOString()
+    .slice(0,16)
+    .replace(/[-T:]/g, '');
+  doc.save(`Picking_${timestamp}.pdf`);
 }
+
 
 
 function init() {
