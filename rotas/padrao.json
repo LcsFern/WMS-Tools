@@ -1,11 +1,11 @@
 [
     {
-        "ANGELONI" : "CODIGO POR PALETE",
-        "COOP" : "CODIGO POR PALETE",
+        "ANGELONI" : "CODIGO POR PALETE E 1,60M",
+        "COOP" : "CODIGO POR PALETE E 1,60M",
         "BISTEK" : "CODIGO POR PALETE E 1,60M",
-        "GIASSI" : "CODIGO POR PALETE",
-        "KOCH" : "CODIGO POR PALETE",
+        "GIASSI" : "CODIGO POR PALETE/BLOCADO",
+        "KOCH" : "CODIGO POR PALETE/BLOCADO",
         "OESA" : "1,60M E PALETE PBR",
-        "REDE TOP" : "BLOCADO"
+        "REDE TOP" : "CODIGO POR PALETE/BLOCADO"
     }
 ]
