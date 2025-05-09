@@ -52,7 +52,8 @@ async function carregarLogs() {
     if (!response.ok) throw new Error(`Erro ao acessar load.php: ${response.status}`);
 
     const data = await response.json();
-    const registros = data.dados ? JSON.parse(data.dados) : {};
+const registros = data.dados || {};
+
 
     processarLogs(registros);
 
@@ -68,8 +69,9 @@ async function carregarLogs() {
 
       if (!workerResponse.ok) throw new Error(`Erro ao acessar Worker: ${workerResponse.status}`);
 
-      const workerData = await workerResponse.json();
-      const registros = JSON.parse(workerData.dados || '{}');
+const workerData = await workerResponse.json();
+const registros = workerData.dados || {};
+
 
       processarLogs(registros);
 
