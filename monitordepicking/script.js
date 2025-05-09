@@ -66,57 +66,60 @@
     }
 
     function processCSVData(csvData) {
-      const rows = csvData.split('\n').filter(row => row.trim() !== '');
-      if (rows.length === 0) return;
-      
-      const delimiter = detectDelimiter(rows[0]);
-      const headers = rows[0].split(delimiter).map(h => h.trim());
-      const data = [];
-      // Array para armazenar as cargas vazias (TIPO DE CARGA)
-      const emptyLoads = [];
-      
-      for (let i = 1; i < rows.length; i++) {
+    const rows = csvData.split('\n').filter(row => row.trim() !== '');
+    if (rows.length === 0) return;
+
+    const delimiter = detectDelimiter(rows[0]);
+    const headers = rows[0].split(delimiter).map(h => h.trim());
+    const data = [];
+    const emptyLoads = [];
+
+    for (let i = 1; i < rows.length; i++) {
         const values = rows[i].split(delimiter);
         if (values.length === headers.length) {
-          const rowObject = {}; 
-          headers.forEach((header, index) => {
-            rowObject[header] = values[index]?.trim() || '';
-          });
-          data.push(rowObject);
-          
-          // Cargas pendentes: FIXO ou VARIÁVEL, progresso < 100, prioridade definida (<= 50) e sem separador
-          if (
-            (rowObject['TIPO DO PESO'] === 'FIXO' || rowObject['TIPO DO PESO'] === 'VARIÁVEL') &&
-            rowObject['PERCENTUAL'] &&
-            parseFloat(rowObject['PERCENTUAL'].replace(',', '.')) < 100 &&
-            rowObject['PRIORIDADE'] &&
-            parseInt(rowObject['PRIORIDADE']) <= 50 &&
-            (!rowObject['SEPARADOR'] || rowObject['SEPARADOR'].trim() === '')
-          ) {
-            emptyLoads.push({
-              oe: rowObject['OE / VIAGEM'] || 'N/A',
-              grupo: rowObject['GRUPO'] || 'N/A',
-              tipoOperacao: rowObject['TIPO DE OPERAÇÃO'] || 'N/A',
-              prioridade: parseInt(rowObject['PRIORIDADE']),
-              temperatura: rowObject['TEMPERATURA'] || 'N/A',
-              caixas: parseInt(rowObject['CAIXAS']) || 0,
-              posicao: parseInt(rowObject['POSIÇÃO']) || 0
+            const rowObject = {};
+            headers.forEach((header, index) => {
+                rowObject[header] = values[index]?.trim() || '';
             });
-          }
+            data.push(rowObject);
+
+            if (
+                (rowObject['TIPO DO PESO'] === 'FIXO' || rowObject['TIPO DO PESO'] === 'VARIÁVEL') &&
+                rowObject['PERCENTUAL'] &&
+                parseFloat(rowObject['PERCENTUAL'].replace(',', '.')) < 100 &&
+                rowObject['PRIORIDADE'] &&
+                parseInt(rowObject['PRIORIDADE']) <= 50 &&
+                (!rowObject['SEPARADOR'] || rowObject['SEPARADOR'].trim() === '')
+            ) {
+                emptyLoads.push({
+                    oe: rowObject['OE / VIAGEM'] || 'N/A',
+                    grupo: rowObject['GRUPO'] || 'N/A',
+                    tipoOperacao: rowObject['TIPO DE OPERAÇÃO'] || 'N/A',
+                    prioridade: parseInt(rowObject['PRIORIDADE']),
+                    temperatura: rowObject['TEMPERATURA'] || 'N/A',
+                    caixas: parseInt(rowObject['CAIXAS']) || 0,
+                    posicao: parseInt(rowObject['POSIÇÃO']) || 0
+                });
+            }
         }
-      }
-    
-      // Salva os dados no localStorage
-      const pickingData = {
-        csvData: csvData,
+    }
+
+    // Salva os dados no localStorage
+    const pickingData = {
+        csvData: csvData, // Opcional, dependendo se você precisa do CSV original salvo
         data: data,
         emptyLoads: emptyLoads
-      };
-      localStorage.setItem('pickingData', JSON.stringify(pickingData));
-      
-      processData(data);
-      updateEmptyLoads(emptyLoads);
-    }
+    };
+    localStorage.setItem('pickingData', JSON.stringify(pickingData));
+
+    // Define e salva o timestamp do processamento ATUAL
+    const now = new Date();
+    const formattedDate = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+    localStorage.setItem('pickingTimestamp', formattedDate); // <<<<<< CORREÇÃO AQUI
+
+    processData(data);
+    updateEmptyLoads(emptyLoads);
+}
 
     function detectDelimiter(firstRow) {
       if (firstRow.includes('\t')) return '\t';
@@ -529,39 +532,62 @@
     }
 
     function addResetButton() {
-      const importSection = document.querySelector('.import-section');
-      let resetBtn = document.getElementById('resetBtn');
-      if (!resetBtn) {
+    const importSection = document.querySelector('.import-section');
+    let resetBtn = document.getElementById('resetBtn');
+
+    if (!resetBtn) {
         resetBtn = document.createElement('button');
         resetBtn.id = 'resetBtn';
         resetBtn.innerHTML = '<i class="fas fa-undo"></i> Resetar';
         resetBtn.addEventListener('click', function() {
-          document.getElementById('csvContent').value = '';
-          document.getElementById('csvContent').style.display = 'block';
-          document.getElementById('results').style.display = 'none';
-          resetSummaryTables();
-          localStorage.removeItem('pickingData');
-          localStorage.removeItem('pickingTimestamp');
-          document.getElementById('dataTimestamp')?.remove();
-          this.remove();
+            document.getElementById('csvContent').value = '';
+            document.getElementById('csvContent').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            resetSummaryTables();
+            localStorage.removeItem('pickingData');
+            localStorage.removeItem('pickingTimestamp'); // Remove o timestamp ao resetar
+            
+            const timestampEl = document.getElementById('dataTimestamp');
+            if (timestampEl) {
+                timestampEl.remove(); // Remove o elemento do DOM
+            }
+            this.remove(); // Remove o próprio botão de reset
         });
         importSection.appendChild(resetBtn);
-        
-        // Adiciona timestamp
-        const now = new Date();
-        const formattedDate = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-        const timestamp = document.createElement('div');
-        timestamp.id = 'dataTimestamp';
-        timestamp.innerHTML = `<i class="fas fa-clock"></i> Dados de: ${formattedDate}`;
-        timestamp.style.marginTop = '10px';
-        timestamp.style.fontSize = '0.9rem';
-        timestamp.style.color = 'var(--accent)';
-        importSection.appendChild(timestamp);
-        
-        // Salva timestamp no localStorage
-        localStorage.setItem('pickingTimestamp', formattedDate);
-      }
     }
+
+    // Lógica do Timestamp: Adiciona ou atualiza o elemento do timestamp
+    let timestampEl = document.getElementById('dataTimestamp');
+    if (!timestampEl) {
+        timestampEl = document.createElement('div');
+        timestampEl.id = 'dataTimestamp';
+        timestampEl.style.marginTop = '10px';
+        timestampEl.style.fontSize = '0.9rem';
+        timestampEl.style.color = 'var(--accent)';
+        // Adiciona o elemento timestamp após o botão de reset ou em um local apropriado
+        // Se o botão já existe, insere depois, senão, anexa ao final da seção
+        if (resetBtn.parentElement === importSection) { // Garante que o botão está onde esperamos
+             // Tenta inserir após o botão. Se o botão for o último filho, anexa.
+            if (resetBtn.nextSibling) {
+                importSection.insertBefore(timestampEl, resetBtn.nextSibling);
+            } else {
+                importSection.appendChild(timestampEl);
+            }
+        } else { // Caso fallback, apenas anexa à seção de importação
+            importSection.appendChild(timestampEl);
+        }
+    }
+
+    // Lê o timestamp do localStorage e o exibe
+    const storedTimestamp = localStorage.getItem('pickingTimestamp');
+    if (storedTimestamp) {
+        timestampEl.innerHTML = `<i class="fas fa-clock"></i> Dados de: ${storedTimestamp}`;
+        timestampEl.style.display = 'block'; // Garante que esteja visível
+    } else {
+        timestampEl.innerHTML = ''; // Limpa se não houver timestamp
+        timestampEl.style.display = 'none'; // Oculta se não houver timestamp
+    }
+}
 
     function resetSummaryTables() {
       document.getElementById('summaryBoxes').innerHTML = '';
@@ -615,28 +641,32 @@
       }
     }
     function loadSavedData() {
-      const savedData = localStorage.getItem('pickingData');
-      const savedTimestamp = localStorage.getItem('pickingTimestamp');
-      
-      if (savedData) {
-    try {
-      const parsedData = JSON.parse(savedData);
-      
-      // Oculta a área de importação
-      document.getElementById('csvContent').style.display = 'none';
-      
-      // Processa os dados salvos
-      processData(parsedData.data);
-      updateEmptyLoads(parsedData.emptyLoads);
-      
-      // Mostra os resultados
-      document.getElementById('results').style.display = 'block';
-      
-      // Adiciona o botão de resetar
-      addResetButton();
-      
-      } catch (error) {
-          console.error('Erro ao carregar os dados salvos:', error);
+    const savedData = localStorage.getItem('pickingData');
+    // Não é mais necessário ler 'pickingTimestamp' aqui diretamente para exibição,
+    // pois addResetButton cuidará disso.
+
+    if (savedData) {
+        try {
+            const parsedData = JSON.parse(savedData);
+
+            document.getElementById('csvContent').style.display = 'none';
+
+            // Processa os dados salvos (sem chamar processCSVData para não re-gerar o timestamp)
+            processData(parsedData.data);
+            updateEmptyLoads(parsedData.emptyLoads);
+
+            document.getElementById('results').style.display = 'block';
+
+            // Adiciona o botão de resetar e exibe o timestamp salvo
+            addResetButton(); // Esta função agora usará o timestamp do localStorage
+
+        } catch (error) {
+            console.error('Erro ao carregar os dados salvos:', error);
+            // Considerar limpar o localStorage em caso de erro para evitar problemas futuros
+            // localStorage.removeItem('pickingData');
+            // localStorage.removeItem('pickingTimestamp');
         }
-      }
+        return true; // Indica que os dados foram carregados
     }
+    return false; // Indica que não havia dados para carregar
+}
