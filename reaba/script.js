@@ -30,27 +30,32 @@ window.addEventListener('load', () => {
   document.getElementById('searchInput').addEventListener('input', realizarPesquisa);
 });
 
+
 // Função para processar os dados colados do Excel
 // Função para processar os dados colados do Excel
 function processarMovimentacao(rawText) {
+  // Remove espaços em branco no início e fim do texto bruto
   rawText = rawText.trim();
   if (!rawText) {
-    alert('Cole os dados copiados do Excel.');
+    showCustomAlert('Cole os dados copiados do Excel.');
     return;
   }
 
+  // Divide o texto em linhas, remove espaços de cada linha e filtra linhas vazias
   const linhas = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
   if (linhas.length < 2) {
-    alert('O texto deve conter o cabeçalho e ao menos uma linha de dados.');
+    showCustomAlert('O texto deve conter o cabeçalho e ao menos uma linha de dados.');
     return;
   }
 
+  // A primeira linha é o cabeçalho, as demais são dados
   const cabecalho = linhas[0].split('\t');
   const dadosLinhas = linhas.slice(1);
 
-  // Array temporário para armazenar movimentações antes do agrupamento
+  // Mapeia as colunas de cada linha de dados para um objeto de movimentação
   let movimentacoesTemp = dadosLinhas.map(linha => {
     const cols = linha.split('\t');
+    // Cria um objeto para cada linha, associando colunas aos campos esperados
     return {
       etiquetaPalete: cols[0] || '',
       prioridade: cols[1] || '',
@@ -72,42 +77,107 @@ function processarMovimentacao(rawText) {
     };
   });
 
-  // Agrupamento por etiqueta, código, origem e destino
-  const movimentacoes = agruparMovimentacoes(movimentacoesTemp);
+  // Agrupa as movimentações recém-coladas por chave composta (etiqueta, produto, origem, destino)
+  // Isso consolida itens idênticos DENTRO DA MESMA COLAGEM, somando quantidades e pesos.
+  let movimentacoesAgrupadasDoPaste = agruparMovimentacoes(movimentacoesTemp);
 
+  // --- INÍCIO DA LÓGICA DE VERIFICAÇÃO DE DUPLICATAS CONTRA ONDAS EXISTENTES ---
+  // 1. Coleta todas as movimentações de todas as ondas já armazenadas.
+  const todasAsMovimentacoesExistentes = ondas.flatMap(onda => [...onda.congelado, ...onda.resfriado]);
+  let numeroDeDuplicadosIgnorados = 0;
+
+  // 2. Filtra as movimentações recém-coladas (já agrupadas)
+  //    para remover aquelas que já existem em ondas anteriores.
+  const movimentacoesRealmenteNovas = movimentacoesAgrupadasDoPaste.filter(novaMov => {
+    // Verifica se existe alguma movimentação nas ondas anteriores que corresponda
+    // à chave da movimentação atual (etiqueta, produto, origem, destino).
+    const isDuplicate = todasAsMovimentacoesExistentes.some(existente =>
+      existente.etiquetaPalete === novaMov.etiquetaPalete &&
+      existente.codProduto === novaMov.codProduto &&
+      existente.origem === novaMov.origem &&
+      existente.destino === novaMov.destino
+      // NOTA: Se a definição de "duplicata entre ondas" precisar incluir outros campos
+      // (ex: quantidade, peso), eles devem ser adicionados a esta condição.
+    );
+
+    if (isDuplicate) {
+      // Registra no console a duplicata encontrada e não a inclui.
+      console.warn(`Item duplicado (já existente em onda anterior): Etiqueta ${novaMov.etiquetaPalete}, Produto ${novaMov.codProduto}, Origem ${novaMov.origem}. Não será carregado.`);
+      numeroDeDuplicadosIgnorados++;
+      return false; // Indica que este item não deve ser incluído na lista de 'movimentacoesRealmenteNovas'.
+    }
+    return true; // Item não duplicado, pode ser incluído.
+  });
+
+  // 3. Verifica se, após o filtro, todos os itens colados eram duplicatas.
+  if (movimentacoesAgrupadasDoPaste.length > 0 && movimentacoesRealmenteNovas.length === 0) {
+    showCustomAlert('Todos os itens colados já existem em ondas anteriores e não foram carregados novamente.');
+    document.getElementById('movimentacaoInput').value = ''; // Limpa o textarea.
+    return; // Interrompe o processamento, pois não há novos itens.
+  }
+
+  // 4. Informa ao usuário se alguns itens foram ignorados por serem duplicatas.
+  if (numeroDeDuplicadosIgnorados > 0) {
+    showCustomAlert(`${numeroDeDuplicadosIgnorados} item(ns) duplicado(s) foram encontrados (já existiam em ondas anteriores) e não foram carregados novamente.`);
+  }
+  // --- FIM DA LÓGICA DE VERIFICAÇÃO DE DUPLICATAS ---
+
+  // Se não restarem movimentações válidas após o filtro de duplicatas.
+  if (movimentacoesRealmenteNovas.length === 0) {
+    // Esta situação pode ocorrer se todos os itens colados eram duplicatas de ondas anteriores,
+    // ou se os itens que não eram duplicatas não se qualificaram para nenhuma categoria (congelado/resfriado).
+    showCustomAlert('Nenhum item novo para adicionar nesta operação (após verificação de duplicatas e regras de categoria).');
+    document.getElementById('movimentacaoInput').value = ''; // Limpa o textarea.
+    return;
+  }
+
+  // Incrementa o contador da onda atual.
   ondaAtual++;
-  const dataCriacao = new Date().toLocaleString('pt-BR');
+  const dataCriacaoOnda = new Date().toLocaleString('pt-BR');
+
+  // Cria o objeto para a nova onda.
   const novaOnda = {
     numero: ondaAtual,
     congelado: [],
     resfriado: [],
     exportado: { congelado: false, resfriado: false },
-    dataCriacao: dataCriacao
+    dataCriacao: dataCriacaoOnda // Adiciona a data de criação à onda
   };
 
-  movimentacoes.forEach(item => {
+  // Distribui as movimentações realmente novas nas categorias congelado ou resfriado.
+  movimentacoesRealmenteNovas.forEach(item => {
     const origem = item.origem;
+    // Verifica os primeiros 3 caracteres do código de origem para categorizar.
     if (['C01', 'C02', 'C03'].includes(origem.slice(0, 3))) {
       novaOnda.congelado.push(item);
     } else if (origem.slice(0, 3) === 'C04') {
       novaOnda.resfriado.push(item);
     }
+    // Itens que não se encaixam nas categorias acima serão ignorados.
   });
 
+  // Se a nova onda não contiver itens (nem congelados, nem resfriados) após a categorização.
   if (novaOnda.congelado.length === 0 && novaOnda.resfriado.length === 0) {
-    alert('Nenhuma movimentação encontrada nos dados fornecidos.');
+    showCustomAlert('Nenhuma movimentação válida (após filtro de duplicados e categorização por temperatura) encontrada para criar uma nova onda.');
+    document.getElementById('movimentacaoInput').value = ''; // Limpa o textarea.
+    ondaAtual--; // Decrementa o contador, pois a onda não será efetivamente criada/salva.
     return;
   }
 
+  // Ordena os itens dentro de cada categoria da nova onda.
   novaOnda.congelado.sort(compararOrigem);
   novaOnda.resfriado.sort(compararOrigem);
 
+  // Adiciona a nova onda ao array de ondas.
   ondas.push(novaOnda);
-  localStorage.setItem('reaba', JSON.stringify(ondas));
+  // Salva o array atualizado de ondas no localStorage.
+  localStorage.setItem('ondasdin', JSON.stringify(ondas));
 
+  // Atualiza a exibição na tela, mostra a barra de pesquisa e oculta a área de importação.
   exibirMovimentacoes();
   mostrarBarraPesquisa();
   ocultarImportacaoExibirMais();
+  document.getElementById('movimentacaoInput').value = ''; // Limpa o textarea após o processamento bem-sucedido.
 }
 
 // Função auxiliar para agrupar movimentações
@@ -597,4 +667,50 @@ function realizarPesquisa() {
   });
 
   document.getElementById('searchResults').textContent = `${encontrados} encontrados`;
+}
+// Função para mostrar o pop-up customizado
+// tipo pode ser 'warning', 'success', 'error' ou 'info' (default)
+function showCustomAlert(message, type = 'info') {
+  // Pega os elementos do pop-up no HTML
+  const popup = document.getElementById('customAlertPopup');
+  const alertMessage = document.getElementById('customAlertMessage');
+  const alertIcon = document.getElementById('customAlertIcon');
+  const okButton = document.getElementById('customAlertOkButton');
+  const closeButton = document.querySelector('.custom-popup-close-btn');
+
+  // Define a mensagem do pop-up
+  alertMessage.textContent = message;
+
+  // Define o ícone com base no tipo de alerta
+  // Certifique-se de ter FontAwesome incluído no seu HTML para os ícones
+  let iconClass = 'fa-solid fa-circle-info'; // Ícone padrão
+  if (type === 'warning') {
+    iconClass = 'fa-solid fa-triangle-exclamation'; // Ícone de aviso
+  } else if (type === 'success') {
+    iconClass = 'fa-solid fa-circle-check'; // Ícone de sucesso
+  } else if (type === 'error') {
+    iconClass = 'fa-solid fa-circle-xmark'; // Ícone de erro
+  }
+  alertIcon.innerHTML = `<i class="${iconClass}"></i>`; // Adiciona o ícone
+
+  // Função para fechar o pop-up
+  const closePopup = () => {
+    popup.classList.add('hidden');
+  };
+
+  // Adiciona evento para fechar ao clicar no botão OK
+  okButton.onclick = closePopup;
+  // Adiciona evento para fechar ao clicar no botão X
+  closeButton.onclick = closePopup;
+
+  // Adiciona evento para fechar ao clicar fora do conteúdo do pop-up (no overlay)
+  popup.onclick = (event) => {
+    if (event.target === popup) { // Verifica se o clique foi no overlay e não no conteúdo
+      closePopup();
+    }
+  };
+
+  // Mostra o pop-up
+  popup.classList.remove('hidden');
+  okButton.focus(); // Coloca o foco no botão OK para acessibilidade
 }

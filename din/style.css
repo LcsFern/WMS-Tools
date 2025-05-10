@@ -275,3 +275,115 @@ input[type="checkbox"]:checked:after {
 }
 
 /* Removemos qualquer estilo específico para .btnExportarResfriado ou .btnExportarCongelado */
+
+/* Adicione estes estilos ao final do seu style.css */
+
+/* Estilo para o overlay do pop-up (fundo escurecido) */
+.custom-popup {
+  position: fixed; /* Mantém o pop-up fixo na tela, mesmo com rolagem */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Fundo semi-transparente */
+  display: flex;
+  justify-content: center; /* Centraliza horizontalmente */
+  align-items: center; /* Centraliza verticalmente */
+  z-index: 1000; /* Garante que o pop-up fique sobre outros elementos */
+  opacity: 0; /* Começa invisível para animação */
+  visibility: hidden; /* Começa escondido */
+  transition: opacity 0.3s ease, visibility 0.3s ease; /* Animação suave */
+}
+
+/* Classe para mostrar o pop-up */
+.custom-popup:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Conteúdo do pop-up */
+.custom-popup-content {
+  background: var(--background); /* Usa a variável de cor de fundo do seu site */
+  padding: 25px;
+  border-radius: 16px; /* Bordas arredondadas, como no seu container */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Borda sutil, como no seu container */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5); /* Sombra mais pronunciada para destaque */
+  width: 90%;
+  max-width: 450px; /* Largura máxima do pop-up */
+  text-align: center;
+  position: relative; /* Necessário para o posicionamento do botão de fechar */
+  transform: scale(0.9); /* Efeito de "zoom" ao aparecer */
+  transition: transform 0.3s ease;
+}
+
+.custom-popup:not(.hidden) .custom-popup-content {
+  transform: scale(1); /* Efeito de "zoom" ao aparecer */
+}
+
+/* Botão de fechar (X) no canto */
+.custom-popup-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--text); /* Usa a variável de cor de texto */
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.custom-popup-close-btn:hover {
+  color: var(--primary); /* Muda de cor ao passar o mouse */
+}
+
+/* Ícone do pop-up */
+.custom-popup-icon {
+  font-size: 3rem; /* Tamanho grande para o ícone */
+  margin-bottom: 15px;
+}
+
+/* Ícone de aviso (amarelo/laranja) */
+.custom-popup-icon .fa-triangle-exclamation {
+  color: #f8bb86;
+}
+
+/* Ícone de sucesso (verde) */
+.custom-popup-icon .fa-circle-check {
+  color: var(--secondary); /* Usa a variável de cor secundária (verde) */
+}
+
+/* Ícone de erro (vermelho) */
+.custom-popup-icon .fa-circle-xmark {
+  color: #f27474;
+}
+
+/* Mensagem do pop-up */
+.custom-popup-content p {
+  font-size: 1.1rem;
+  color: var(--text); /* Usa a variável de cor de texto */
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Botão OK do pop-up */
+.custom-popup-ok-btn {
+  padding: 10px 25px; /* Mais padding para um botão mais robusto */
+  background: linear-gradient(45deg, var(--primary), var(--secondary)); /* Gradiente do seu tema */
+  color: white;
+  border: none;
+  border-radius: 8px; /* Bordas arredondadas */
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.custom-popup-ok-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3); /* Sombra ao passar o mouse */
+}
+
+/* Classe para esconder elementos (reutilizada do seu CSS) */
+.hidden {
+  display: none !important; /* !important para garantir que sobreponha outros displays */
+}
