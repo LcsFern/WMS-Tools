@@ -132,7 +132,7 @@ const COLORS = {
     if (!raw) {
       container.innerHTML = `
         <div class="error-container">
-          <h2><i class="fa-solid fa-triangle-exclamation"></i> GRADE NÃO ENCONTRADA</h2>
+          <h2><i class="fa-solid fa-triangle-exclamation icone-alerta"></i> GRADE NÃO ENCONTRADA</h2>
           <p>Carregue a GRADE no menu ao lado.</p>
         </div>`;
       return;

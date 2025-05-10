@@ -273,8 +273,8 @@ function exibirMovimentacoes() {
     const header = document.createElement('div');
     header.className = 'group-header';
 
-    let btnCongelado = onda.congelado.length > 0 ? '<button class="btnExportar btnExportarCongelado">Exportar Congelado</button>' : '';
-    let btnResfriado = onda.resfriado.length > 0 ? '<button class="btnExportar btnExportarResfriado">Exportar Resfriado</button>' : '';
+    let btnCongelado = onda.congelado.length > 0 ? '<button class="btnExportar btnExportarCongelado">Congelado <i class="fa-solid fa-file-pdf"></i></button>' : '';
+    let btnResfriado = onda.resfriado.length > 0 ? '<button class="btnExportar btnExportarResfriado">Resfriado <i class="fa-solid fa-file-pdf"></i></button>' : '';
 
     header.innerHTML = `
       <span class="wave-badge">ONDA ${onda.numero} - ${onda.dataCriacao}</span>

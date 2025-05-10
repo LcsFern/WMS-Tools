@@ -16,7 +16,6 @@ function exibirMensagem(mensagem) {
 // Garantir que o modal esteja oculto logo que o DOM esteja disponível
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modalGrupos').classList.add('hidden');
-});
 
 // Carrega a gradeCompleta e os dados processados (se houver) ao iniciar
 window.addEventListener('load', () => {
@@ -86,20 +85,20 @@ window.addEventListener('load', () => {
   document.getElementById('btnProcessarGrupos').addEventListener('click', () => {
     const rawText = document.getElementById('gruposInput').value.trim();
     if (!rawText) {
-      alert('Cole os dados copiados do Excel.');
+      showCustomAlert('Cole os dados copiados do Excel.');
       return;
     }
     
     const linhas = rawText.split('\n').map(l => l.trim()).filter(l => l !== '');
     if (linhas.length < 2) {
-      alert('O texto deve conter o cabeçalho e ao menos uma linha de dados.');
+      showCustomAlert('O texto deve conter o cabeçalho e ao menos uma linha de dados.');
       return;
     }
     
     const cabecalho = linhas[0].split('\t');
     // Se o cabeçalho não tiver o número esperado de colunas (17), avisa o usuário
     if (cabecalho.length < 17) {
-      alert('Formato do cabeçalho inválido. Por favor, verifique os dados copiados do Excel.');
+      showCustomAlert('Formato do cabeçalho inválido. Por favor, verifique os dados copiados do Excel.');
       return;
     }
     
@@ -147,6 +146,37 @@ window.addEventListener('load', () => {
   // Configurar evento de pesquisa
   document.getElementById('searchInput').addEventListener('input', realizarPesquisa);
 });
+// Configurar o novo botão para copiar OEs
+  const btnCopiarOEs = document.getElementById('btnCopiarOEs');
+  if (btnCopiarOEs) { // Verifica se o botão existe na página
+    btnCopiarOEs.addEventListener('click', () => {
+      // Pega todas as chaves (OEs) do objeto movimentacoesProcessadas
+      const oesProcessadas = Object.keys(movimentacoesProcessadas);
+      
+      if (oesProcessadas.length > 0) {
+        // Junta as OEs em uma string separada por vírgula
+        const oesParaCopiar = oesProcessadas.join(',');
+        
+        // Tenta copiar para a área de transferência
+        navigator.clipboard.writeText(oesParaCopiar)
+          .then(() => {
+            // Sucesso ao copiar
+            showCustomAlert('OEs copiadas para a área de transferência!');
+            // Você pode mudar o 'alert' para uma notificação mais sutil se preferir
+          })
+          .catch(err => {
+            // Erro ao copiar
+            console.error('Erro ao copiar OEs: ', err);
+            showCustomAlert('Erro ao copiar OEs. Verifique o console para mais detalhes.');
+          });
+      } else {
+        // Caso não haja OEs processadas
+        showCustomAlert('Nenhuma OE processada para copiar.');
+      }
+    });
+  }
+});
+
 
 // Função para mostrar barra de pesquisa
 function mostrarBarraPesquisa() {
@@ -370,7 +400,7 @@ function exibirMovimentacoes() {
       <div class="group-actions">
         <button class="btnMostrar">Mostrar Movimentação</button>
         <div class="export-container">
-          <button class="btnExportar">Exportar PDF</button>
+          <button class="btnExportar">Exportar <i class="fa-solid fa-file-pdf"></i></button>
           <input type="checkbox" class="export-checkbox" ${movimentacoesProcessadas[oeKey].exportado ? 'checked' : ''} disabled>
           <span class="conferencia-label">Finalizado</span>
         </div>
@@ -705,4 +735,50 @@ function exportarPDF(oeKey, placa, destinoGrade, registros) {
   }
   
   doc.save(`Movimentacao_OE_${oeKey}.pdf`);
+}
+// Função para mostrar o pop-up customizado
+// tipo pode ser 'warning', 'success', 'error' ou 'info' (default)
+function showCustomAlert(message, type = 'info') {
+  // Pega os elementos do pop-up no HTML
+  const popup = document.getElementById('customAlertPopup');
+  const alertMessage = document.getElementById('customAlertMessage');
+  const alertIcon = document.getElementById('customAlertIcon');
+  const okButton = document.getElementById('customAlertOkButton');
+  const closeButton = document.querySelector('.custom-popup-close-btn');
+
+  // Define a mensagem do pop-up
+  alertMessage.textContent = message;
+
+  // Define o ícone com base no tipo de alerta
+  // Certifique-se de ter FontAwesome incluído no seu HTML para os ícones
+  let iconClass = 'fa-solid fa-circle-info'; // Ícone padrão
+  if (type === 'warning') {
+    iconClass = 'fa-solid fa-triangle-exclamation'; // Ícone de aviso
+  } else if (type === 'success') {
+    iconClass = 'fa-solid fa-circle-check'; // Ícone de sucesso
+  } else if (type === 'error') {
+    iconClass = 'fa-solid fa-circle-xmark'; // Ícone de erro
+  }
+  alertIcon.innerHTML = `<i class="${iconClass}"></i>`; // Adiciona o ícone
+
+  // Função para fechar o pop-up
+  const closePopup = () => {
+    popup.classList.add('hidden');
+  };
+
+  // Adiciona evento para fechar ao clicar no botão OK
+  okButton.onclick = closePopup;
+  // Adiciona evento para fechar ao clicar no botão X
+  closeButton.onclick = closePopup;
+
+  // Adiciona evento para fechar ao clicar fora do conteúdo do pop-up (no overlay)
+  popup.onclick = (event) => {
+    if (event.target === popup) { // Verifica se o clique foi no overlay e não no conteúdo
+      closePopup();
+    }
+  };
+
+  // Mostra o pop-up
+  popup.classList.remove('hidden');
+  okButton.focus(); // Coloca o foco no botão OK para acessibilidade
 }

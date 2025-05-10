@@ -58,11 +58,24 @@ title: "WMS Tools - movimentações"
 
       <!-- Seção para exibição dos grupos processados -->
       <section id="movimentacoesContainer" class="hidden">
-        <h2>Movimentações Processadas</h2>
+        <div class="section-header"> <h2>Movimentações Processadas</h2>
+          <button id="btnCopiarOEs" class="btn-copiar-oes" title="Copiar todas as OEs processadas">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
         <div id="movimentacoesList"></div>
       </section>
     </div>
 
     <script src="script.js"></script>
+    <div id="customAlertPopup" class="custom-popup hidden">
+  <div class="custom-popup-content">
+    <span class="custom-popup-close-btn">&times;</span>
+    <div id="customAlertIcon" class="custom-popup-icon">
+      </div>
+    <p id="customAlertMessage"></p>
+    <button id="customAlertOkButton" class="custom-popup-ok-btn">OK</button>
+  </div>
+</div>
   </body>
 </html>
