@@ -10,7 +10,6 @@ title: "Rotas e Padrões"
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rotas e Padrões</title>
 
-  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
 
@@ -99,68 +98,68 @@ title: "Rotas e Padrões"
 
     /* === Estilos de Bloqueio === */
     .grade-bloqueio {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-.grade-bloqueio-conteudo {
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid #00a65a;
-  border-radius: 16px;
-  padding: 40px;
-  text-align: center;
-  box-shadow: 0 0 30px rgba(0, 166, 90, 0.3);
-  animation: pulsar 2s infinite;
-  max-width: 90%;
-}
+    .grade-bloqueio-conteudo {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid #00a65a;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0, 166, 90, 0.3);
+      animation: pulsar 2s infinite;
+      max-width: 90%;
+    }
 
-.icone-alerta {
-  font-size: 5rem;
-  color: #ff3b30;
-  margin-bottom: 20px;
-  animation: tremer 0.3s infinite;
-}
+    .icone-alerta {
+      font-size: 5rem;
+      color: #ff3b30;
+      margin-bottom: 20px;
+      animation: tremer 0.3s infinite;
+    }
 
-.grade-bloqueio h2 {
-  font-size: 2.5rem;
-  color: #ff3b30;
-  margin-bottom: 15px;
-}
+    .grade-bloqueio h2 {
+      font-size: 2.5rem;
+      color: #ff3b30;
+      margin-bottom: 15px;
+    }
 
-.grade-bloqueio p {
-  font-size: 1.5rem;
-  color: #fff;
-  margin-bottom: 10px;
-}
+    .grade-bloqueio p {
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: 10px;
+    }
 
-.motivo-bloqueio {
-  font-size: 1.2rem !important;
-  color: #ffd700 !important;
-  margin-top: 20px;
-}
+    .motivo-bloqueio {
+      font-size: 1.2rem !important;
+      color: #ffd700 !important;
+      margin-top: 20px;
+    }
 
-@keyframes pulsar {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-  100% { transform: scale(1); }
-}
+    @keyframes pulsar {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
 
-@keyframes tremer {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  50% { transform: translateX(0); }
-  75% { transform: translateX(2px); }
-  100% { transform: translateX(0); }
-}
+    @keyframes tremer {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      50% { transform: translateX(0); }
+      75% { transform: translateX(2px); }
+      100% { transform: translateX(0); }
+    }
   </style>
 </head>
 <body>
@@ -176,9 +175,8 @@ title: "Rotas e Padrões"
     <h1><i class="fa-solid fa-pen-ruler"></i> Rotas e Padrões</h1>
     <div id="toast" class="toast"></div>
 
-    <!-- Seção Padrões -->
     <div class="section" id="padroes-section">
-      <h2><i class="fa-solid fa-scale-balanced"></i> PADRÕES <span id="padroes-count" class="badge">0</span></h2>
+      <h2><i class="fa-solid fa-scale-balanced"></i> PADRÕES DE CARGA <span id="padroes-count" class="badge">0</span></h2>
       <div class="alert" id="padroes-alert"></div>
       <div id="padroes-loader" class="loader"></div>
       <div id="padroes-error" class="error-message" style="display:none;"></div>
@@ -195,7 +193,29 @@ title: "Rotas e Padrões"
       </div>
     </div>
 
-    <!-- Seção Rotas -->
+    <div class="section" id="troca-placa-section" style="display:none;"> <h2><i class="fa-solid fa-right-left"></i> TROCA DE PLACA <span id="troca-placa-count" class="badge">0</span></h2>
+      <div id="troca-placa-loader" class="loader"></div>
+      <div id="troca-placa-error" class="error-message" style="display:none;"></div>
+      <div class="table-container">
+        <table id="troca-placa-table">
+          <thead>
+            <tr>
+              <th>PLACA ANTIGA</th>
+              <th>PLACA NOVA</th>
+              <th>OE</th>
+              <th>QTD PALLETS</th>
+              <th>DESTINO</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="button-container">
+        <button id="btn-exportar-troca-placa-pdf" class="btn">
+          <i class="fas fa-file-pdf"></i> Exportar PDF
+        </button>
+      </div>
+    </div>
     <div class="section" id="rotas-section">
       <h2><i class="fa-solid fa-road"></i> ROTAS DE VIAGEM <span id="rotas-count" class="badge">0</span></h2>
       <div class="button-container top-right">
@@ -217,7 +237,6 @@ title: "Rotas e Padrões"
     </div>
   </div>
 
-  <!-- jsPDF & AutoTable -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script>
@@ -230,11 +249,16 @@ title: "Rotas e Padrões"
   }
   function showError(id, msg) {
     const el = document.getElementById(id);
-    el.textContent = msg;
-    el.style.display = 'block';
+    if (el) { // Verifica se o elemento existe
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
   }
   function hideLoader(id) {
-    document.getElementById(id).style.display = 'none';
+    const el = document.getElementById(id);
+    if (el) { // Verifica se o elemento existe
+        el.style.display = 'none';
+    }
   }
 
   (async function() {
@@ -242,6 +266,8 @@ title: "Rotas e Padrões"
     function verificarGradeValida() {
       const raw = localStorage.getItem('gradeCompleta');
       if (!raw) {
+        // Se não há grade no localStorage, retorna inválido sem motivo específico,
+        // pois o bloqueio genérico de "GRADE NÃO ENCONTRADA" será exibido.
         return { valida: false, motivo: "" };
       }
       try {
@@ -249,9 +275,14 @@ title: "Rotas e Padrões"
         if (!Array.isArray(grade) || grade.length === 0) {
           return { valida: false, motivo: "O formato da grade é inválido ou está vazio." };
         }
+        // Verifica se ALGUM item da grade possui uma DATA no formato esperado.
+        // Isso é importante para diferenciar da grade "Ondas".
         const regexData = /\d{1,2}\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i;
-        if (!regexData.test(JSON.stringify(grade))) {
-          return { valida: false, motivo: "A GRADE carregada Via Ondas não funciona nessa tela." };
+        const temDataValida = grade.some(item => item.DATA && regexData.test(item.DATA.trim()));
+
+        if (!temDataValida) {
+          // Se nenhuma data válida foi encontrada, pode ser a grade "Ondas" ou outro formato.
+          return { valida: false, motivo: "A GRADE carregada não parece ser a de programação diária (verifique o formato da data)." };
         }
         return { valida: true };
       } catch (e) {
@@ -263,27 +294,48 @@ title: "Rotas e Padrões"
     const verificacao = verificarGradeValida();
     if (!verificacao.valida) {
       const bloqueio = document.getElementById('grade-bloqueio');
-      bloqueio.querySelector('.motivo-bloqueio').textContent = verificacao.motivo;
+      // Se houver um motivo específico da validação, usa ele.
+      // Senão, a mensagem padrão do HTML ("FAVOR CARREGAR A GRADE") será mantida.
+      if (verificacao.motivo) {
+          bloqueio.querySelector('.motivo-bloqueio').textContent = verificacao.motivo;
+      }
       bloqueio.style.display = 'flex';
-      ['padroes', 'rotas'].forEach(sec => {
+      ['padroes', 'rotas', 'troca-placa'].forEach(sec => { // Inclui a nova seção
         hideLoader(`${sec}-loader`);
         showError(`${sec}-error`, 'Grade inválida ou não carregada');
       });
-      return;
+      return; // Interrompe a execução se a grade for inválida
     }
 
     try {
       // Carrega definições de padrões e rotas
-      const padraoArr = await (await fetch('padrao.json')).json();
-      const padroes   = padraoArr[0] || {};
-      const rotasArr  = await (await fetch('rotas.json')).json();
+      // É importante tratar erros no fetch, caso os arquivos JSON não existam.
+      let padroes = {};
+      try {
+        const padraoArr = await (await fetch('padrao.json')).json();
+        padroes   = padraoArr[0] || {}; // Pega o primeiro objeto do array, ou um objeto vazio
+      } catch (e) {
+        console.warn("Não foi possível carregar padrao.json. A funcionalidade de padrões pode ser afetada.", e);
+        showError('padroes-error', 'Erro ao carregar definições de padrões.');
+      }
+
+      let rotasArr = [];
+      try {
+        rotasArr  = await (await fetch('rotas.json')).json();
+      } catch (e) {
+        console.warn("Não foi possível carregar rotas.json. A funcionalidade de rotas pode ser afetada.", e);
+        showError('rotas-error', 'Erro ao carregar definições de rotas.');
+      }
+
 
       // Recupera gradeCompleta do localStorage
       const raw = localStorage.getItem('gradeCompleta');
+      // A validação anterior já deve ter coberto o caso de 'raw' ser nulo,
+      // mas uma verificação adicional não faz mal.
       if (!raw) {
-        ['padroes','rotas'].forEach(sec=>{
+        ['padroes', 'troca-placa', 'rotas'].forEach(sec=>{ // Inclui a nova seção
           hideLoader(`${sec}-loader`);
-          showError(`${sec}-error`, 'Dados não encontrados');
+          showError(`${sec}-error`, 'Dados da grade não encontrados no localStorage.');
         });
         return;
       }
@@ -292,189 +344,349 @@ title: "Rotas e Padrões"
       // === EXTRAÇÃO DA DATA DA GRADE (PULA VALORES INVÁLIDOS) ===
       // Regex para datas no formato "dd/mmm" (ex: "17/abr")
       const regexData = /^\d{1,2}\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)$/i;
-      let dataGrade = new Date().toLocaleDateString('pt-BR'); // valor padrão
+      let dataGrade = new Date().toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'}).replace('.',''); // valor padrão formatado
 
       // Percorre a grade até achar a primeira DATA que bate com regexData
       for (const item of grade) {
         if (item.DATA && regexData.test(item.DATA.trim())) {
           dataGrade = item.DATA.trim();
-          break;
+          break; // Para na primeira data válida encontrada
         }
       }
 
       // Atualiza o alerta mostrando a data encontrada
-      document.getElementById('padroes-alert').textContent =
-        `CLIENTES COM PADRÕES DE CARGA (${dataGrade})`;
+      const padroesAlert = document.getElementById('padroes-alert');
+      if (padroesAlert) { // Verifica se o elemento existe
+        padroesAlert.textContent = `CLIENTES COM PADRÕES DE CARGA (${dataGrade})`;
+      }
       // ===================================
 
       // Helpers de processamento
-      const extrai = d => Object.keys(padroes)
-        .find(k => (d || '').toUpperCase().includes(k)) || null;
-      const kmNum = s => parseFloat((s || '').replace(' km','').replace(',','.')) || 0;
-      const qtd   = i => i['QTD PALLETS'] || '-';
+      // Função para extrair a chave do padrão com base no destino
+      const extraiChavePadrao = d => Object.keys(padroes)
+        .find(k => (d || '').toUpperCase().includes(k.toUpperCase())) || null; // Comparação case-insensitive
+
+      // Função para converter KM para número
+      const kmNum = s => parseFloat((s || '').replace(/\s*km/i,'').replace(',','.')) || 0; // Remove "km" (case-insensitive) e espaços, depois converte
+
+      // Função para obter a quantidade de pallets
+      const qtd = i => i['QTD PALLETS'] || i['QTDE PALLET'] || '-'; // Verifica ambos os nomes de campo
 
       // === Processa Padrões ===
       const tbP = document.querySelector('#padroes-table tbody');
       let cntP = 0;
-      for (const i of grade) {
-        const key = extrai(i.DESTINO);
-        if (!key) continue;
-        cntP++;
-        tbP.insertAdjacentHTML('beforeend', `
-          <tr>
-            <td>${i.OE  || '-'}</td>
-            <td>${i['PLACA ROTEIRIZADA'] || '-'}</td>
-            <td>${qtd(i)}</td>
-            <td>${i.DESTINO || '-'}</td>
-            <td>${padroes[key].replace(' e ', '\n e ')}</td>
-          </tr>
-        `);
-      }
-      document.getElementById('padroes-count').textContent = cntP;
-      hideLoader('padroes-loader');
-
-      // === Processa Rotas ===
-      const tbR = document.querySelector('#rotas-table tbody');
-      let cntR = 0, arrO = [], seen = new Set();
-      for (const i of grade) {
-        if (!i.OE || seen.has(i.OE)) continue;
-        const dUp = (i.DESTINO || '').toUpperCase();
-        for (const r of rotasArr) {
-          if (dUp.includes(r.CIDADE.toUpperCase()) && kmNum(r.KM) > 100) {
-            seen.add(i.OE);
-            cntR++;
-            arrO.push(i.OE);
-            tbR.insertAdjacentHTML('beforeend', `
+      if (tbP) { // Verifica se a tabela existe
+          for (const i of grade) {
+            const key = extraiChavePadrao(i.DESTINO); // Usa a função helper
+            if (!key || !padroes[key]) continue; // Pula se não houver chave ou padrão correspondente
+            cntP++;
+            // Adiciona uma nova linha à tabela de padrões
+            tbP.insertAdjacentHTML('beforeend', `
               <tr>
-                <td>${i.OE}</td>
+                <td>${i.OE  || '-'}</td>
                 <td>${i['PLACA ROTEIRIZADA'] || '-'}</td>
                 <td>${qtd(i)}</td>
                 <td>${i.DESTINO || '-'}</td>
+                <td>${padroes[key].replace(' e ', '\n e ')}</td>
               </tr>
             `);
-            break;
           }
-        }
+          const padroesCountEl = document.getElementById('padroes-count');
+          if (padroesCountEl) padroesCountEl.textContent = cntP; // Atualiza o contador de padrões
       }
-      document.getElementById('rotas-count').textContent = cntR;
+      hideLoader('padroes-loader');
+
+
+      // === Processa Troca de Placa ===
+      const tbTP = document.querySelector('#troca-placa-table tbody'); // Tabela de Troca de Placa
+      const trocaPlacaSection = document.getElementById('troca-placa-section');
+      let cntTP = 0; // Contador para Troca de Placa
+      const trocasDePlacaData = []; // Array para armazenar dados de troca de placa para o PDF
+
+      if (tbTP && trocaPlacaSection) { // Verifica se os elementos existem
+          for (const i of grade) {
+            // Verifica se o campo 'TROCAR PLACA' existe e não está vazio
+            if (i['TROCAR PLACA'] && String(i['TROCAR PLACA']).trim() !== "") {
+              cntTP++;
+              // Adiciona uma nova linha à tabela de Troca de Placa
+              const rowData = {
+                  placaAntiga: String(i['TROCAR PLACA']).trim(),
+                  placaNova: i['PLACA ROTEIRIZADA'] || '-',
+                  oe: i.OE || '-',
+                  qtdPallets: qtd(i),
+                  destino: i.DESTINO || '-'
+              };
+              trocasDePlacaData.push(rowData); // Adiciona ao array para o PDF
+
+              tbTP.insertAdjacentHTML('beforeend', `
+                <tr>
+                  <td>${rowData.placaAntiga}</td>
+                  <td>${rowData.placaNova}</td>
+                  <td>${rowData.oe}</td>
+                  <td>${rowData.qtdPallets}</td>
+                  <td>${rowData.destino}</td>
+                </tr>
+              `);
+            }
+          }
+
+          const trocaPlacaCountEl = document.getElementById('troca-placa-count');
+          if (trocaPlacaCountEl) trocaPlacaCountEl.textContent = cntTP; // Atualiza o contador
+
+          if (cntTP > 0) {
+            trocaPlacaSection.style.display = 'block'; // Mostra a seção se houver trocas
+          } else {
+            trocaPlacaSection.style.display = 'none'; // Mantém escondida se não houver
+            showError('troca-placa-error', 'Nenhuma troca de placa encontrada.'); // Opcional: mostrar mensagem
+          }
+      }
+      hideLoader('troca-placa-loader');
+
+
+      // === Processa Rotas ===
+      const tbR = document.querySelector('#rotas-table tbody');
+      let cntR = 0, arrO = [], seen = new Set(); // arrO para OEs, seen para evitar duplicatas
+      if (tbR) { // Verifica se a tabela existe
+          for (const i of grade) {
+            if (!i.OE || seen.has(i.OE)) continue; // Pula se OE não existe ou já foi vista
+            const dUp = (i.DESTINO || '').toUpperCase();
+            for (const r of rotasArr) {
+              if (r.CIDADE && dUp.includes(r.CIDADE.toUpperCase()) && kmNum(r.KM) > 100) {
+                seen.add(i.OE); // Adiciona OE ao conjunto de OEs vistas
+                cntR++;
+                arrO.push(i.OE); // Adiciona OE ao array para cópia
+                // Adiciona uma nova linha à tabela de rotas
+                tbR.insertAdjacentHTML('beforeend', `
+                  <tr>
+                    <td>${i.OE}</td>
+                    <td>${i['PLACA ROTEIRIZADA'] || '-'}</td>
+                    <td>${qtd(i)}</td>
+                    <td>${i.DESTINO || '-'}</td>
+                  </tr>
+                `);
+                break; // Sai do loop interno de rotas, pois já encontrou uma correspondência
+              }
+            }
+          }
+          const rotasCountEl = document.getElementById('rotas-count');
+          if (rotasCountEl) rotasCountEl.textContent = cntR; // Atualiza o contador de rotas
+      }
       hideLoader('rotas-loader');
 
+
       // === Exportar Padrões PDF ===
-      document.getElementById('btn-exportar-pdf')
-        .addEventListener('click', () => {
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-          const w = doc.internal.pageSize.getWidth(), y = 25;
+      const btnExportarPDF = document.getElementById('btn-exportar-pdf');
+      if (btnExportarPDF) { // Verifica se o botão existe
+          btnExportarPDF.addEventListener('click', () => {
+              const { jsPDF } = window.jspdf; // Pega o construtor jsPDF do objeto global window.jspdf
+              const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' }); // Cria um novo documento PDF
+              const w = doc.internal.pageSize.getWidth(); // Largura da página
+              const y = 25; // Posição Y inicial para o texto
 
-          doc.setFont('helvetica','bold');
-          doc.setFontSize(45);
-          doc.setTextColor(0,0,0);
-          doc.text('ATENÇÃO', w * 0.35, y, { align:'center' });
-          doc.text(dataGrade, w * 0.65, y, { align:'center' });
+              // Define a fonte, tamanho e cor para o título do PDF
+              doc.setFont('helvetica','bold');
+              doc.setFontSize(45);
+              doc.setTextColor(0,0,0); // Preto
+              doc.text('ATENÇÃO', w * 0.35, y, { align:'center' }); // Adiciona texto "ATENÇÃO"
+              doc.text(dataGrade, w * 0.65, y, { align:'center' }); // Adiciona a data da grade
 
-          const headers = [['OE','PLACA','QTD PALLETS','DESTINO','PADRÃO']];
-          const body = Array.from(tbP.querySelectorAll('tr'))
-            .map(r => Array.from(r.cells).map(c => c.textContent));
+              // Define os cabeçalhos da tabela
+              const headers = [['OE','PLACA','QTD PALLETS','DESTINO','PADRÃO']];
+              // Mapeia as linhas da tabela HTML para um array de arrays para o corpo da tabela do PDF
+              const body = Array.from(tbP.querySelectorAll('tr'))
+                .map(r => Array.from(r.cells).map(c => c.textContent));
 
-          doc.autoTable({
-            head: headers,
-            body,
-            startY: 35,
-            theme: 'grid',
-            margin: { left:10, right:10 },
-            headStyles: {
-              fillColor:[0,60,20],
-              textColor:255,
-              fontStyle:'bold',
-              lineWidth:1.5,
-              lineColor:[0,0,0]
-            },
-            styles: {
-              font:'helvetica',
-              fontStyle:'bold',
-              fontSize:24,
-              halign:'center',
-              cellPadding:3,
-              lineWidth:1.5,
-              lineColor:[0,0,0],
-              textColor:[0,0,0]
-            },
-            didParseCell: data => {
-              if (data.section === 'head' && data.column.index === 2) {
-                data.cell.styles.fillColor = [0,60,20];
+              // Gera a tabela no PDF usando autoTable
+              doc.autoTable({
+                head: headers, // Cabeçalhos
+                body, // Corpo da tabela
+                startY: 35, // Posição Y inicial da tabela
+                theme: 'grid', // Estilo da tabela
+                margin: { left:10, right:10 }, // Margens
+                headStyles: { // Estilos para o cabeçalho
+                  fillColor:[0,60,20], // Cor de fundo (verde escuro)
+                  textColor:255, // Cor do texto (branco)
+                  fontStyle:'bold', // Estilo da fonte
+                  lineWidth:1.5, // Largura da linha
+                  lineColor:[0,0,0] // Cor da linha (preto)
+                },
+                styles: { // Estilos gerais para a tabela
+                  font:'helvetica',
+                  fontStyle:'bold',
+                  fontSize:24,
+                  halign:'center', // Alinhamento horizontal
+                  cellPadding:3, // Preenchimento da célula
+                  lineWidth:1.5,
+                  lineColor:[0,0,0],
+                  textColor:[0,0,0]
+                },
+                // Função para customizar células específicas (não usada aqui, mas exemplo mantido)
+                // didParseCell: data => {
+                //   if (data.section === 'head' && data.column.index === 2) {
+                //     data.cell.styles.fillColor = [0,60,20];
+                //   }
+                // },
+                pageBreak: 'avoid' // Evita quebra de página dentro de uma linha
+              });
+
+              // Salva o PDF com um nome dinâmico
+              doc.save(`Padroes_Carga_${dataGrade.replace(/\//g,'-')}.pdf`);
+              showToast('PDF de Padrões exportado com sucesso!'); // Mostra notificação
+            });
+      }
+
+      // === Exportar Troca de Placa PDF ===
+      const btnExportarTrocaPlacaPDF = document.getElementById('btn-exportar-troca-placa-pdf');
+      if (btnExportarTrocaPlacaPDF && trocaPlacaSection.style.display === 'block') { // Só adiciona o listener se a seção estiver visível
+          btnExportarTrocaPlacaPDF.addEventListener('click', () => {
+              if (cntTP === 0) {
+                  showToast('Nenhuma troca de placa para exportar.');
+                  return;
               }
-            },
-            pageBreak: 'avoid'
-          });
 
-          doc.save(`Padroes_${dataGrade.replace(/\//g,'-')}.pdf`);
-          showToast('PDF exportado com sucesso!');
-        });
+              const { jsPDF } = window.jspdf;
+              const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+              const w = doc.internal.pageSize.getWidth();
+              const y = 20; // Posição Y para o título, um pouco mais acima
+
+              doc.setFont('helvetica','bold');
+              doc.setFontSize(30); // Tamanho da fonte do título um pouco menor que Padrões
+              doc.setTextColor(0,0,0);
+              doc.text(`TROCA DE PLACAS (${dataGrade})`, w / 2, y, { align:'center' }); // Título centralizado
+
+              const headers = [['PLACA ANTIGA', 'PLACA NOVA', 'OE', 'QTD PALLETS', 'DESTINO']];
+              // Usa os dados armazenados em trocasDePlacaData
+              const body = trocasDePlacaData.map(item => [
+                  item.placaAntiga,
+                  item.placaNova,
+                  item.oe,
+                  item.qtdPallets,
+                  item.destino
+              ]);
+
+              doc.autoTable({
+                head: headers,
+                body,
+                startY: y + 10, // Inicia a tabela um pouco abaixo do título
+                theme: 'grid',
+                margin: { left:10, right:10 },
+                headStyles: { // Estilo similar ao de Padrões
+                  fillColor:[0,60,20], // Verde escuro
+                  textColor:255, // Branco
+                  fontStyle:'bold',
+                  lineWidth: 1.5, // Linha um pouco mais fina que padrões, mas ainda visível
+                  lineColor:[0,0,0] // Preto
+                },
+                styles: { // Estilo de célula similar ao de Padrões, mas pode ajustar o tamanho da fonte se necessário
+                  font:'helvetica',
+                  fontStyle:'normal', // Pode ser 'normal' ou 'bold'
+                  fontSize:30, // Fonte menor para caber mais informação se necessário
+                  halign:'center',
+                  cellPadding:2, // Padding um pouco menor
+                  lineWidth:1.5,
+                  lineColor:[0,0,0],
+                  textColor:[0,0,0]
+                },
+                tableLineWidth: 1.5,
+                pageBreak: 'avoid'
+              });
+
+              doc.save(`Troca_Placas_${dataGrade.replace(/\//g,'-')}.pdf`);
+              showToast('PDF de Troca de Placas exportado!');
+            });
+      }
+
 
       // === Exportar Rotas PDF ===
-      document.getElementById('btn-exportar-rotas-pdf')
-        .addEventListener('click', () => {
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-          const w = doc.internal.pageSize.getWidth();
+      const btnExportarRotasPDF = document.getElementById('btn-exportar-rotas-pdf');
+      if (btnExportarRotasPDF) { // Verifica se o botão existe
+          btnExportarRotasPDF.addEventListener('click', () => {
+              if (cntR === 0) { // Verifica se há rotas para exportar
+                  showToast('Nenhuma rota para exportar.');
+                  return;
+              }
+              const { jsPDF } = window.jspdf;
+              const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+              const w = doc.internal.pageSize.getWidth();
 
-          doc.setFont('helvetica','bold');
-          doc.setFontSize(20);
-          doc.setTextColor(0,0,0);
-          doc.text(`Rotas de Viagem (${dataGrade})`, w/2, 20, { align:'center' });
+              doc.setFont('helvetica','bold');
+              doc.setFontSize(20);
+              doc.setTextColor(0,0,0);
+              doc.text(`Rotas de Viagem (${dataGrade})`, w/2, 20, { align:'center' });
 
-          const headersR = [['OE','PLACA','QTD PALLETS','DESTINO']];
-          const bodyR = Array.from(tbR.querySelectorAll('tr'))
-            .map(r => Array.from(r.cells).map(c => c.textContent));
+              const headersR = [['OE','PLACA','QTD PALLETS','DESTINO']];
+              const bodyR = Array.from(tbR.querySelectorAll('tr'))
+                .map(r => Array.from(r.cells).map(c => c.textContent));
 
-          doc.autoTable({
-            head: headersR,
-            body: bodyR,
-            startY: 30,
-            theme: 'grid',
-            margin: { left:10, right:10 },
-            headStyles: {
-              fillColor:[0,166,90],
-              textColor:255,
-              fontStyle:'bold',
-              lineWidth:0.5,
-              lineColor:[0,0,0]
-            },
-            styles: {
-              font:'helvetica',
-              fontStyle:'bold',
-              fontSize:12,
-              cellPadding:3,
-              lineWidth:0.2,
-              lineColor:[0,0,0],
-              textColor:[0,0,0]
-            },
-            tableLineWidth:0.2
-          });
+              doc.autoTable({
+                head: headersR,
+                body: bodyR,
+                startY: 30,
+                theme: 'grid',
+                margin: { left:10, right:10 },
+                headStyles: {
+                  fillColor:[0,166,90], // Verde mais claro para diferenciar
+                  textColor:255,
+                  fontStyle:'bold',
+                  lineWidth:0.5,
+                  lineColor:[0,0,0]
+                },
+                styles: {
+                  font:'helvetica',
+                  fontStyle:'bold', // Mantendo bold para dados também
+                  fontSize:12,
+                  cellPadding:3,
+                  lineWidth:0.2,
+                  lineColor:[0,0,0],
+                  textColor:[0,0,0]
+                },
+                tableLineWidth:0.2
+              });
 
-          doc.save(`Rotas_${dataGrade.replace(/\//g,'-')}.pdf`);
-          showToast('PDF de Rotas exportado!');
-        });
+              doc.save(`Rotas_Viagem_${dataGrade.replace(/\//g,'-')}.pdf`);
+              showToast('PDF de Rotas exportado!');
+            });
+      }
 
       // === Copiar OEs ===
-      document.getElementById('btn-copiar-oes')
-        .addEventListener('click', async () => {
-          if (!arrO.length) return showToast('Nenhuma OE para copiar!');
-          try {
-            await navigator.clipboard.writeText(arrO.join(','));
-          } catch {
-            const ta = document.createElement('textarea');
-            ta.value = arrO.join(',');
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-          }
-          showToast(`${arrO.length} OEs copiadas!`);
-        });
+      const btnCopiarOEs = document.getElementById('btn-copiar-oes');
+      if (btnCopiarOEs) { // Verifica se o botão existe
+          btnCopiarOEs.addEventListener('click', async () => {
+              if (!arrO.length) return showToast('Nenhuma OE para copiar!'); // Verifica se há OEs para copiar
+              try {
+                // Tenta usar a API moderna do Clipboard
+                await navigator.clipboard.writeText(arrO.join(','));
+              } catch (err) {
+                // Fallback para o método execCommand (para navegadores mais antigos ou contextos não seguros)
+                console.warn("Falha ao copiar com a API do Clipboard, usando fallback:", err);
+                const ta = document.createElement('textarea'); // Cria um textarea temporário
+                ta.style.position = 'absolute'; // Evita que afete o layout
+                ta.style.left = '-9999px';
+                ta.value = arrO.join(','); // Define o valor com as OEs
+                document.body.appendChild(ta); // Adiciona ao corpo do documento
+                ta.select(); // Seleciona o texto
+                try {
+                    document.execCommand('copy'); // Executa o comando de cópia
+                } catch (copyErr) {
+                    console.error("Falha ao copiar com execCommand:", copyErr);
+                    showToast('Erro ao copiar OEs.');
+                    return; // Sai se o fallback também falhar
+                } finally {
+                    document.body.removeChild(ta); // Remove o textarea temporário
+                }
+              }
+              showToast(`${arrO.length} OE(s) copiada(s)!`); // Notificação de sucesso
+            });
+      }
 
     } catch (e) {
-      console.error(e);
+      // Erro geral no processamento principal
+      console.error("Erro principal no processamento da página:", e);
+      // Mostra erro em todas as seções se algo der muito errado
+      ['padroes', 'troca-placa', 'rotas'].forEach(sec => {
+        hideLoader(`${sec}-loader`);
+        showError(`${sec}-error`, 'Ocorreu um erro inesperado ao carregar os dados.');
+      });
     }
   })();
 </script>
