@@ -1,28 +1,33 @@
+// script.js
+// Exibe logs de sincronização e permite restaurar versões anteriores de cada key.
+
 const logContainer = document.getElementById('logContainer');
 const refreshButton = document.getElementById('refreshButton');
 const searchInput = document.getElementById('searchInput');
 
-// Defina o username que será usado para buscar os dados
+// User e endpoints
 const username = localStorage.getItem('username')?.toLowerCase();
+const LOAD_API     = 'https://labsuaideia.store/api/load.php';
+const WORKER_LOAD  = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
+const HISTORY_API  = 'https://labsuaideia.store/api/history.php'; 
+// OBS.: É NECESSÁRIO implementar no servidor o history.php que retorne:
+// { dados: { [key]: [ { userId, value, timestamp }, ... ] } }
 
-// Nomes personalizados para as chaves
 const nomesPersonalizados = {
-  'logHistoricoMudancas': 'Ultima Sincronização de Logs de Alterações',
-  'checkbox_state_monitor': 'Ultima Sincronização checkbox carros em conferencia',
-  'result_state_monitor': 'Ultima Sincronização pendencias de picking',
-  'ondasdin': 'Ultima Sincronização picking dinâmico',
-  'ondas': 'Ultima Sincronização Ondas da GRADE',
-  'gradeCompleta': 'Ultima Sincronização grade completa',
-  'reaba': 'Ultima Sincronização reabastecimento',
-  'movimentacoesProcessadas': 'Ultima Sincronização movimentações',
-  'dashboardHTML': 'Ultima Sincronização Produtividade',
-  'rankingArray': 'Ultima Sincronização ranking',
-  'pickingData': 'Ultima Sincronização pendências de picking',
+  'logHistoricoMudancas': 'Última Sincronização de Logs de Alterações',
+  'checkbox_state_monitor': 'Última Sincronização checkbox carros em conferência',
+  'result_state_monitor': 'Última Sincronização pendências de picking',
+  'ondasdin': 'Última Sincronização picking dinâmico',
+  'ondas': 'Última Sincronização Ondas da GRADE',
+  'gradeCompleta': 'Última Sincronização grade completa',
+  'reaba': 'Última Sincronização reabastecimento',
+  'movimentacoesProcessadas': 'Última Sincronização movimentações',
+  'dashboardHTML': 'Última Sincronização Produtividade',
+  'rankingArray': 'Última Sincronização ranking',
+  'pickingData': 'Última Sincronização pendências de picking',
   'pickingTimestamp': 'Horário de sincronização pendências de picking'
-  // Adicione mais mapeamentos conforme necessário
 };
 
-// Ícones para categorias de logs
 const iconesChaves = {
   'checkbox_state_monitor': 'fa-solid fa-check-square',
   'movimentacoesProcessadas': 'fa-solid fa-truck-container',
@@ -36,151 +41,130 @@ const iconesChaves = {
   'logHistoricoMudancas': 'fa-solid fa-history',
   'pickingData': 'fas fa-tasks',
   'pickingTimestamp': 'fa-solid fa-clock',
-  // ícone padrão para chaves não especificadas
   'default': 'fa-solid fa-circle-info'
 };
 
+// Carrega logs do servidor principal ou fallback Worker
 async function carregarLogs() {
   logContainer.innerHTML = '<p class="placeholder">Carregando logs...</p>';
+  let registros = {};
 
   try {
-    // Primeira tentativa: buscar dados do load.php
-    const response = await fetch(`https://labsuaideia.store/api/load.php?userId=${username}`, {
-      signal: AbortSignal.timeout(10000)
-    });
-
-    if (!response.ok) throw new Error(`Erro ao acessar load.php: ${response.status}`);
-
-    const data = await response.json();
-const registros = data.dados || {};
-
-
-    processarLogs(registros);
-
-  } catch (error) {
-    console.error('Erro ao carregar dados do load.php:', error);
-    mostrarToast("Falha ao carregar dados do servidor. Tentando fallback...", "error");
-
-    // Segunda tentativa: buscar dados do Worker
+    const res = await fetch(`${LOAD_API}?userId=${username}`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error();
+    registros = (await res.json()).dados || {};
+  } catch {
     try {
-      const workerResponse = await fetch(`https://dry-scene-2df7.tjslucasvl.workers.dev/?userId=${username}`, {
-        signal: AbortSignal.timeout(10000)
-      });
-
-      if (!workerResponse.ok) throw new Error(`Erro ao acessar Worker: ${workerResponse.status}`);
-
-const workerData = await workerResponse.json();
-const registros = workerData.dados || {};
-
-
-      processarLogs(registros);
-
-    } catch (workerError) {
-      console.error('Erro ao carregar dados do Worker:', workerError);
-      mostrarToast("Falha ao carregar dados de backup. Tente novamente mais tarde.", "error");
+      const res2 = await fetch(`${WORKER_LOAD}?userId=${username}`, { signal: AbortSignal.timeout(10000) });
+      if (!res2.ok) throw new Error();
+      registros = (await res2.json()).dados || {};
+    } catch {
+      return showToast("Falha ao carregar dados do servidor.", "error");
     }
   }
+
+  processarLogs(registros);
 }
 
-// Função para processar os logs e exibi-los
+// Processa e exibe cada log-entry
 function processarLogs(registros) {
   logContainer.innerHTML = '';
-
   const chaves = Object.keys(registros);
-
   if (chaves.length === 0) {
     logContainer.innerHTML = '<p class="placeholder">Nenhum dado encontrado.</p>';
     return;
   }
 
-  // Ordenar por timestamp (mais recente primeiro)
-  chaves.sort((a, b) => {
-    return new Date(registros[b].timestamp) - new Date(registros[a].timestamp);
-  });
+  // Ordena do mais recente
+  chaves.sort((a, b) => new Date(registros[b].timestamp) - new Date(registros[a].timestamp));
 
   chaves.forEach((key, index) => {
     const entry = registros[key];
-    
-    // Determinar nome personalizado
     const nomeExibido = nomesPersonalizados[key] || key;
-    
-    // Determinar ícone adequado
     let icone = iconesChaves.default;
-    for (const categoria in iconesChaves) {
-      if (key.includes(categoria)) {
-        icone = iconesChaves[categoria];
-        break;
-      }
+    for (const cat in iconesChaves) {
+      if (key.includes(cat)) { icone = iconesChaves[cat]; break; }
     }
-    
+
     const logDiv = document.createElement('div');
     logDiv.className = 'log-entry';
-    // Adicionar delay para animação escalonada
     logDiv.style.animationDelay = `${index * 0.05}s`;
-    
+
+    // Monta o HTML com timestamp, valor e usuário
     logDiv.innerHTML = `
       <div class="log-header">
         <i class="log-icon ${icone}"></i>
         <div class="log-key">${nomeExibido}</div>
         <div class="timestamp">${new Date(entry.timestamp).toLocaleString('pt-BR')}</div>
       </div>
+      <div class="log-user">Alterado por: <strong>${entry.userId || 'desconhecido'}</strong></div>
       <div class="log-value">${entry.value}</div>
     `;
-    
-    // Adicionar evento de clique para mostrar/ocultar o valor
+
+    // Click para toggle do valor
     logDiv.addEventListener('click', () => {
-      const valorElement = logDiv.querySelector('.log-value');
-      valorElement.classList.toggle('visible');
+      logDiv.querySelector('.log-value').classList.toggle('visible');
     });
-    
+
+    // Botão para restaurar a versão ANTERIOR dessa key
+    const btnRestorePrev = document.createElement('button');
+    btnRestorePrev.textContent = 'Restaurar versão anterior';
+    btnRestorePrev.className = 'btn-restore-prev';
+    btnRestorePrev.addEventListener('click', e => {
+      e.stopPropagation();
+      restaurarAnterior(key);
+    });
+    logDiv.appendChild(btnRestorePrev);
+
     logContainer.appendChild(logDiv);
   });
 }
 
-// Função para filtrar logs
+// Busca histórico de alterações de uma key
+async function fetchHistory(key) {
+  const res = await fetch(`${HISTORY_API}?key=${encodeURIComponent(key)}`);
+  if (!res.ok) throw new Error('Falha ao obter histórico');
+  return (await res.json()).dados[key] || [];
+}
+
+// Restaura a versão anterior de uma key (último registro antes do atual)
+async function restaurarAnterior(key) {
+  try {
+    showToast(`Buscando versão anterior de "${key}"...`, 'info');
+    const hist = await fetchHistory(key);
+    if (hist.length < 2) return showToast('Não há versão anterior disponível.', 'error');
+    // Ordena por timestamp e pega o penúltimo
+    hist.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const anterior = hist[1];
+    localStorage.setItem(key, anterior.value);
+    showToast(`"${key}" restaurado para valor de ${new Date(anterior.timestamp).toLocaleString('pt-BR')}`, 'success');
+    // Recarrega logs para refletir a mudança
+    carregarLogs();
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao restaurar versão anterior.', 'error');
+  }
+}
+
 function filtrarLogs() {
   const termo = searchInput.value.toLowerCase();
-  const entradas = document.querySelectorAll('.log-entry');
-  
-  entradas.forEach(entrada => {
+  document.querySelectorAll('.log-entry').forEach(entrada => {
     const chave = entrada.querySelector('.log-key').textContent.toLowerCase();
     const valor = entrada.querySelector('.log-value').textContent.toLowerCase();
-    
-    if (chave.includes(termo) || valor.includes(termo)) {
-      entrada.style.display = 'flex';
-    } else {
-      entrada.style.display = 'none';
-    }
+    entrada.style.display = (chave.includes(termo) || valor.includes(termo)) ? 'flex' : 'none';
   });
 }
 
-// Função para mostrar toast
 function mostrarToast(mensagem, tipo) {
   const toast = document.createElement('div');
   toast.classList.add('toast', tipo);
   toast.textContent = mensagem;
   document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 5000);
+  setTimeout(() => toast.remove(), 5000);
 }
 
-// Função para sincronizar agora
-async function sincronizarAgora() {
-
-  mostrarToast("Sincronização iniciada...", "info");
-}
-
-document.getElementById('syncButton').addEventListener('click', async () => {
-  await sincronizarAgora();
-});
-
-// Atualizar manualmente
+// Eventos
+document.getElementById('syncButton')?.addEventListener('click', async () => { /* botão de sincronizar agora */ });
 refreshButton.addEventListener('click', carregarLogs);
-
-// Pesquisar conforme digita
 searchInput.addEventListener('input', filtrarLogs);
-
-// Carregar ao abrir
 document.addEventListener('DOMContentLoaded', carregarLogs);

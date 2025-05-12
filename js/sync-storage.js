@@ -1,8 +1,8 @@
-// sync-storage.js
-// Gerencia sincronização contínua de chaves individuais do localStorage com o servidor,
-// exibindo popups apenas em caso de sucesso/falha real e restaurando dados baseado em timestamps.
+////////////////////////////////////////////////////////////////////////////////
+// ─── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 
-/* ─── CONFIGURAÇÕES ────────────────────────────────────────────────────────── */
+// URLs do servidor (save.php e load.php continuam os mesmos)
 const SERVER_SAVE   = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD   = 'https://labsuaideia.store/api/load.php';
 const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
@@ -10,7 +10,7 @@ const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 const FETCH_TIMEOUT = 10000;  // ms
 const MAX_RETRIES   = 3;      // Tentativas por requisição
 
-// Quais chaves do localStorage serão sincronizadas
+// Todas as chaves que serão sincronizadas
 const SYNC_KEYS = [
   'ondasdin','gradeCompleta','movimentacoesProcessadas',
   'ondas','result_state_monitor','checkbox_state_monitor',
@@ -18,25 +18,25 @@ const SYNC_KEYS = [
   'pickingData','pickingTimestamp'
 ];
 
-// Storage interno para fila de operações e mapa de timestamps
+// Internal storage keys
 const QUEUE_KEY  = 'syncQueue';
 const TS_MAP_KEY = 'syncLastModified';
+
+// Identificador global (todos compartilham os mesmos dados)
+const GLOBAL_ID = 'all';  
+const userId = GLOBAL_ID;  // força uso de namespace único
 
 let lastModifiedMap = {};
 let queue            = [];
 let flushing         = false;
 
-// Identificador do usuário (deve vir de algum localStorage ou contexto de autenticação)
-const userId = localStorage.getItem('username')?.toLowerCase();
-if (!userId) {
-  throw new Error('Usuário não autenticado. Por favor, faça login.');
-}
-
-/* ─── Inicializa estado interno a partir do localStorage ─────────────────── */
+// Carrega estado interno do localStorage
 try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
 try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
 
-/* ─── HELPERS DE UI ───────────────────────────────────────────────────────── */
+////////////////////////////////////////////////////////////////////////////////
+// ─── HELPERS DE UI ─────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 function showLoading() {
   if (document.getElementById('loading-overlay')) return;
   const overlay = document.createElement('div');
@@ -78,12 +78,10 @@ function showPopup(msg, type='info') {
     transform:'translateY(20px)', opacity:0, zIndex:10001
   });
   document.body.appendChild(p);
-  // anima entrada
   requestAnimationFrame(() => {
     p.style.transform = 'translateY(0)';
     p.style.opacity = '1';
   });
-  // remove após 3s
   setTimeout(() => {
     p.style.transform = 'translateY(20px)';
     p.style.opacity = '0';
@@ -95,12 +93,12 @@ const style = document.createElement('style');
 style.textContent = `@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`;
 document.head.appendChild(style);
 
-/* ─── HELPERS DE SINCRONIZAÇÃO ─────────────────────────────────────────────── */
-// Persiste fila e timestamps no localStorage
+////////////////////////////////////////////////////////////////////////////////
+// ─── HELPERS DE SINCRONIZAÇÃO ───────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 const saveQueue   = () => localStorage.setItem(QUEUE_KEY,  JSON.stringify(queue));
 const saveTsMap   = () => localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap));
 
-// fetch com timeout
 async function fetchWithTimeout(url, options={}, timeout=FETCH_TIMEOUT) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -110,7 +108,7 @@ async function fetchWithTimeout(url, options={}, timeout=FETCH_TIMEOUT) {
     return res;
   } finally { clearTimeout(id); }
 }
-// fallback entre server e worker
+
 async function fetchWithFallback(urls, options) {
   let lastErr;
   for (const url of urls) {
@@ -126,13 +124,15 @@ async function fetchWithFallback(urls, options) {
   throw lastErr;
 }
 
-/* ─── INTERCEPTA localStorage.setItem PARA SINCRONIZAR ─────────────────────── */
+////////////////////////////////////////////////////////////////////////////////
+// ─── INTERCEPTA localStorage.setItem PARA SINCRONIZAR ───────────────────────
+////////////////////////////////////////////////////////////////////////////////
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const prev = localStorage.getItem(key);
   originalSetItem(key, value);
 
-  // 🛠️ Correção aqui: só salva se o valor mudou de verdade
+  // só dispara se for chave sincronizada e valor realmente mudou
   if (value === prev || !SYNC_KEYS.includes(key)) return;
 
   const ts = Date.now();
@@ -145,14 +145,14 @@ localStorage.setItem = (key, value) => {
   flushQueue().finally(hideLoading);
 };
 
-
-/* ─── ENVIA CADA OPERAÇÃO AO SERVIDOR ─────────────────────────────────────── */
+////////////////////////////////////////////////////////////////////////////////
+// ─── ENVIA A FILA AO SERVIDOR ──────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 async function flushQueue() {
   if (flushing || !navigator.onLine || queue.length === 0) return;
   flushing = true;
   let successCount = 0;
 
-  // Processa cada item da fila individualmente
   for (const op of [...queue]) {
     try {
       const body = JSON.stringify(op);
@@ -160,7 +160,7 @@ async function flushQueue() {
         [SERVER_SAVE, WORKER_URL],
         { method:'POST', headers:{'Content-Type':'application/json'}, body }
       );
-      // remove da fila e atualiza timestamp em cache
+      // remove da fila
       queue = queue.filter(q => !(q.key===op.key && q.timestamp===op.timestamp));
       lastModifiedMap[op.key] = op.timestamp;
       saveQueue();
@@ -171,26 +171,27 @@ async function flushQueue() {
     }
   }
 
-  // feedback ao usuário
   if (successCount > 0) showPopup(`Sincronizados ${successCount} item(s)`, 'success');
   if (queue.length  > 0) showPopup(`${queue.length} item(s) pendente(s)`, 'error');
   flushing = false;
 }
 
-/* ─── RESTAURA DO SERVIDOR SE MAIS NOVO QUE LOCAL ─────────────────────────── */
+////////////////////////////////////////////////////////////////////////////////
+// ─── RESTAURA DO SERVIDOR SE NÃO HOUVER DADO LOCAL ─────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 async function restoreStorage() {
   if (!navigator.onLine) return;
   showLoading();
   try {
-    const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${encodeURIComponent(userId)}`, {cache:'no-store'});
+    const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${GLOBAL_ID}`, {cache:'no-store'});
     const json = await res.json();
     let applied = 0;
 
     if (json.dados) {
       for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
         if (!SYNC_KEYS.includes(key)) continue;
-        const localTs = lastModifiedMap[key] || 0;
-        if (timestamp > localTs) {
+        // restaura SÓ se não existir valor local
+        if (localStorage.getItem(key) === null) {
           originalSetItem(key, value);
           lastModifiedMap[key] = timestamp;
           applied++;
@@ -206,12 +207,13 @@ async function restoreStorage() {
   } finally {
     hideLoading();
     flushing = false;
-    // após restaurar, tente enviar pendentes
     flushQueue();
   }
 }
 
-/* ─── EVENTOS DE REDE E CICLO DE VIDA ─────────────────────────────────────── */
+////////////////////////////////////////////////////////////////////////////////
+// ─── EVENTOS DE REDE E CICLO DE VIDA ───────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 window.addEventListener('online',  () => { showPopup('Online', 'info');  restoreStorage(); });
 window.addEventListener('offline', () => showPopup('Offline', 'error'));
 window.addEventListener('beforeunload', () => { if (navigator.onLine) flushQueue(); });
