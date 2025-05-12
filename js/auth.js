@@ -16,13 +16,13 @@ function login(username) {
   localStorage.setItem('username', username);
   localStorage.setItem('expiry', expiry.toString());
 
+  // Restaura os dados do servidor apenas se não tiver restaurado antes
   if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
     jaRestaurouDados = true;
     showPopup('🔄 Restaurando dados do servidor (login)...', 'info');
     window.restoreStorage();
   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
@@ -36,6 +36,7 @@ function verificarLogin() {
     return;
   }
 
+  // Restaurar dados somente se não tiver sido feito após o login
   if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
     jaRestaurouDados = true;
     showPopup('🔄 Restaurando dados do servidor (sessão existente)...', 'info');
@@ -55,7 +56,7 @@ function redirectToLogin() {
 ////////////////////////////////////////////////////////////////////////////////
 function logout(clearAll = false) {
   async function fazerLogout() {
-    jaRestaurouDados = false; // ← Reset da flag
+    jaRestaurouDados = false; // Reset da flag para restaurar dados após o próximo login
     if (clearAll) {
       localStorage.clear();
     } else {
@@ -64,6 +65,7 @@ function logout(clearAll = false) {
     }
     redirectToLogin();
   }
+
   // Se houver dados pendentes de sincronização, salva antes de sair
   if (navigator.onLine && typeof salvarLocalStorage === 'function' && precisaSincronizar) {
     salvarLocalStorage();
