@@ -186,7 +186,7 @@ async function restoreStorage() {
   if (!navigator.onLine) return;
   showLoading();
   try {
-    const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${GLOBAL_ID}`, {cache:'no-store'});
+    const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${bucketId}`, { cache: 'no-store' });
     const json = await res.json();
     let applied = 0;
 
