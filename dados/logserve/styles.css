@@ -223,26 +223,24 @@ header h1 {
 #syncButton:hover {
   background: linear-gradient(135deg, #00c48c, #00796b);
 }
-/* Botão restaurar versão anterior */
 .btn-restore-prev {
   background: linear-gradient(90deg, #008d4c, #00a65a);
-  border: none;
-  border-radius: 10px;
-  padding: 0.8rem 1.6rem;
   color: #f8fafc;
   font-family: 'Segoe UI', sans-serif;
   font-size: 0.9rem;
+  padding: 0.8rem 1.6rem;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
-  margin-top: 8px;
-  align-self: flex-start;
+  margin-top: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
 }
 
-/* Hover elevação */
 .btn-restore-prev:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 /* Toast simples */
@@ -271,4 +269,103 @@ header h1 {
   to { opacity: 0; transform: translateX(-50%) translateY(20px); }
 }
 
+.btn-restore-prev {
+  background: linear-gradient(90deg, #008d4c, #00a65a);
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.6rem;
+  color: #f8fafc;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 8px;
+}
 
+.btn-restore-prev:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+/* === MODAL === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.modal {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #f8fafc;
+  font-family: 'Segoe UI', sans-serif;
+  animation: slideIn 0.3s ease forwards;
+}
+
+.modal h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #e0e0e0;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  gap: 1rem;
+}
+
+.modal-button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-family: 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.modal-button.confirm {
+  background: linear-gradient(90deg, #008d4c, #00a65a);
+  color: #f8fafc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button.confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-button.cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+.modal-button.cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
