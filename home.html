@@ -177,7 +177,7 @@ title: "Homepage"
     <h1><i class="fas fa-rocket"></i> WMS Tools</h1>
     <div class="header-actions">
       <button id="refreshDataBtn" class="header-button">
-        <i class="fas fa-sync-alt"></i> Atualizar Dados
+        <i class="fas fa-sync-alt"></i> Recarregar Página
       </button>
     </div>
   </div>
@@ -495,7 +495,7 @@ title: "Homepage"
 
       // Inicializa
       processGradeData();
-      refreshDataBtn.addEventListener('click', processGradeData);
+      refreshDataBtn.addEventListener('click', () => location.reload());
     });
   </script>
 </body>
