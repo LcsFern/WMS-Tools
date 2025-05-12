@@ -1,7 +1,7 @@
 // auth.js
 
-// Tempo de expiração padrão da sessão (2 horas)
-const TEMPO_EXPIRACAO_MS = 2 * 60 * 60 * 1000;
+// Tempo de expiração padrão da sessão (10 minutos)
+const TEMPO_EXPIRACAO_MS = 10 * 60 * 1000;
 
 // Variável de controle para saber se há dados para sincronizar
 let precisaSincronizar = false;

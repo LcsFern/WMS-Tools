@@ -62,6 +62,7 @@ const destinosCoordenadas = {
   "FLOPIS CONTINENTE": [-27.5949, -48.5895]
 };
 
+
 const baseItajai = { lat: -26.947144, lon: -48.739698 };
 
 // Função para parsear o peso vindo como string tipo "1.234,56"
@@ -142,6 +143,7 @@ async function getCoordinates(destino) {
   return null;
 }
 
+
 // Gera o SVG da placa no padrão Mercosul
 function getSVGPlaca(placa) {
   return `
@@ -166,8 +168,6 @@ function getSVGPlaca(placa) {
 async function processarGrade() {
   const rawData = document.getElementById('excelData').value.trim();
   if (!rawData) return;
-
-  showLoading('gradeSection', 'Processando grade');
 
   const linhas = rawData.split('\n');
   if (linhas.length < 2) return;
@@ -208,6 +208,7 @@ async function processarGrade() {
     const placa = registro[headers[indexPlaca]];
     if (placa && !veiculosUnicos.has(placa)) {
       veiculosUnicos.add(placa);
+      // Corrigindo a conversão: removendo o separador de milhar (ponto)
       totalCaixas += parseInt(registro[headers[indexQtdeCxs]].replace(/[.]/g, '')) || 0;
       if (indexPeso !== -1) {
         pesoTotal += parsePeso(registro[headers[indexPeso]] || '0');
@@ -293,6 +294,7 @@ async function loadGradeFromStorage() {
     const placa = registro[headers[indexPlaca]];
     if (placa && !veiculosUnicos.has(placa)) {
       veiculosUnicos.add(placa);
+      // Corrigindo a conversão para "QTDE CXS" removendo o ponto separador
       totalCaixas += parseInt(registro[headers[indexQtdeCxs]].replace(/[.]/g, '')) || 0;
       if (indexPeso !== -1) {
         pesoTotal += parsePeso(registro[headers[indexPeso]] || '0');
@@ -356,7 +358,8 @@ function resetGrade() {
 
       askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
         if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
-      });
+
+});
 
       // Zera os demais dados
       localStorage.removeItem("activeSeparatorsSaved");
@@ -411,9 +414,7 @@ function closePopup(popup) {
 
 // Função para copiar o texto da OE
 function copiarTexto(texto) {
-  navigator.clipboard.writeText(texto)
-    .then(() => showNotification('Texto copiado!'))
-    .catch(() => showNotification('Falha ao copiar', 'error'));
+  navigator.clipboard.writeText(texto);
 }
 
 // Função de busca com ícones e clique no destino para centralizar o mapa
@@ -421,15 +422,13 @@ async function searchGrade() {
   const query = document.getElementById('searchInput').value.trim().toUpperCase();
   if (!query) return;
 
-  const searchResults = document.getElementById('searchResults');
-  searchResults.innerHTML = '<div class="loading-container"><div class="loading"></div><span style="margin-left: 10px;">Buscando...</span></div>';
-
   const gradeCompleta = JSON.parse(localStorage.getItem("gradeCompleta") || "[]");
   const results = gradeCompleta.filter(registro => 
     registro["PLACA ROTEIRIZADA"]?.toUpperCase().includes(query) || 
     registro["TRANSPORTADORA"]?.toUpperCase().includes(query)
   );
 
+  const searchResults = document.getElementById('searchResults');
   searchResults.innerHTML = '';
   if (results.length > 0) {
     for (const registro of results) {
@@ -563,57 +562,3 @@ document.getElementById('excelData').addEventListener('paste', (e) => {
 });
 
 window.onload = loadGradeFromStorage;
-
-// Função para mostrar o loading
-function showLoading(elementId, message) {
-  const element = document.getElementById(elementId);
-  element.innerHTML = `
-    <div class="loading-container">
-      <div class="loading"></div>
-      <span class="typing-indicator" style="margin-left: 10px;">${message}</span>
-    </div>
-  `;
-}
-
-// Função para mostrar notificação
-function showNotification(message, type = 'success') {
-  const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
-  notification.innerHTML = `
-    <div class="notification-content">
-      <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-      <span>${message}</span>
-    </div>
-  `;
-  document.body.appendChild(notification);
-  
-  setTimeout(() => {
-    notification.classList.add('show');
-  }, 10);
-  
-  setTimeout(() => {
-    notification.classList.remove('show');
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
-}
-
-// Configuração do botão de ação flutuante
-document.addEventListener('DOMContentLoaded', () => {
-  const fabButton = document.getElementById('fabButton');
-  const fabOptions = document.querySelector('.fab-options');
-  
-  fabButton.addEventListener('click', () => {
-    fabOptions.classList.toggle('show');
-  });
-  
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#fab') && fabOptions.classList.contains('show')) {
-      fabOptions.classList.remove('show');
-    }
-  });
-  
-  // Botão de ajuda
-  document.getElementById('helpBtn').addEventListener('click', () => {
-    showNotification('GRADE Principal para funcionamento do sistema', 'info');
-  });
-});
