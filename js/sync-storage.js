@@ -127,10 +127,12 @@ async function fetchWithFallback(urls, options) {
 ////////////////////////////////////////////////////////////////////////////////
 // ─── INTERCEPTA localStorage.setItem PARA SINCRONIZAR ───────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const prev = localStorage.getItem(key);
   originalSetItem(key, value);
 
+  // só dispara se for chave sincronizada e valor realmente mudou
   if (value === prev || !SYNC_KEYS.includes(key)) return;
 
   const ts = Date.now();
@@ -139,15 +141,9 @@ localStorage.setItem = (key, value) => {
   saveTsMap();
   saveQueue();
 
-  // 🔁 Reinicia tempo da sessão por modificação
-  if (typeof window.reiniciarTempoSessao === 'function') {
-    window.reiniciarTempoSessao();
-  }
-
   showLoading();
   flushQueue().finally(hideLoading);
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── ENVIA A FILA AO SERVIDOR ──────────────────────────────────────────────
@@ -159,15 +155,13 @@ async function flushQueue() {
 
   for (const op of [...queue]) {
     try {
-const { userId, bucketId, key, value, timestamp } = op;
+      const { userId, bucketId, key, value, timestamp } = op;
 const body = JSON.stringify({ userId, key, value, timestamp });
 const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
-
-await fetchWithFallback(
+      await fetchWithFallback(
   [uploadURL, WORKER_URL],
-  { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+  { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
 );
-
 
       // remove da fila
       queue = queue.filter(q => !(q.key===op.key && q.timestamp===op.timestamp));
