@@ -1,0 +1,223 @@
+---
+layout: default
+title: "Homepage"
+---
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WMS Tools - Página Principal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
+  <style>
+    :root {
+      --primary: #00a65a;
+      --secondary: #008d4c;
+      --accent: #34c759;
+      --background: #0f172a;
+      --glass: rgba(255, 255, 255, 0.05);
+      --text: #f8fafc;
+      --text-light: #e0e0e0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(145deg, #0f172a, #1e293b);
+      color: var(--text);
+    }
+
+    .home-container {
+      max-width: 900px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: var(--glass);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .home-container h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .home-container p {
+      font-size: 1.2rem;
+      color: var(--text-light);
+      margin-bottom: 2rem;
+    }
+
+    .home-container ul {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    .home-container li {
+      background: var(--glass);
+      border-radius: 12px;
+      padding: 1.2rem;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .home-container li:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.02);
+    }
+
+    .home-container a {
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+    }
+
+    .home-container strong {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .coming-soon {
+      margin-top: 2rem;
+      color: var(--text-light);
+    }
+
+    footer {
+      margin-top: 3rem;
+      background: linear-gradient(135deg, #0f172a, #00a65a);
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
+
+    footer .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    footer .social-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: transform 0.3s ease;
+    }
+
+    footer .social-links a:hover {
+      transform: scale(1.1);
+    }
+
+    footer p.copy {
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    @media (min-width: 600px) {
+      .home-container ul {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="home-container">
+    <h2><i class="fas fa-rocket"></i> Bem-vindo ao WMS Tools</h2>
+    <p>Selecione uma das ferramentas abaixo para começar:</p>
+
+    <ul>
+      <li><a href="grade/index.html">
+        <strong><i class="fa-solid fa-rectangle-list"></i> Grade de Carregamento</strong>
+        Carregue a grade com dados complementares para o site.
+      </a></li>
+      <li><a href="ondas/index.html">
+        <strong><i class="fa-solid fa-list-tree"></i> Ondas Pré-GRADE</strong>
+        Organize a liberação de veículos para separação.
+      </a></li>
+      <li><a href="rotas/index.html">
+        <strong><i class="fa-solid fa-pen-ruler"></i> Rotas e Padrões</strong>
+        Verifique os veículos de rota longas e os padrões de paletes dos clientes. 
+      </a></li>
+      <li><a href="expedicao/index.html">
+        <strong><i class="fa-solid fa-truck"></i> Monitor de Expedição</strong>
+        Acompanhe e edite facilmente os dados dos veículos na operação.
+      </a></li>
+      <li><a href="monitordeseparacao/index.html">
+        <strong><i class="fa-solid fa-chart-bar"></i> Porcentagem por Picking</strong>
+        Veja a proximidade de 100% por separador.
+      </a></li>
+      <li><a href="monitordepicking/index.html">
+        <strong><i class="fas fa-clipboard-list"></i> Pendências de Picking</strong>
+        Veja o andamento da separação e separadores ativos.
+      </a></li>
+      <li><a href="movi/index.html">
+        <strong><i class="fa-solid fa-forklift"></i> Movimentações</strong>
+        Organize dados de movimentação de forma prática.
+      </a></li>
+      <li><a href="din/index.html">
+        <strong><i class="fa-solid fa-pallet-boxes"></i> Dinâmicos</strong>
+        Gerencie os pickings dinâmicos.
+      </a></li>
+      <li><a href="reaba/index.html">
+        <strong><i class="fa-solid fa-shelves"></i> Ressuprimento</strong>
+        Organize os ressuprimentos com agilidade.
+      </a></li>
+      <li><a href="produtividade/index.html">
+        <strong><i class="fas fa-chart-line"></i> Produtividade</strong>
+        Consulte a produtividade da separação.
+      </a></li>
+      <li><a href="shelflife/index.html">
+        <strong><i class="fas fa-box-open"></i> Consulta de Shelf</strong>
+        Verifique validades e Porcentagem de Shelf dos produtos.
+      </a></li>
+      <li><a href="variavel/index.html">
+        <strong><i class="fas fa-weight-scale"></i> Pesos Variáveis</strong>
+        Garanta precisão no bipe dos pesos variáveis.
+      </a></li>
+      <li><a href="tratadin/index.html">
+        <strong><i class="fas fa-exchange-alt"></i> Abastecer Pickings Dinâmicos</strong>
+        Acesse rapidamente o tratamento dos pickings dinâmicos.
+      </a></li>
+      <li><a href="checkdigito/index.html">
+        <strong><i class="fa-solid fa-rectangle-barcode"></i> Posições do Estoque</strong>
+        Acesse rapidamente as posições de estoque, checkdigito, etc.
+      </a></li>
+    </ul>
+
+    <p class="coming-soon">
+      <i class="fas fa-wrench"></i> Em breve, mais funcionalidades estarão disponíveis!
+    </p>
+  </div>
+
+  <footer>
+    <p><strong>Feito por Lucas Fernandes</strong></p>
+    <div class="social-links">
+      <a href="https://www.facebook.com/fernandes.lcas/" target="_blank"><i class="fab fa-facebook-f"></i> Facebook</a>
+      <a href="https://www.instagram.com/jlsfoff/" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
+      <a href="tel:47991970281"><i class="fas fa-phone"></i> 47 99197-0281</a>
+      <a href="mailto:jlcs.fernandes@gmail.com"><i class="fas fa-envelope"></i> Email</a>
+    </div>
+    <p class="copy">© 2025 Todos os direitos reservados.</p>
+  </footer>
+
+</body>
+</html>
