@@ -1,3 +1,8 @@
+---
+layout: default
+title: "Homepage"
+---
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -104,12 +109,8 @@
       color: var(--accent);
     }
     /* Ajuste específico para o card "Distribuição por Destino" */
-    .card-destinos {
-      min-height: 150px; /* Menor que os outros */
-    }
-    .card-destinos .chart-container {
-      height: 100px; /* Reduzindo a altura do gráfico */
-    }
+    .card-destinos { min-height: 150px; }
+    .card-destinos .chart-container { height: 100px; }
     /* ==== TABELA ==== */
     .table-container { overflow-x: auto; margin-top: 1rem; }
     table { width: 100%; border-collapse: collapse; }
@@ -163,9 +164,7 @@
       width: 100% !important;
       height: 100% !important;
     }
-    .chart-container {
-      height: 100%;
-    }
+    .chart-container { height: 100%; }
     .card-content canvas {
       width: 100% !important;
       height: 100% !important;
@@ -175,7 +174,7 @@
 <body>
   <!-- CABEÇALHO -->
   <div class="header">
-    <h1><i class="fas fa-rocket"></i> WMS Tools Dashboard</h1>
+    <h1><i class="fas fa-rocket"></i> WMS Tools</h1>
     <div class="header-actions">
       <button id="refreshDataBtn" class="header-button">
         <i class="fas fa-sync-alt"></i> Atualizar Dados
@@ -266,7 +265,9 @@
   </div>
   <!-- FERRAMENTAS DISPONÍVEIS -->
   <div class="tools-container">
-    <h2 class="section-title" style="text-align: center; margin-bottom: 2rem;"><i class="fas fa-toolbox"></i> Ferramentas Disponíveis</h2>
+    <h2 class="section-title" style="text-align: center; margin-bottom: 2rem;">
+      <i class="fas fa-toolbox"></i> Ferramentas Disponíveis
+    </h2>
     <div class="tools-grid">
       <div class="tool-card">
         <a href="grade/index.html">
@@ -365,29 +366,59 @@
     </div>
     <p class="copy">© 2025 Todos os direitos reservados.</p>
   </footer>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const dashboardContainer = document.getElementById('dashboardContainer');
-      const loadingIndicator = document.getElementById('loadingIndicator');
-      const refreshDataBtn = document.getElementById('refreshDataBtn');
+      const loadingIndicator  = document.getElementById('loadingIndicator');
+      const refreshDataBtn    = document.getElementById('refreshDataBtn');
+
+      // === INÍCIO: FUNÇÃO DE VALIDAÇÃO DA GRADE (inserida) ===
+      function verificarGradeValida() {
+        const raw = localStorage.getItem('gradeCompleta');
+        if (!raw) {
+          return { valida: false, motivo: "Nenhuma grade carregada." };
+        }
+        try {
+          const grade = JSON.parse(raw);
+          if (!Array.isArray(grade) || grade.length === 0) {
+            return { valida: false, motivo: "Formato da grade inválido ou vazio." };
+          }
+          // regex para dd/mmm (ex: 17/abr)
+          const regexData = /\d{1,2}\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i;
+          const temDataValida = grade.some(item => item.DATA && regexData.test(item.DATA.trim()));
+          if (!temDataValida) {
+            return { valida: false, motivo: "Grade não parece ter programação diária." };
+          }
+          return { valida: true };
+        } catch (e) {
+          return { valida: false, motivo: "Erro ao processar a grade: " + e.message };
+        }
+      }
+      // === FIM: FUNÇÃO DE VALIDAÇÃO DA GRADE ===
 
       // Processa e exibe a grade
       async function processGradeData() {
         loadingIndicator.classList.remove('hidden');
         dashboardContainer.classList.add('hidden');
+
+        // === INÍCIO: VALIDAÇÃO ANTES DE EXIBIR OS CARTÕES (inserida) ===
+        const resultado = verificarGradeValida();
+        if (!resultado.valida) {
+          console.warn("Grade inválida:", resultado.motivo);
+          loadingIndicator.classList.add('hidden');
+          return; // sai sem mostrar dashboard
+        }
+        // === FIM: VALIDAÇÃO ===
+
         try {
           const raw = localStorage.getItem('gradeCompleta');
-          if (!raw) {
-            return; // Apenas ferramentas serão exibidas
-          }
           const grade = JSON.parse(raw);
-          if (!Array.isArray(grade) || grade.length <= 1) {
-            return; // Apenas ferramentas serão exibidas
-          }
           const dadosReais = grade.slice(1);
           let totalVeiculos = dadosReais.length;
           let pesoTotal = 0, totalCaixas = 0, totalPallets = 0;
           const destinosCount = {}, destinosSet = new Set(), transpSet = new Set();
+
           dadosReais.forEach(v => {
             // Peso
             const p = parseFloat(String(v['PESO ENTREGAS']).replace('.', '').replace(',', '.')) || 0;
@@ -415,15 +446,19 @@
             // Transportadoras
             if (v['TRANSPORTADORA']) transpSet.add(v['TRANSPORTADORA']);
           });
+
           // Atualiza métricas
-          document.getElementById('totalVeiculos').textContent = totalVeiculos;
-          document.getElementById('pesoTotal').textContent = pesoTotal.toLocaleString('pt-BR');
-          document.getElementById('totalCaixas').textContent = totalCaixas.toLocaleString('pt-BR');
-          document.getElementById('totalPallets').textContent = totalPallets.toLocaleString('pt-BR');
+          document.getElementById('totalVeiculos').textContent       = totalVeiculos;
+          document.getElementById('pesoTotal').textContent           = pesoTotal.toLocaleString('pt-BR');
+          document.getElementById('totalCaixas').textContent         = totalCaixas.toLocaleString('pt-BR');
+          document.getElementById('totalPallets').textContent        = totalPallets.toLocaleString('pt-BR');
           document.getElementById('totalTransportadoras').textContent = transpSet.size;
-          document.getElementById('totalDestinos').textContent = destinosSet.size;
+          document.getElementById('totalDestinos').textContent       = destinosSet.size;
+
           // Gera gráfico
           createDestinosChart(destinosCount);
+
+          // Exibe dashboard somente após validação e processamento
           dashboardContainer.classList.remove('hidden');
         } catch (err) {
           console.error('Erro ao processar grade:', err);
@@ -431,24 +466,22 @@
           loadingIndicator.classList.add('hidden');
         }
       }
-      // Cria o gráfico de distribuição por destino
+
+      // Cria o gráfico de distribuição por destino (inalterado)
       function createDestinosChart(destinosCount) {
         const ctx = document.getElementById('destinosChart').getContext('2d');
         const entries = Object.entries(destinosCount).sort((a,b) => b[1]-a[1]).slice(0,10);
         const labels = entries.map(e => e[0]);
-        const data = entries.map(e => e[1]);
+        const data   = entries.map(e => e[1]);
         if (window.destinosChartInstance) window.destinosChartInstance.destroy();
         window.destinosChartInstance = new Chart(ctx, {
           type: 'doughnut',
           data: {
             labels,
-            datasets: [{
-              data,
-              backgroundColor: [
-                '#00a65a','#f39c12','#3498db','#9b59b6','#34495e',
-                '#1abc9c','#e74c3c','#e67e22','#f1c40f','#7f8c8d'
-              ]
-            }]
+            datasets: [{ data, backgroundColor: [
+              '#00a65a','#f39c12','#3498db','#9b59b6','#34495e',
+              '#1abc9c','#e74c3c','#e67e22','#f1c40f','#7f8c8d'
+            ]}]
           },
           options: {
             responsive: true,
@@ -459,9 +492,9 @@
           }
         });
       }
-      // Init
+
+      // Inicializa
       processGradeData();
-      // Evento de clique para atualizar dados
       refreshDataBtn.addEventListener('click', processGradeData);
     });
   </script>
