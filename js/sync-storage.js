@@ -56,12 +56,14 @@ function showLoading() {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.style.opacity = '1');
 }
+
 function hideLoading() {
   const o = document.getElementById('loading-overlay');
   if (!o) return;
   o.style.opacity = '0';
   o.addEventListener('transitionend', () => o.remove(), { once:true });
 }
+
 function showPopup(msg, type='info') {
   const COLORS = { success:'#4CAF50', error:'#F44336', info:'#2196F3' };
   let p = document.getElementById('sync-notification-popup');
@@ -88,6 +90,7 @@ function showPopup(msg, type='info') {
     p.addEventListener('transitionend', () => p.remove(), { once:true });
   }, 3000);
 }
+
 // keyframes para spinner
 const style = document.createElement('style');
 style.textContent = `@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`;
@@ -96,8 +99,8 @@ document.head.appendChild(style);
 ////////////////////////////////////////////////////////////////////////////////
 // ─── HELPERS DE SINCRONIZAÇÃO ───────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-const saveQueue   = () => localStorage.setItem(QUEUE_KEY,  JSON.stringify(queue));
-const saveTsMap   = () => localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap));
+const saveQueue = () => localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+const saveTsMap = () => localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap));
 
 async function fetchWithTimeout(url, options={}, timeout=FETCH_TIMEOUT) {
   const controller = new AbortController();
@@ -112,7 +115,7 @@ async function fetchWithTimeout(url, options={}, timeout=FETCH_TIMEOUT) {
 async function fetchWithFallback(urls, options) {
   let lastErr;
   for (const url of urls) {
-    for (let i=1; i<=MAX_RETRIES; i++) {
+    for (let i = 1; i <= MAX_RETRIES; i++) {
       try {
         return await fetchWithTimeout(url, options);
       } catch (e) {
@@ -156,15 +159,15 @@ async function flushQueue() {
   for (const op of [...queue]) {
     try {
       const { userId, bucketId, key, value, timestamp } = op;
-const body = JSON.stringify({ userId, key, value, timestamp });
-const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
+      const body = JSON.stringify({ userId, key, value, timestamp });
+      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
       await fetchWithFallback(
-  [uploadURL, WORKER_URL],
-  { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
-);
+        [uploadURL, WORKER_URL],
+        { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
+      );
 
       // remove da fila
-      queue = queue.filter(q => !(q.key===op.key && q.timestamp===op.timestamp));
+      queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
       lastModifiedMap[op.key] = op.timestamp;
       saveQueue();
       saveTsMap();
@@ -180,7 +183,7 @@ const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── RESTAURA DO SERVIDOR SE NÃO HOUVER DADO LOCAL ─────────────────────────
+// ─── RESTAURA DO SERVIDOR ─────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 async function restoreStorage() {
   if (!navigator.onLine) return;
@@ -215,17 +218,20 @@ async function restoreStorage() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── EVENTOS DE REDE E CICLO DE VIDA ───────────────────────────────────────
+// ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-window.addEventListener('online',  () => { showPopup('Online', 'info');  restoreStorage(); });
+window.addEventListener('online',  () => { showPopup('Online', 'info'); /* REMOVER restoreStorage(); */ });
 window.addEventListener('offline', () => showPopup('Offline', 'error'));
-window.addEventListener('beforeunload', () => { if (navigator.onLine) flushQueue(); });
-document.addEventListener('DOMContentLoaded', () => {
-  if (navigator.onLine) restoreStorage();
-  else showPopup('Iniciado offline; aguardando rede', 'info');
-});
 
-// Chamável via console: sincroniza manualmente
+
+////////////////////////////////////////////////////////////////////////////////
+// ─── Expondo restoreStorage para uso externo ───────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+window.restoreStorage = restoreStorage;
+
+////////////////////////////////////////////////////////////////////////////////
+// ─── Chamável via console: sincroniza manualmente ───────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 window.sincronizarAgora = async () => {
   if (!navigator.onLine) return showPopup('Sem conexão', 'error');
   showPopup('Sincronizando manualmente...', 'info');

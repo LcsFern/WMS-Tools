@@ -1,19 +1,31 @@
-// auth.js
+////////////////////////////////////////////////////////////////////////////////
+// ─── CONFIGURAÇÃO DE SESSÃO E LOGIN ────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 
 // Tempo de expiração padrão da sessão (10 minutos)
 const TEMPO_EXPIRACAO_MS = 10 * 60 * 1000;
 
-// Variável de controle para saber se há dados para sincronizar
-let precisaSincronizar = false;
+// Variável de controle para saber se já restauramos após o login
+let jaRestaurouDados = false;
 
-// Função para logar o usuário
+////////////////////////////////////////////////////////////////////////////////
+// ─── FUNÇÃO DE LOGIN ───────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 function login(username) {
   const expiry = Date.now() + TEMPO_EXPIRACAO_MS;
   localStorage.setItem('username', username);
   localStorage.setItem('expiry', expiry.toString());
+
+  // INSERIR: restaurar dados apenas no primeiro login
+  if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
+    jaRestaurouDados = true;
+    window.restoreStorage();
+  }
 }
 
-// Função para verificar se o usuário está logado
+////////////////////////////////////////////////////////////////////////////////
+// ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 function verificarLogin() {
   const username = localStorage.getItem('username');
   const expiry = parseInt(localStorage.getItem('expiry'), 10);
@@ -23,12 +35,16 @@ function verificarLogin() {
   }
 }
 
-// Função para redirecionar para a página de login
+////////////////////////////////////////////////////////////////////////////////
+// ─── REDIRECIONA PARA LOGIN ────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 function redirectToLogin() {
-  window.top.location.href = '/WMS-Tools/login.html'; // Altere conforme seu sistema
+  window.top.location.href = '/WMS-Tools/login.html'; // Ajuste conforme seu sistema
 }
 
-// Função para logout do usuário
+////////////////////////////////////////////////////////////////////////////////
+// ─── FUNÇÃO DE LOGOUT ─────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 function logout(clearAll = false) {
   async function fazerLogout() {
     if (clearAll) {
@@ -40,15 +56,18 @@ function logout(clearAll = false) {
     redirectToLogin();
   }
 
+  // Se houver dados pendentes de sincronização, salva antes de sair
   if (navigator.onLine && typeof salvarLocalStorage === 'function' && precisaSincronizar) {
     salvarLocalStorage();
-    setTimeout(fazerLogout, 1500); // Espera 1,5s para garantir o salvamento
+    setTimeout(fazerLogout, 1500); // Aguarda 1,5s para garantir envio
   } else {
     fazerLogout();
   }
 }
 
-// Função para renovar a sessão com base em atividade do usuário
+////////////////////////////////////////////////////////////////////////////////
+// ─── MONITORAMENTO DE ATIVIDADE ───────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 (function monitorarAtividade() {
   let ultimoEvento = Date.now();
 
@@ -63,16 +82,18 @@ function logout(clearAll = false) {
 
   function registrarAtividade() {
     const agora = Date.now();
-    if (agora - ultimoEvento > 60000) { // Renova se ficou mais de 1 min sem renovar
+    if (agora - ultimoEvento > 60000) { // Renova se ficou > 1 min sem renovação
       renovarSessao();
     }
     ultimoEvento = agora;
   }
 
-  ['click', 'keydown', 'scroll', 'mousemove'].forEach(evt => {
-    document.addEventListener(evt, registrarAtividade, { passive: true });
-  });
+  ['click', 'keydown', 'scroll', 'mousemove'].forEach(evt =>
+    document.addEventListener(evt, registrarAtividade, { passive: true })
+  );
 })();
 
-// Sempre checar login ao carregar a página
+////////////////////////////////////////////////////////////////////////////////
+// ─── CHECA LOGIN NO CARREGAMENTO DA PÁGINA ─────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 document.addEventListener('DOMContentLoaded', verificarLogin);
