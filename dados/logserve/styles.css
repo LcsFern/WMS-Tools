@@ -39,7 +39,7 @@ header {
 
 header h1 {
   font-size: 28px;
-  color: #00DFA2;
+  color: #008d4c;
 }
 
 .header-controls {
@@ -67,7 +67,7 @@ header h1 {
 #searchInput:focus {
   width: 250px;
   background: rgba(255, 255, 255, 0.15);
-  border-color: #00DFA2;
+  border-color: #008d4c;
 }
 
 .search-icon {
@@ -79,7 +79,7 @@ header h1 {
 }
 
 #refreshButton {
-  background: linear-gradient(135deg, #00DFA2, #009688);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
   border: none;
   padding: 10px 20px;
   border-radius: 30px;
@@ -91,7 +91,7 @@ header h1 {
 }
 
 #refreshButton:hover {
-  background: linear-gradient(135deg, #00c48c, #00796b);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
 }
 
 /* Logs Container */
@@ -137,14 +137,14 @@ header h1 {
 }
 
 .log-icon {
-  color: #00DFA2;
+  color: #008d4c;
   font-size: 16px;
   width: 20px;
   text-align: center;
 }
 
 .log-key {
-  color: #00DFA2;
+  color: #008d4c;
   font-weight: bold;
   font-size: 16px;
   flex-grow: 1;
@@ -209,7 +209,7 @@ header h1 {
 }
 
 #syncButton {
-  background: linear-gradient(135deg, #00DFA2, #009688);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
   border: none;
   padding: 10px 20px;
   border-radius: 30px;
@@ -221,7 +221,7 @@ header h1 {
 }
 
 #syncButton:hover {
-  background: linear-gradient(135deg, #00c48c, #00796b);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
 }
 .btn-restore-prev {
   background: linear-gradient(90deg, #008d4c, #00a65a);
