@@ -282,7 +282,7 @@ title: "Rotas e Padrões"
 
         if (!temDataValida) {
           // Se nenhuma data válida foi encontrada, pode ser a grade "Ondas" ou outro formato.
-          return { valida: false, motivo: "A GRADE carregada não parece ser a de programação diária (verifique o formato da data)." };
+          return { valida: false, motivo: "A GRADE carregada via ONDAS não funciona nessa tela." };
         }
         return { valida: true };
       } catch (e) {
