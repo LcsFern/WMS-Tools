@@ -171,7 +171,7 @@ function processarMovimentacao(rawText) {
   // Adiciona a nova onda ao array de ondas.
   ondas.push(novaOnda);
   // Salva o array atualizado de ondas no localStorage.
-  localStorage.setItem('ondasdin', JSON.stringify(ondas));
+  localStorage.setItem('reaba', JSON.stringify(ondas));
 
   // Atualiza a exibição na tela, mostra a barra de pesquisa e oculta a área de importação.
   exibirMovimentacoes();
