@@ -16,10 +16,11 @@ function login(username) {
   // Restaurar dados somente se não tiver sido restaurado ainda
   if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
     localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-    showPopup('🔄 Restaurando dados do servidor (login)...', 'info');
+    showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
     window.restoreStorage();
   }
-}
+}  // <-- Chave de fechamento para a função 'login'
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
@@ -34,12 +35,12 @@ function verificarLogin() {
   }
 
   // Restaurar dados apenas se não tiver sido feito após o login
-  if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
-    localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-    showPopup('🔄 Restaurando dados do servidor (sessão existente)...', 'info');
-    window.restoreStorage();
-  }
+if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
+  localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
+  showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
+  window.restoreStorage();
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── REDIRECIONA PARA LOGIN ────────────────────────────────────────────────
@@ -104,3 +105,4 @@ function logout(clearAll = false) {
 // ─── CHECA LOGIN NO CARREGAMENTO DA PÁGINA ─────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 document.addEventListener('DOMContentLoaded', verificarLogin);
+}
