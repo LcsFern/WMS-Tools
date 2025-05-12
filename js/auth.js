@@ -2,8 +2,8 @@
 // ─── CONFIGURAÇÃO DE SESSÃO E LOGIN ────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
-// Tempo de expiração padrão da sessão (10 minutos)
-const TEMPO_EXPIRACAO_MS = 10 * 60 * 1000;
+// Tempo de expiração padrão da sessão (30 minutos)
+const TEMPO_EXPIRACAO_MS = 30 * 60 * 1000;
 
 // Variável de controle para saber se já restauramos após o login
 let jaRestaurouDados = false;
@@ -16,13 +16,13 @@ function login(username) {
   localStorage.setItem('username', username);
   localStorage.setItem('expiry', expiry.toString());
 
+  // Restaurar dados apenas no primeiro login
   if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
     jaRestaurouDados = true;
     showPopup('🔄 Restaurando dados do servidor (login)...', 'info');
     window.restoreStorage();
   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
@@ -31,16 +31,12 @@ function verificarLogin() {
   const username = localStorage.getItem('username');
   const expiry = parseInt(localStorage.getItem('expiry'), 10);
 
+  // Se não houver login ou a sessão expirou, redireciona
   if (!username || !expiry || Date.now() > expiry) {
     redirectToLogin();
     return;
   }
 
-  if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
-    jaRestaurouDados = true;
-    showPopup('🔄 Restaurando dados do servidor (sessão existente)...', 'info');
-    window.restoreStorage();
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +51,7 @@ function redirectToLogin() {
 ////////////////////////////////////////////////////////////////////////////////
 function logout(clearAll = false) {
   async function fazerLogout() {
-    jaRestaurouDados = false; // ← Reset da flag
+    jaRestaurouDados = false; // Reset da flag para permitir restauração no próximo login
     if (clearAll) {
       localStorage.clear();
     } else {
@@ -64,6 +60,7 @@ function logout(clearAll = false) {
     }
     redirectToLogin();
   }
+
   // Se houver dados pendentes de sincronização, salva antes de sair
   if (navigator.onLine && typeof salvarLocalStorage === 'function' && precisaSincronizar) {
     salvarLocalStorage();
