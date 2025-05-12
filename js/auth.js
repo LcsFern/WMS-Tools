@@ -5,9 +5,6 @@
 // Tempo de expiração padrão da sessão (10 minutos)
 const TEMPO_EXPIRACAO_MS = 10 * 60 * 1000;
 
-// Variável de controle para saber se já restauramos após o login
-let jaRestaurouDados = false;
-
 ////////////////////////////////////////////////////////////////////////////////
 // ─── FUNÇÃO DE LOGIN ───────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
@@ -16,9 +13,9 @@ function login(username) {
   localStorage.setItem('username', username);
   localStorage.setItem('expiry', expiry.toString());
 
-  // Restaura os dados do servidor apenas se não tiver restaurado antes
-  if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
-    jaRestaurouDados = true;
+  // Restaurar dados somente se não tiver sido restaurado ainda
+  if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
+    localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
     showPopup('🔄 Restaurando dados do servidor (login)...', 'info');
     window.restoreStorage();
   }
@@ -36,9 +33,9 @@ function verificarLogin() {
     return;
   }
 
-  // Restaurar dados somente se não tiver sido feito após o login
-  if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
-    jaRestaurouDados = true;
+  // Restaurar dados apenas se não tiver sido feito após o login
+  if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
+    localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
     showPopup('🔄 Restaurando dados do servidor (sessão existente)...', 'info');
     window.restoreStorage();
   }
@@ -56,7 +53,7 @@ function redirectToLogin() {
 ////////////////////////////////////////////////////////////////////////////////
 function logout(clearAll = false) {
   async function fazerLogout() {
-    jaRestaurouDados = false; // Reset da flag para restaurar dados após o próximo login
+    localStorage.removeItem('jaRestaurouDados'); // Resetando a variável de controle
     if (clearAll) {
       localStorage.clear();
     } else {
