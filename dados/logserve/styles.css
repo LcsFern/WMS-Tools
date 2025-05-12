@@ -223,5 +223,52 @@ header h1 {
 #syncButton:hover {
   background: linear-gradient(135deg, #00c48c, #00796b);
 }
+/* Botão restaurar versão anterior */
+.btn-restore-prev {
+  background: linear-gradient(90deg, #008d4c, #00a65a);
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 1.6rem;
+  color: #f8fafc;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 8px;
+  align-self: flex-start;
+}
+
+/* Hover elevação */
+.btn-restore-prev:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+/* Toast simples */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15,23,42,0.8);
+  color: #f8fafc;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  font-family: 'Segoe UI', sans-serif;
+  opacity: 0;
+  animation: fadeIn 0.3s forwards, fadeOut 0.3s forwards 4.7s;
+}
+
+/* Tipo de alerta */
+.toast.info    { border-left: 4px solid #34c759; }
+.toast.error   { border-left: 4px solid #F44336; }
+.toast.success { border-left: 4px solid #00a65a; }
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+}
 
 
