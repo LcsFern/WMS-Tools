@@ -17,10 +17,9 @@ function login(username) {
   if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
     localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
     showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
-    window.restoreStorage();
+    window.restoreStorage();  // Chama a função para restaurar os dados
   }
 }  // <-- Chave de fechamento para a função 'login'
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
@@ -29,18 +28,19 @@ function verificarLogin() {
   const username = localStorage.getItem('username');
   const expiry = parseInt(localStorage.getItem('expiry'), 10);
 
+  // Verifica se o login não é válido ou a sessão expirou
   if (!username || !expiry || Date.now() > expiry) {
     redirectToLogin();
     return;
   }
 
-  // Restaurar dados apenas se não tiver sido feito após o login
-if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
-  localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-  showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
-  window.restoreStorage();
+  // Restaurar dados somente se não tiver sido feito após o login
+  if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
+    localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
+    showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
+    window.restoreStorage();  // Chama a função para restaurar os dados
+  }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── REDIRECIONA PARA LOGIN ────────────────────────────────────────────────
@@ -105,4 +105,4 @@ function logout(clearAll = false) {
 // ─── CHECA LOGIN NO CARREGAMENTO DA PÁGINA ─────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 document.addEventListener('DOMContentLoaded', verificarLogin);
-}
+// Verifica se o usuário está logado ao carregar a página
