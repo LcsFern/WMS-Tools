@@ -16,12 +16,13 @@ function login(username) {
   localStorage.setItem('username', username);
   localStorage.setItem('expiry', expiry.toString());
 
-  // INSERIR: restaurar dados apenas no primeiro login
   if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
     jaRestaurouDados = true;
+    showPopup('🔄 Restaurando dados do servidor (login)...', 'info');
     window.restoreStorage();
   }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
@@ -35,11 +36,9 @@ function verificarLogin() {
     return;
   }
 
-  // Restaurar dados automaticamente se for a primeira vez nesta aba
   if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
     jaRestaurouDados = true;
-
-    showPopup('🔄 Restaurando dados do servidor...', 'info');
+    showPopup('🔄 Restaurando dados do servidor (sessão existente)...', 'info');
     window.restoreStorage();
   }
 }
