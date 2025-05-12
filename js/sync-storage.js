@@ -23,8 +23,8 @@ const QUEUE_KEY  = 'syncQueue';
 const TS_MAP_KEY = 'syncLastModified';
 
 // Identificador global (todos compartilham os mesmos dados)
-const GLOBAL_ID = 'all';  
-const userId = GLOBAL_ID;  // força uso de namespace único
+const bucketId = 'all';  // dados são salvos em bucket global
+const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCase();
 
 let lastModifiedMap = {};
 let queue            = [];
@@ -137,7 +137,7 @@ localStorage.setItem = (key, value) => {
 
   const ts = Date.now();
   lastModifiedMap[key] = ts;
-  queue.push({ userId, key, value, timestamp: ts });
+  queue.push({ userId, key, value, timestamp: ts, bucketId });
   saveTsMap();
   saveQueue();
 
@@ -155,11 +155,14 @@ async function flushQueue() {
 
   for (const op of [...queue]) {
     try {
-      const body = JSON.stringify(op);
+      const { userId, bucketId, key, value, timestamp } = op;
+const body = JSON.stringify({ userId, key, value, timestamp });
+const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
       await fetchWithFallback(
-        [SERVER_SAVE, WORKER_URL],
-        { method:'POST', headers:{'Content-Type':'application/json'}, body }
-      );
+  [uploadURL, WORKER_URL],
+  { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
+);
+
       // remove da fila
       queue = queue.filter(q => !(q.key===op.key && q.timestamp===op.timestamp));
       lastModifiedMap[op.key] = op.timestamp;

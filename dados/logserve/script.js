@@ -105,7 +105,7 @@ function processarLogs(registros) {
         <div class="log-key">${nomeExibido}</div>
         <div class="timestamp">${new Date(entry.timestamp).toLocaleString('pt-BR')}</div>
       </div>
-      <div class="log-user">Alterado por: <strong>${entry.userId || 'desconhecido'}</strong></div>
+      <div class="log-user">Alterado por: <strong>${formatarUsuario(entry.userId)}</strong></div>
       <div class="log-value">${entry.value}</div>
     `;
 
@@ -204,4 +204,8 @@ function confirmarRestauracao({ key, timestamp, userId }, onConfirm) {
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+}
+function formatarUsuario(nome) {
+  if (!nome) return 'Desconhecido';
+  return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
 }
