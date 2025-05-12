@@ -32,6 +32,15 @@ function verificarLogin() {
 
   if (!username || !expiry || Date.now() > expiry) {
     redirectToLogin();
+    return;
+  }
+
+  // Restaurar dados automaticamente se for a primeira vez nesta aba
+  if (!jaRestaurouDados && navigator.onLine && typeof window.restoreStorage === 'function') {
+    jaRestaurouDados = true;
+
+    showPopup('🔄 Restaurando dados do servidor...', 'info');
+    window.restoreStorage();
   }
 }
 
@@ -47,6 +56,7 @@ function redirectToLogin() {
 ////////////////////////////////////////////////////////////////////////////////
 function logout(clearAll = false) {
   async function fazerLogout() {
+    jaRestaurouDados = false; // ← Reset da flag
     if (clearAll) {
       localStorage.clear();
     } else {
@@ -55,7 +65,6 @@ function logout(clearAll = false) {
     }
     redirectToLogin();
   }
-
   // Se houver dados pendentes de sincronização, salva antes de sair
   if (navigator.onLine && typeof salvarLocalStorage === 'function' && precisaSincronizar) {
     salvarLocalStorage();
