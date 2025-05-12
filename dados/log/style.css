@@ -39,7 +39,7 @@ header {
 
 header h1 {
   font-size: 28px;
-  color: #00DFA2;
+  color: #008d4c;
 }
 
 /* Main content */
@@ -88,7 +88,7 @@ main {
 }
 
 .log-key {
-  color: #00DFA2;
+  color: #008d4c;
   font-weight: bold;
   font-size: 16px;
   margin-bottom: 5px;
@@ -101,7 +101,7 @@ main {
 }
 
 .restore-btn {
-  background: linear-gradient(135deg, #00DFA2, #009688);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
   border: none;
   padding: 10px 20px;
   border-radius: 30px;
@@ -115,7 +115,7 @@ main {
 }
 
 .restore-btn:hover {
-  background: linear-gradient(135deg, #00c48c, #00796b);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
 }
 
 .no-log {
@@ -137,7 +137,7 @@ main {
 }
 
 .toast {
-  background: linear-gradient(135deg, #00DFA2, #009688);
+  background: linear-gradient(135deg, #008d4c, #00a65a);
   color: #111;
   padding: 0.75rem 1rem;
   border-radius: 6px;
@@ -176,9 +176,9 @@ main {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #00DFA2;
+  background-color: #008d4c;
   border-radius: 10px;
-  box-shadow: 0 0 6px rgba(0, 223, 162, 0.5);
+  box-shadow: 0 0 6px rgba(0, 223, 112, 0.5);
 }
 
 ::-webkit-scrollbar-track {
