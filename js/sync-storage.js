@@ -127,12 +127,10 @@ async function fetchWithFallback(urls, options) {
 ////////////////////////////////////////////////////////////////////////////////
 // ─── INTERCEPTA localStorage.setItem PARA SINCRONIZAR ───────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
   const prev = localStorage.getItem(key);
   originalSetItem(key, value);
 
-  // só dispara se for chave sincronizada e valor realmente mudou
   if (value === prev || !SYNC_KEYS.includes(key)) return;
 
   const ts = Date.now();
@@ -141,9 +139,15 @@ localStorage.setItem = (key, value) => {
   saveTsMap();
   saveQueue();
 
+  // 🔁 Reinicia tempo da sessão por modificação
+  if (typeof window.reiniciarTempoSessao === 'function') {
+    window.reiniciarTempoSessao();
+  }
+
   showLoading();
   flushQueue().finally(hideLoading);
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── ENVIA A FILA AO SERVIDOR ──────────────────────────────────────────────

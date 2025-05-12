@@ -49,29 +49,22 @@ function logout(clearAll = false) {
 }
 
 // Função para renovar a sessão com base em atividade do usuário
-(function monitorarAtividade() {
-  let ultimoEvento = Date.now();
+// Monitor de inatividade baseado em modificações (não em eventos do usuário)
+(function monitorarInatividade() {
+  const TEMPO_INATIVIDADE_MS = 30 * 60 * 1000; // 30 minutos
+  let timer;
 
-  function renovarSessao() {
-    const username = localStorage.getItem('username');
-    if (username) {
-      const novoExpiry = Date.now() + TEMPO_EXPIRACAO_MS;
-      localStorage.setItem('expiry', novoExpiry.toString());
-      console.log('🕒 Sessão renovada até:', new Date(novoExpiry).toLocaleTimeString());
-    }
-  }
+  // Função global que poderá ser chamada por outros scripts para reiniciar o tempo
+  window.reiniciarTempoSessao = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      console.log('⏳ Nenhuma modificação nas chaves por 30 minutos. Fazendo logout...');
+      logout(); // Faz logout normal
+    }, TEMPO_INATIVIDADE_MS);
+  };
 
-  function registrarAtividade() {
-    const agora = Date.now();
-    if (agora - ultimoEvento > 60000) { // Renova se ficou mais de 1 min sem renovar
-      renovarSessao();
-    }
-    ultimoEvento = agora;
-  }
-
-  ['click', 'keydown', 'scroll', 'mousemove'].forEach(evt => {
-    document.addEventListener(evt, registrarAtividade, { passive: true });
-  });
+  // Inicia o contador no carregamento
+  window.reiniciarTempoSessao();
 })();
 
 // Sempre checar login ao carregar a página
