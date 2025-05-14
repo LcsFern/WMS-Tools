@@ -403,19 +403,18 @@ async function deleteKeyFromServer(key) {
     });
 
     const data = await res.json();
+    console.log('Resposta do servidor:', data);
 
     if (data.status === 'success') {
       showPopup(`"${nomeAmigavel}" deletado com sucesso no servidor!`, 'success');
     } else {
-      showPopup(`Erro ao tentar deletar "${nomeAmigavel}" no servidor.`, 'error');
+      showPopup(`Erro ao tentar deletar "${nomeAmigavel}" no servidor: ${data.message}`, 'error');
     }
   } catch (error) {
     console.error('Erro ao deletar chave no servidor:', error);
-    showPopup(`Falha ao conectar para deletar "${nomeAmigavel}".`, 'error');
+    showPopup(`Falha ao conectar para deletar "${nomeAmigavel}": ${error.message}`, 'error');
   }
 }
-
-
 
 function askConfirmation(msg, callback) {
   const popup = document.getElementById('customResetPopup');
