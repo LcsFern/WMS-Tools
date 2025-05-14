@@ -126,7 +126,7 @@ th {
   color: white;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border-radius: 0.1cm;
 }
 
 td {
