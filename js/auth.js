@@ -16,10 +16,10 @@ function login(username) {
   // Restaurar dados somente se não tiver sido restaurado ainda
   if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
     localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-    showPopup('<i class="fa-solid fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
-    window.restoreStorage();  // Chama a função para restaurar os dados
+    showLoading(); // <-- Aqui usamos o spinner central
+    window.restoreStorage();  // Restaura os dados (hideLoading será chamado depois)
   }
-}  // <-- Chave de fechamento para a função 'login'
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VERIFICAÇÃO DE LOGIN ─────────────────────────────────────────────────
@@ -28,19 +28,18 @@ function verificarLogin() {
   const username = localStorage.getItem('username');
   const expiry = parseInt(localStorage.getItem('expiry'), 10);
 
-  // Verifica se o login não é válido ou a sessão expirou
   if (!username || !expiry || Date.now() > expiry) {
     redirectToLogin();
     return;
   }
 
-  // Restaurar dados somente se não tiver sido feito após o login
   if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
     localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-    showPopup('<i class="fa-solid fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
-    window.restoreStorage();  // Chama a função para restaurar os dados
+    showLoading(); // <-- Usa spinner bonito
+    window.restoreStorage();  // Restaura e depois oculta
   }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── REDIRECIONA PARA LOGIN ────────────────────────────────────────────────
