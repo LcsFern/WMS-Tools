@@ -264,6 +264,17 @@ title: "Homepage"
           <div class="stat-label">Destinos Únicos</div>
         </div>
       </div>
+      <!-- NOVO CARD: Padrões de Carga -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-scale-balanced card-icon"></i> Padrões de Carga</div>
+        </div>
+        <div class="card-content">
+          <div id="totalPadroesCarga" class="big-number">0</div>
+          <div class="stat-label">Veículos com Padrão de Carga</div>
+        </div>
+      </div>
+      <!-- FIM NOVO CARD -->
     </div>
   </div>
   <!-- FERRAMENTAS DISPONÍVEIS -->
@@ -358,6 +369,7 @@ title: "Homepage"
       </div>
     </div>
   </div>
+  
   <!-- RODAPÉ -->
   <footer>
     <p><strong>Feito por Lucas Fernandes</strong></p>
@@ -376,7 +388,7 @@ title: "Homepage"
       const loadingIndicator  = document.getElementById('loadingIndicator');
       const refreshDataBtn    = document.getElementById('refreshDataBtn');
 
-      // === INÍCIO: FUNÇÃO DE VALIDAÇÃO DA GRADE (inserida) ===
+      // === INÍCIO: FUNÇÃO DE VALIDAÇÃO DA GRADE ===
       function verificarGradeValida() {
         const raw = localStorage.getItem('gradeCompleta');
         if (!raw) {
@@ -387,7 +399,6 @@ title: "Homepage"
           if (!Array.isArray(grade) || grade.length === 0) {
             return { valida: false, motivo: "Formato da grade inválido ou vazio." };
           }
-          // regex para dd/mmm (ex: 17/abr)
           const regexData = /\d{1,2}\/(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i;
           const temDataValida = grade.some(item => item.DATA && regexData.test(item.DATA.trim()));
           if (!temDataValida) {
@@ -400,68 +411,103 @@ title: "Homepage"
       }
       // === FIM: FUNÇÃO DE VALIDAÇÃO DA GRADE ===
 
-      // Processa e exibe a grade
+      // === Processa e exibe a grade ===
       async function processGradeData() {
         loadingIndicator.classList.remove('hidden');
         dashboardContainer.classList.add('hidden');
 
-        // === INÍCIO: VALIDAÇÃO ANTES DE EXIBIR OS CARTÕES (inserida) ===
+        // Validação antes de exibir
         const resultado = verificarGradeValida();
         if (!resultado.valida) {
           console.warn("Grade inválida:", resultado.motivo);
           loadingIndicator.classList.add('hidden');
-          return; // sai sem mostrar dashboard
+          return;
         }
-        // === FIM: VALIDAÇÃO ===
 
         try {
           const raw = localStorage.getItem('gradeCompleta');
           const grade = JSON.parse(raw);
           const dadosReais = grade.slice(1);
-          let totalVeiculos = dadosReais.length;
-          let pesoTotal = 0, totalCaixas = 0, totalPallets = 0;
-          const destinosCount = {}, destinosSet = new Set(), transpSet = new Set();
 
+          // Inicialização de contadores
+          let totalVeiculos      = dadosReais.length;
+          let pesoTotal          = 0;
+          let totalCaixas        = 0;
+          let totalPallets       = 0;
+          let totalPadroesCarga  = 0; // contador do novo card
+
+          // Mapeamento de Padrões de Carga
+          const padroesCargaMap = {
+            "ANGELONI":  "CODIGO POR PALETE E 1,60M",
+            "COOP":      "CODIGO POR PALETE E 1,60M",
+            "BISTEK":    "CODIGO POR PALETE E 1,60M",
+            "GIASSI":    "CODIGO POR PALETE/BLOCADO",
+            "KOCH":      "CODIGO POR PALETE/BLOCADO",
+            "OESA":      "1,60M E PALETE PBR",
+            "REDE TOP":  "CODIGO POR PALETE/BLOCADO"
+          };
+
+          const destinosCount = {};
+          const destinosSet   = new Set();
+          const transpSet     = new Set();
+
+          // Loop principal
           dadosReais.forEach(v => {
             // Peso
             const p = parseFloat(String(v['PESO ENTREGAS']).replace('.', '').replace(',', '.')) || 0;
             pesoTotal += p;
+
             // Caixas
             const c = parseInt(String(v['QTDE CXS']).replace('.', '')) || 0;
             totalCaixas += c;
+
             // Pallets
             const palletInfo = String(v['QTD PALLETS'] || '');
             let palletsCount = 0;
-            const peso = parseFloat(String(v['PESO ENTREGAS'] || '0').replace(',', '.')) || 0;
             const m = palletInfo.match(/P-(\d+)/);
             if (m) {
               palletsCount = parseInt(m[1], 10);
-            } else if (/^[GB]\/L-1/.test(palletInfo) && peso > 0) {
+            } else if (/^[GB]\/L-1/.test(palletInfo) && p > 0) {
               const capacidadePallet = 750;
-              palletsCount = Math.ceil(peso / capacidadePallet);
+              palletsCount = Math.ceil(p / capacidadePallet);
             }
             totalPallets += palletsCount;
+
             // Destinos
             if (v['DESTINO']) {
-              destinosSet.add(v['DESTINO']);
-              destinosCount[v['DESTINO']] = (destinosCount[v['DESTINO']] || 0) + 1;
+              const dest = String(v['DESTINO']).toUpperCase();
+              destinosSet.add(dest);
+              destinosCount[dest] = (destinosCount[dest] || 0) + 1;
+
+              // Verificação de padrão de carga
+              for (const nomeDestino of Object.keys(padroesCargaMap)) {
+                if (dest.includes(nomeDestino)) {
+                  totalPadroesCarga++;
+                  break; // evita dupla contagem
+                }
+              }
             }
+
             // Transportadoras
-            if (v['TRANSPORTADORA']) transpSet.add(v['TRANSPORTADORA']);
+            if (v['TRANSPORTADORA']) {
+              transpSet.add(v['TRANSPORTADORA']);
+            }
           });
 
           // Atualiza métricas
-          document.getElementById('totalVeiculos').textContent       = totalVeiculos;
-          document.getElementById('pesoTotal').textContent           = pesoTotal.toLocaleString('pt-BR');
-          document.getElementById('totalCaixas').textContent         = totalCaixas.toLocaleString('pt-BR');
-          document.getElementById('totalPallets').textContent        = totalPallets.toLocaleString('pt-BR');
+          document.getElementById('totalVeiculos').textContent        = totalVeiculos;
+          document.getElementById('pesoTotal').textContent            = pesoTotal.toLocaleString('pt-BR');
+          document.getElementById('totalCaixas').textContent          = totalCaixas.toLocaleString('pt-BR');
+          document.getElementById('totalPallets').textContent         = totalPallets.toLocaleString('pt-BR');
           document.getElementById('totalTransportadoras').textContent = transpSet.size;
-          document.getElementById('totalDestinos').textContent       = destinosSet.size;
+          document.getElementById('totalDestinos').textContent        = destinosSet.size;
+          // Atualiza o novo card Padrões de Carga
+          document.getElementById('totalPadroesCarga').textContent    = totalPadroesCarga;
 
           // Gera gráfico
           createDestinosChart(destinosCount);
 
-          // Exibe dashboard somente após validação e processamento
+          // Exibe dashboard
           dashboardContainer.classList.remove('hidden');
         } catch (err) {
           console.error('Erro ao processar grade:', err);
@@ -470,7 +516,7 @@ title: "Homepage"
         }
       }
 
-      // Cria o gráfico de distribuição por destino (inalterado)
+      // Cria o gráfico de distribuição por destino
       function createDestinosChart(destinosCount) {
         const ctx = document.getElementById('destinosChart').getContext('2d');
         const entries = Object.entries(destinosCount).sort((a,b) => b[1]-a[1]).slice(0,10);
@@ -496,43 +542,38 @@ title: "Homepage"
         });
       }
 
-      // Recarregar Pagina
+      // Inicia processamento e configura botão de recarga
       processGradeData();
       refreshDataBtn.addEventListener('click', () => location.reload());
     });
   </script>
+
   <script>
     // Função para enviar dados e depois restaurar com segurança
-async function sendAndRestoreData() {
-  if (!navigator.onLine) {
-    showPopup('Sem conexão', 'error');
-    return;
-  }
-
-  // Exibe popup de "Sincronizando..."
-  showPopup('Sincronizando dados...', 'info');
-
-  // Enviar os dados locais para o servidor
-  const sentItems = await flushQueue(); // Envia os dados locais pendentes
-
-  // Exibe popup com a quantidade de itens enviados
-  if (sentItems > 0) {
-    showPopup(`${sentItems} item(s) enviados ao servidor`, 'success');
-  } else {
-    showPopup('Nenhum dado enviado (já está sincronizado)', 'info');
-  }
-
-  // Restaura os dados do servidor, sem sobrescrever dados locais mais novos
-  const restoredItems = await restoreStorage();
-
-  // Exibe popup com a quantidade de itens restaurados
-  if (restoredItems > 0) {
-    showPopup(`${restoredItems} item(s) restaurado(s) do servidor`, 'success');
-  } else {
-    showPopup('Nenhum dado restaurado (já está atualizado)', 'info');
-  }
-}
-
+    async function sendAndRestoreData() {
+      if (!navigator.onLine) {
+        showPopup('Sem conexão', 'error');
+        return;
+      }
+      // Exibe popup de "Sincronizando..."
+      showPopup('Sincronizando dados...', 'info');
+      // Envia os dados locais pendentes
+      const sentItems = await flushQueue();
+      // Mensagem de sucesso/nenhum envio
+      if (sentItems > 0) {
+        showPopup(`${sentItems} item(s) enviados ao servidor`, 'success');
+      } else {
+        showPopup('Nenhum dado enviado (já está sincronizado)', 'info');
+      }
+      // Restaura dados do servidor
+      const restoredItems = await restoreStorage();
+      // Mensagem de sucesso/nenhuma restauração
+      if (restoredItems > 0) {
+        showPopup(`${restoredItems} item(s) restaurado(s) do servidor`, 'success');
+      } else {
+        showPopup('Nenhum dado restaurado (já está atualizado)', 'info');
+      }
+    }
   </script>
 </body>
 </html>
