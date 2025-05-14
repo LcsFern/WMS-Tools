@@ -390,7 +390,7 @@ async function resetGrade() {
 async function deleteKeyFromServer(key) {
   try {
     // Envia a requisição para deletar a chave do servidor
-    const res = await fetch('http://labsuaideia.store/api/delete.php', {
+    const res = await fetch('https://labsuaideia.store/api/delete.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chaves: [key] }) // Envia a chave para ser deletada
