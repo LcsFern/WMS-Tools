@@ -16,7 +16,7 @@ function login(username) {
   // Restaurar dados somente se não tiver sido restaurado ainda
   if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
     localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-    showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
+    showPopup('<i class="fa-solid fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
     window.restoreStorage();  // Chama a função para restaurar os dados
   }
 }  // <-- Chave de fechamento para a função 'login'
@@ -37,7 +37,7 @@ function verificarLogin() {
   // Restaurar dados somente se não tiver sido feito após o login
   if (!localStorage.getItem('jaRestaurouDados') && navigator.onLine && typeof window.restoreStorage === 'function') {
     localStorage.setItem('jaRestaurouDados', 'true'); // Marca como restaurado
-    showPopup('<i class="fas fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
+    showPopup('<i class="fa-solid fa-spinner fa-spin"></i> Restaurando dados do servidor (sessão existente)...', 'info');
     window.restoreStorage();  // Chama a função para restaurar os dados
   }
 }
