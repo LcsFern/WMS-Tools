@@ -64,32 +64,53 @@ function hideLoading() {
   o.addEventListener('transitionend', () => o.remove(), { once:true });
 }
 
-function showPopup(msg, type='info') {
-  const COLORS = { success:'#4CAF50', error:'#F44336', info:'#2196F3' };
+function showPopup(msg, type = 'info') {
+  const COLORS = {
+    success: '#34c759',
+    error: '#F44336',
+    info: '#2196F3'
+  };
+
   let p = document.getElementById('sync-notification-popup');
   if (p) p.remove();
+
   p = document.createElement('div');
   p.id = 'sync-notification-popup';
   p.textContent = msg;
+
   Object.assign(p.style, {
-    position:'fixed', right:'20px', bottom:'20px', padding:'15px 20px',
-    borderRadius:'6px', backgroundColor:COLORS[type]||COLORS.info,
-    color:'#fff', boxShadow:'0 4px 12px rgba(0,0,0,0.15)',
-    font:'14px Arial, sans-serif',
-    transition:'transform 0.4s ease, opacity 0.4s',
-    transform:'translateY(20px)', opacity:0, zIndex:10001
+    position: 'fixed',
+    right: '30px',
+    bottom: '30px',
+    padding: '14px 24px',
+    borderRadius: '12px',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    border: `1px solid ${COLORS[type] || COLORS.info}`,
+    color: '#f8fafc',
+    font: '14px "Segoe UI", sans-serif',
+    boxShadow: `0 8px 24px ${COLORS[type]}33`,
+    transform: 'translateY(30px)',
+    opacity: 0,
+    zIndex: 10001,
+    transition: 'transform 0.4s ease, opacity 0.4s'
   });
+
   document.body.appendChild(p);
+
   requestAnimationFrame(() => {
-    p.style.transform = 'translateY(0)';
     p.style.opacity = '1';
+    p.style.transform = 'translateY(0)';
   });
+
   setTimeout(() => {
-    p.style.transform = 'translateY(20px)';
     p.style.opacity = '0';
-    p.addEventListener('transitionend', () => p.remove(), { once:true });
-  }, 3000);
+    p.style.transform = 'translateY(30px)';
+    p.addEventListener('transitionend', () => p.remove(), { once: true });
+  }, 3500);
 }
+
 
 // keyframes para spinner
 const style = document.createElement('style');
