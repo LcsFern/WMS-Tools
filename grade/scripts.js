@@ -387,27 +387,34 @@ async function resetGrade() {
 }
 
 // Função auxiliar para deletar a chave do servidor
+const KEY_NAMES = {
+  ondasdin: "Picking Dinâmico",
+  reaba: "Ressuprimento",
+  movimentacoesProcessadas: "Movimentações"
+};
+
 async function deleteKeyFromServer(key) {
+  const nomeAmigavel = KEY_NAMES[key] || key;
   try {
-    // Envia a requisição para deletar a chave do servidor
     const res = await fetch('https://labsuaideia.store/api/delete.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chaves: [key] }) // Envia a chave para ser deletada
+      body: JSON.stringify({ chaves: [key] })
     });
 
     const data = await res.json();
 
     if (data.status === 'success') {
-      showPopup(`Chave '${key}' deletada com sucesso no servidor!`, 'success');
+      showPopup(`"${nomeAmigavel}" deletado com sucesso no servidor!`, 'success');
     } else {
-      showPopup(`Erro ao tentar deletar a chave '${key}' no servidor.`, 'error');
+      showPopup(`Erro ao tentar deletar "${nomeAmigavel}" no servidor.`, 'error');
     }
   } catch (error) {
     console.error('Erro ao deletar chave no servidor:', error);
-    showPopup('Falha ao conectar ao servidor para deletar a chave.', 'error');
+    showPopup(`Falha ao conectar para deletar "${nomeAmigavel}".`, 'error');
   }
 }
+
 
 
 function askConfirmation(msg, callback) {
