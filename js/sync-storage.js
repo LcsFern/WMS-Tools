@@ -167,10 +167,17 @@ localStorage.setItem = (key, value) => {
   saveTsMap();
   saveQueue();
 
-  showLoading();
+showLoading();
 
-flushQueue().finally(hideLoading);
-};
+const MIN_LOADING_DURATION = 1500; // Mínimo 1 segundo visível
+const startTime = Date.now();
+
+flushQueue().finally(() => {
+  const elapsed = Date.now() - startTime;
+  const delay = Math.max(0, MIN_LOADING_DURATION - elapsed);
+  setTimeout(hideLoading, delay);
+});
+
 
 
 
