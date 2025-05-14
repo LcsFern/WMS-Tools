@@ -48,7 +48,7 @@ function showLoading() {
     zIndex:10000, opacity:0, transition:'opacity 0.3s ease'
   });
   const icon = document.createElement('i');
-  icon.className = 'fas fa-spinner';
+  icon.className = 'fa-duotone fa-solid fa-spinner-third';
   Object.assign(icon.style, {
     fontSize:'3rem', color:'#008d4c', animation:'spin 1s linear infinite'
   });
