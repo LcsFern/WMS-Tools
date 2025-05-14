@@ -25,6 +25,8 @@ const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCas
 let lastModifiedMap = {};
 let queue            = [];
 let flushing         = false;
+let retryTimeout = null;
+
 
 try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
 try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
@@ -187,6 +189,7 @@ async function flushQueue() {
       const { userId, bucketId, key, value, timestamp } = op;
       const body = JSON.stringify({ userId, key, value, timestamp });
       const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
+
       await fetchWithFallback(
         [uploadURL, WORKER_URL],
         { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
@@ -200,6 +203,16 @@ async function flushQueue() {
     } catch (e) {
       console.error('Erro sync key', op.key, e);
     }
+  }
+
+  flushing = false;
+
+  // Se ainda restaram dados na fila, e estamos online, agendar nova tentativa
+  if (queue.length > 0 && navigator.onLine && !retryTimeout) {
+    retryTimeout = setTimeout(() => {
+      retryTimeout = null;
+      flushQueue();
+    }, 30000); // Tenta de novo em 30 segundos
   }
 
   return successCount;
