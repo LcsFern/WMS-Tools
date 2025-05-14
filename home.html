@@ -176,8 +176,11 @@ title: "Homepage"
   <div class="header">
     <h1><i class="fas fa-rocket"></i> WMS Tools</h1>
     <div class="header-actions">
+      <button id="sync-button" onclick="sendAndRestoreData()" class="header-button">
+        <i class="fas fa-sync-alt"></i> Sincronizar Dados
+      </button>
       <button id="refreshDataBtn" class="header-button">
-        <i class="fas fa-sync-alt"></i> Recarregar Página
+        <i class="fa-solid fa-rotate-right"></i> Recarregar Página
       </button>
     </div>
   </div>
@@ -493,10 +496,43 @@ title: "Homepage"
         });
       }
 
-      // Inicializa
+      // Recarregar Pagina
       processGradeData();
       refreshDataBtn.addEventListener('click', () => location.reload());
     });
+  </script>
+  <script>
+    // Função para enviar dados e depois restaurar com segurança
+async function sendAndRestoreData() {
+  if (!navigator.onLine) {
+    showPopup('Sem conexão', 'error');
+    return;
+  }
+
+  // Exibe popup de "Sincronizando..."
+  showPopup('Sincronizando dados...', 'info');
+
+  // Enviar os dados locais para o servidor
+  const sentItems = await flushQueue(); // Envia os dados locais pendentes
+
+  // Exibe popup com a quantidade de itens enviados
+  if (sentItems > 0) {
+    showPopup(`${sentItems} item(s) enviados ao servidor`, 'success');
+  } else {
+    showPopup('Nenhum dado enviado (já está sincronizado)', 'info');
+  }
+
+  // Restaura os dados do servidor, sem sobrescrever dados locais mais novos
+  const restoredItems = await restoreStorage();
+
+  // Exibe popup com a quantidade de itens restaurados
+  if (restoredItems > 0) {
+    showPopup(`${restoredItems} item(s) restaurado(s) do servidor`, 'success');
+  } else {
+    showPopup('Nenhum dado restaurado (já está atualizado)', 'info');
+  }
+}
+
   </script>
 </body>
 </html>

@@ -148,11 +148,10 @@ localStorage.setItem = (key, value) => {
   flushQueue().finally(hideLoading);
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// ─── ENVIA A FILA AO SERVIDOR ──────────────────────────────────────────────
-////////////////////////////////////////////////////////////////////////////////
+
+// Envia a fila de dados para o servidor
 async function flushQueue() {
-  if (flushing || !navigator.onLine || queue.length === 0) return;
+  if (flushing || !navigator.onLine || queue.length === 0) return 0;
   flushing = true;
   let successCount = 0;
 
@@ -166,7 +165,7 @@ async function flushQueue() {
         { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
       );
 
-      // remove da fila
+      // Remove da fila
       queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
       lastModifiedMap[op.key] = op.timestamp;
       saveQueue();
@@ -177,36 +176,39 @@ async function flushQueue() {
     }
   }
 
-  if (successCount > 0) showPopup(`Sincronizados ${successCount} item(s)`, 'success');
-  if (queue.length  > 0) showPopup(`${queue.length} item(s) pendente(s)`, 'error');
-  flushing = false;
+  // Retorna o número de itens enviados
+  return successCount;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURA DO SERVIDOR ─────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+// Função para restaurar dados com verificação de timestamp
 async function restoreStorage() {
-  if (!navigator.onLine) return;
+  if (!navigator.onLine) return 0; // Não tenta restaurar se estiver offline
   showLoading();
+
+  let applied = 0;
   try {
     const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${bucketId}`, { cache: 'no-store' });
     const json = await res.json();
-    let applied = 0;
 
     if (json.dados) {
       for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
         if (!SYNC_KEYS.includes(key)) continue;
-        // restaura SÓ se não existir valor local
-        if (localStorage.getItem(key) === null) {
+
+        const localValue = localStorage.getItem(key);
+        const localTimestamp = lastModifiedMap[key] || 0;
+
+        // Aplica a restauração somente se o valor do servidor for mais novo
+        if (localValue === null || timestamp > localTimestamp) {
           originalSetItem(key, value);
           lastModifiedMap[key] = timestamp;
           applied++;
         }
       }
     }
-
-    if (applied) showPopup(`${applied} item(s) restaurado(s)`, 'info');
-    saveTsMap();
   } catch (e) {
     console.error('Erro ao restaurar:', e);
     showPopup('Falha ao restaurar dados', 'error');
@@ -215,7 +217,11 @@ async function restoreStorage() {
     flushing = false;
     flushQueue();
   }
+
+  // Retorna o número de itens restaurados
+  return applied;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
