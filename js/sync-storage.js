@@ -156,18 +156,31 @@ localStorage.setItem = (key, value) => {
   const prev = localStorage.getItem(key);
   originalSetItem(key, value);
 
-  // só dispara se for chave sincronizada e valor realmente mudou
+  // só reage se for chave sincronizada e valor mudou
   if (value === prev || !SYNC_KEYS.includes(key)) return;
 
   const ts = Date.now();
   lastModifiedMap[key] = ts;
+
+  // Evita duplicar na fila
   queue.push({ userId, key, value, timestamp: ts, bucketId });
   saveTsMap();
   saveQueue();
 
   showLoading();
-  flushQueue().finally(hideLoading);
+
+  flushQueue().then(async () => {
+    // Após tentar sincronizar, só restaura se:
+    // 1. Está online
+    // 2. Não há pendência na fila para essa chave
+    const stillQueued = queue.some(q => q.key === key);
+    if (navigator.onLine && !stillQueued) {
+      const restored = await restoreStorage();
+      console.log(`Restore após modificação: ${restored} itens aplicados`);
+    }
+  }).finally(hideLoading);
 };
+
 
 
 // Envia a fila de dados para o servidor
