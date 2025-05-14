@@ -169,16 +169,7 @@ localStorage.setItem = (key, value) => {
 
   showLoading();
 
-  flushQueue().then(async () => {
-    // Após tentar sincronizar, só restaura se:
-    // 1. Está online
-    // 2. Não há pendência na fila para essa chave
-    const stillQueued = queue.some(q => q.key === key);
-    if (navigator.onLine && !stillQueued) {
-      const restored = await restoreStorage();
-      console.log(`Restore após modificação: ${restored} itens aplicados`);
-    }
-  }).finally(hideLoading);
+flushQueue().finally(hideLoading);
 };
 
 
@@ -278,3 +269,14 @@ window.sincronizarAgora = async () => {
   await restoreStorage();
   await flushQueue();
 };
+////////////////////////////////////////////////////////////////////////////////
+// ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+
+// A cada 5 minutos (300.000 ms), tenta restaurar dados se a aba estiver ativa
+setInterval(() => {
+  if (document.visibilityState === 'visible' && navigator.onLine) {
+    console.log('[Sync] Verificando atualizações do servidor...');
+    restoreStorage();
+  }
+}, 300000); // 5 minutos em milissegundos
