@@ -347,22 +347,37 @@ async function loadGradeFromStorage() {
   setupAutocomplete(gradeCompleta);
 }
 
-function resetGrade() {
-  askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
-    if (confirmarOndas) localStorage.removeItem("ondasdin");
+async function resetGrade() {
+  // Solicitação de confirmação para apagar as chaves específicas
+  askConfirmation("Deseja apagar os Picking Dinâmicos?", async function (confirmarOndas) {
+    if (confirmarOndas) {
+      // Deleta do localStorage e do servidor
+      localStorage.removeItem("ondasdin");
+      await deleteKeyFromServer("ondasdin");
+    }
 
-    askConfirmation("Deseja apagar os Ressuprimentos?", function (confirmarRessu) {
-      if (confirmarRessu) localStorage.removeItem("reaba");
+    askConfirmation("Deseja apagar os Ressuprimentos?", async function (confirmarRessu) {
+      if (confirmarRessu) {
+        // Deleta do localStorage e do servidor
+        localStorage.removeItem("reaba");
+        await deleteKeyFromServer("reaba");
+      }
 
-      askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
-        if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
+      askConfirmation("Deseja apagar as Movimentações?", async function (confirmarMovs) {
+        if (confirmarMovs) {
+          // Deleta do localStorage e do servidor
+          localStorage.removeItem("movimentacoesProcessadas");
+          await deleteKeyFromServer("movimentacoesProcessadas");
+        }
       });
 
-      // Zera os demais dados
+      // Zera os dados restantes diretamente
       localStorage.removeItem("activeSeparatorsSaved");
       localStorage.removeItem("historicalInactiveSeparators");
       localStorage.removeItem("gradeCompleta");
       localStorage.removeItem("result_state_monitor");
+
+      // Envia os dados do formulário e controla a visibilidade de elementos da interface
       document.getElementById('excelData').value = '';
       document.getElementById('gradeSection').classList.remove('hidden');
       document.getElementById('dashboard').classList.add('hidden');
@@ -370,6 +385,30 @@ function resetGrade() {
     });
   });
 }
+
+// Função auxiliar para deletar a chave do servidor
+async function deleteKeyFromServer(key) {
+  try {
+    // Envia a requisição para deletar a chave do servidor
+    const res = await fetch('http://labsuaideia.store/api/delete.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chaves: [key] }) // Envia a chave para ser deletada
+    });
+
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      showPopup(`Chave '${key}' deletada com sucesso no servidor!`, 'success');
+    } else {
+      showPopup(`Erro ao tentar deletar a chave '${key}' no servidor.`, 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao deletar chave no servidor:', error);
+    showPopup('Falha ao conectar ao servidor para deletar a chave.', 'error');
+  }
+}
+
 
 function askConfirmation(msg, callback) {
   const popup = document.getElementById('customResetPopup');
