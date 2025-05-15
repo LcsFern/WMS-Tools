@@ -55,8 +55,10 @@ function showLoading() {
   overlay.appendChild(icon);
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.style.opacity = '1');
-}
 
+  // Fecha o spinner automaticamente após 1,5 s (1500 ms)
+  setTimeout(hideLoading, 1500);
+}
 function hideLoading() {
   const o = document.getElementById('loading-overlay');
   if (!o) return;
@@ -180,29 +182,42 @@ async function flushQueue() {
   flushing = true;
   let successCount = 0;
 
-  for (const op of [...queue]) {
-    try {
-      const { userId, bucketId, key, value, timestamp } = op;
-      const body = JSON.stringify({ userId, key, value, timestamp });
-      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
-      await fetchWithFallback(
-        [uploadURL, WORKER_URL],
-        { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
-      );
+  try {
+    for (const op of [...queue]) {
+      try {
+        const { userId, bucketId, key, value, timestamp } = op;
+        const body = JSON.stringify({ userId, key, value, timestamp });
+        const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
+        await fetchWithFallback(
+          [uploadURL, WORKER_URL],
+          { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
+        );
 
-      // Remove da fila
-      queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
-      lastModifiedMap[op.key] = op.timestamp;
-      saveQueue();
-      saveTsMap();
-      successCount++;
-    } catch (e) {
-      console.error('Erro sync key', op.key, e);
+        // Remove da fila
+        queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
+        lastModifiedMap[op.key] = op.timestamp;
+        saveQueue();
+        saveTsMap();
+        successCount++;
+      } catch (e) {
+        console.error('Erro sync key', op.key, e);
+      }
     }
-  }
 
-  // Retorna o número de itens enviados
-  return successCount;
+    // Notificar resultado da sincronização
+    if (successCount > 0) {
+      showPopup(`${successCount} item(ns) sincronizado(s) com sucesso.`, 'success');
+    } else {
+      showPopup('Nenhum dado para enviar.', 'info');
+    }
+    return successCount;
+  } catch (e) {
+    console.error('Erro geral em flushQueue:', e);
+    showPopup('Erro ao sincronizar dados. Será re-tentado em 5 min.', 'error');
+    return 0;
+  } finally {
+    flushing = false;
+  }
 }
 
 
@@ -277,6 +292,16 @@ window.sincronizarAgora = async () => {
 setInterval(() => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
     console.log('[Sync] Verificando atualizações do servidor...');
+    showPopup('Verificando atualizações do servidor...', 'info');
+    // Chama a função de restauração
     restoreStorage();
   }
 }, 900000); // 15 minutos em milissegundos
+// ─── RETRY DE SINCRONIZAÇÃO A CADA 5 MINUTOS ─────────────────────────────
+setInterval(() => {
+  if (navigator.onLine) {
+    console.log('[Sync] Tentativa automática de Sincronização...');
+    showPopup('Tentativa automática de Sincronização...', 'info');
+    flushQueue();
+  }
+}, 300000); // 300000 ms = 5 minutos
