@@ -231,7 +231,7 @@ async function flushQueue() {
 ////////////////////////////////////////////////////////////////////////////////
 // Função para restaurar dados com verificação de timestamp
 async function restoreStorage() {
-  if (!navigator.onLine) return 0; // Não tenta restaurar se estiver offline
+  if (!navigator.onLine) return 0; // Não tenta restaurar se offline
   showLoading();
 
   let applied = 0;
@@ -240,17 +240,38 @@ async function restoreStorage() {
     const json = await res.json();
 
     if (json.dados) {
-      for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
-        if (!SYNC_KEYS.includes(key)) continue;
+      // Se retornou dados agrupados por usuário (ex: userId = 'all')
+      if (bucketId === 'all') {
+        // Percorre cada usuário no objeto dados
+        for (const usuario in json.dados) {
+          const userData = json.dados[usuario];
+          // Percorre as chaves do usuário atual
+          for (const [key, { value, timestamp }] of Object.entries(userData)) {
+            if (!SYNC_KEYS.includes(key)) continue;
 
-        const localValue = localStorage.getItem(key);
-        const localTimestamp = lastModifiedMap[key] || 0;
+            const localValue = localStorage.getItem(key);
+            const localTimestamp = lastModifiedMap[key] || 0;
 
-        // Aplica a restauração somente se o valor do servidor for mais novo
-        if (localValue === null || timestamp > localTimestamp) {
-          originalSetItem(key, value);
-          lastModifiedMap[key] = timestamp;
-          applied++;
+            if (localValue === null || timestamp > localTimestamp) {
+              originalSetItem(key, value);
+              lastModifiedMap[key] = timestamp;
+              applied++;
+            }
+          }
+        }
+      } else {
+        // Caso bucketId seja um usuário específico (string diferente de 'all')
+        for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
+          if (!SYNC_KEYS.includes(key)) continue;
+
+          const localValue = localStorage.getItem(key);
+          const localTimestamp = lastModifiedMap[key] || 0;
+
+          if (localValue === null || timestamp > localTimestamp) {
+            originalSetItem(key, value);
+            lastModifiedMap[key] = timestamp;
+            applied++;
+          }
         }
       }
     }
@@ -263,9 +284,9 @@ async function restoreStorage() {
     flushQueue();
   }
 
-  // Retorna o número de itens restaurados
   return applied;
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
