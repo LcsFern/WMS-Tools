@@ -281,8 +281,8 @@ window.restoreStorage = restoreStorage;
 window.sincronizarAgora = async () => {
   if (!navigator.onLine) return showPopup('Sem conexão', 'error');
   showPopup('Sincronizando manualmente...', 'info');
-  await restoreStorage();
   await flushQueue();
+  await restoreStorage();
 };
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
