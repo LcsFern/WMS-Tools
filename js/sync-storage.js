@@ -2,13 +2,13 @@
 // ─── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
-// URL do seu endpoint save.php (não precisa de query string)
+// URLs do servidor (save.php e load.php continuam os mesmos)
 const SERVER_SAVE   = 'https://labsuaideia.store/api/save.php';
-// URL do seu Cloudflare Worker que faz proxy para o save.php
+const SERVER_LOAD   = 'https://labsuaideia.store/api/load.php';
 const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
-const FETCH_TIMEOUT = 10000;  // ms de timeout por requisição
-const MAX_RETRIES   = 3;      // tentativas por requisição
+const FETCH_TIMEOUT = 10000;  // ms
+const MAX_RETRIES   = 3;      // Tentativas por requisição
 
 // Todas as chaves que serão sincronizadas
 const SYNC_KEYS = [
@@ -18,15 +18,13 @@ const SYNC_KEYS = [
   'pickingData','pickingTimestamp'
 ];
 
-// Chaves internas de localStorage
+// Internal storage keys
 const QUEUE_KEY  = 'syncQueue';
 const TS_MAP_KEY = 'syncLastModified';
 
-// Identificador global (usar sempre este userId em save.php)
-const bucketId = 'all';
-
-// User ID real só serve para nome de usuário local, não para gravação no server
-const localUserId = (localStorage.getItem('username') || 'desconhecido').toLowerCase();
+// Identificador global (todos compartilham os mesmos dados)
+const bucketId = 'all';  // dados são salvos em bucket global
+const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCase();
 
 let lastModifiedMap = {};
 let queue            = [];
@@ -72,27 +70,40 @@ function showPopup(msg, type = 'info') {
     error: '#F44336',
     info: '#2196F3'
   };
+
   let p = document.getElementById('sync-notification-popup');
   if (p) p.remove();
+
   p = document.createElement('div');
   p.id = 'sync-notification-popup';
   p.textContent = msg;
+
   Object.assign(p.style, {
-    position: 'fixed', right: '30px', bottom: '30px',
-    padding: '14px 24px', borderRadius: '12px',
+    position: 'fixed',
+    right: '30px',
+    bottom: '30px',
+    padding: '14px 24px',
+    borderRadius: '12px',
     backgroundColor: 'rgba(255,255,255,0.08)',
-    backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
     border: `1px solid ${COLORS[type] || COLORS.info}`,
-    color: '#f8fafc', font: '14px "Segoe UI", sans-serif',
+    color: '#f8fafc',
+    font: '14px "Segoe UI", sans-serif',
     boxShadow: `0 8px 24px ${COLORS[type]}33`,
-    transform: 'translateY(30px)', opacity: 0,
-    zIndex: 10001, transition: 'transform 0.4s ease, opacity 0.4s'
+    transform: 'translateY(30px)',
+    opacity: 0,
+    zIndex: 10001,
+    transition: 'transform 0.4s ease, opacity 0.4s'
   });
+
   document.body.appendChild(p);
+
   requestAnimationFrame(() => {
     p.style.opacity = '1';
     p.style.transform = 'translateY(0)';
   });
+
   setTimeout(() => {
     p.style.opacity = '0';
     p.style.transform = 'translateY(30px)';
@@ -100,7 +111,8 @@ function showPopup(msg, type = 'info') {
   }, 3500);
 }
 
-// Spinner keyframes
+
+// keyframes para spinner
 const style = document.createElement('style');
 style.textContent = `@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`;
 document.head.appendChild(style);
@@ -150,73 +162,72 @@ localStorage.setItem = (key, value) => {
   const ts = Date.now();
   lastModifiedMap[key] = ts;
 
-  // adiciona na fila de envio
-  queue.push({ userId: localUserId, bucketId, key, value, timestamp: ts });
+  // Evita duplicar na fila
+  queue.push({ userId, key, value, timestamp: ts, bucketId });
   saveTsMap();
   saveQueue();
 
   showLoading();
-  flushQueue().finally(hideLoading);
+
+flushQueue().finally(hideLoading);
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// ─── ENVIA A FILA DE DADOS PARA O SERVIDOR ─────────────────────────────────
-////////////////////////////////////////////////////////////////////////////////
+
+
+// Envia a fila de dados para o servidor
 async function flushQueue() {
   if (flushing || !navigator.onLine || queue.length === 0) return 0;
   flushing = true;
   let successCount = 0;
 
-  // copia a fila para evitar mutação durante o loop
   for (const op of [...queue]) {
     try {
-      const { bucketId, key, value, timestamp } = op;
-      // envia sempre bucketId como userId para o servidor
-      const body = JSON.stringify({
-        userId:    bucketId,
-        key:       key,
-        value:     value,
-        timestamp: timestamp
-      });
-
-      // URLs de fallback: primeiro seu save.php, depois o Worker
+      const { userId, bucketId, key, value, timestamp } = op;
+      const body = JSON.stringify({ userId, key, value, timestamp });
+      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
       await fetchWithFallback(
-        [SERVER_SAVE, WORKER_URL],
+        [uploadURL, WORKER_URL],
         { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
       );
 
-      // se salvou, remove da fila e atualiza timestamp local
-      queue = queue.filter(q => !(q.key === key && q.timestamp === timestamp));
-      lastModifiedMap[key] = timestamp;
+      // Remove da fila
+      queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
+      lastModifiedMap[op.key] = op.timestamp;
       saveQueue();
       saveTsMap();
       successCount++;
     } catch (e) {
-      console.error('Erro ao sincronizar chave', op.key, e);
+      console.error('Erro sync key', op.key, e);
     }
   }
 
-  flushing = false;
+  // Retorna o número de itens enviados
   return successCount;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURA DO SERVIDOR ─────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+// Função para restaurar dados com verificação de timestamp
 async function restoreStorage() {
-  if (!navigator.onLine) return 0;
+  if (!navigator.onLine) return 0; // Não tenta restaurar se estiver offline
   showLoading();
+
   let applied = 0;
   try {
     const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${bucketId}`, { cache: 'no-store' });
     const json = await res.json();
+
     if (json.dados) {
       for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
         if (!SYNC_KEYS.includes(key)) continue;
-        const localValue     = localStorage.getItem(key);
+
+        const localValue = localStorage.getItem(key);
         const localTimestamp = lastModifiedMap[key] || 0;
+
+        // Aplica a restauração somente se o valor do servidor for mais novo
         if (localValue === null || timestamp > localTimestamp) {
-          // usa originalSetItem para não retriggerar a fila
           originalSetItem(key, value);
           lastModifiedMap[key] = timestamp;
           applied++;
@@ -231,32 +242,41 @@ async function restoreStorage() {
     flushing = false;
     flushQueue();
   }
+
+  // Retorna o número de itens restaurados
   return applied;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-window.addEventListener('online',  () => showPopup('Online', 'info'));
+window.addEventListener('online',  () => { showPopup('Online', 'info'); /* REMOVER restoreStorage(); */ });
 window.addEventListener('offline', () => showPopup('Offline', 'error'));
 
+
 ////////////////////////////////////////////////////////////////////////////////
-// ─── EXPÕE FUNÇÕES PARA USO EXTERNO ────────────────────────────────────────
+// ─── Expondo restoreStorage para uso externo ───────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-window.restoreStorage    = restoreStorage;
-window.sincronizarAgora  = async () => {
+window.restoreStorage = restoreStorage;
+
+////////////////////////////////////////////////////////////////////////////////
+// ─── Chamável via console: sincroniza manualmente ───────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+window.sincronizarAgora = async () => {
   if (!navigator.onLine) return showPopup('Sem conexão', 'error');
   showPopup('Sincronizando manualmente...', 'info');
   await restoreStorage();
   await flushQueue();
 };
-
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+
+// A cada 5 minutos (300.000 ms), tenta restaurar dados se a aba estiver ativa
 setInterval(() => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
     console.log('[Sync] Verificando atualizações do servidor...');
     restoreStorage();
   }
-}, 300000); // a cada 5 minutos
+}, 300000); // 5 minutos em milissegundos
