@@ -200,7 +200,13 @@ async function flushQueue() {
         saveTsMap();
         successCount++;
       } catch (e) {
-        console.error('Erro sync key', op.key, e);
+        if (e.name === 'AbortError') {
+  console.warn(`Tempo excedido ao sincronizar "${op.key}".`);
+} else {
+  console.error(`Erro ao sincronizar "${op.key}":`, e);
+}
+        showPopup(`Erro ao sincronizar "${op.key}".`, 'error');
+        // Não remove da fila, tenta novamente na próxima execução
       }
     }
 
