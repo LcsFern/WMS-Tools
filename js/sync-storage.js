@@ -6,7 +6,7 @@ const SERVER_SAVE   = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD   = 'https://labsuaideia.store/api/load.php';
 const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
-const FETCH_TIMEOUT = 10000;
+const FETCH_TIMEOUT = 10000;  // ms
 const MAX_RETRIES   = 3;
 
 const SYNC_KEYS = [
@@ -22,100 +22,131 @@ const TS_MAP_KEY = 'syncLastModified';
 const bucketId = 'all';
 const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCase();
 
-let queue = [];
-let flushing = false;
-let retryTimeout = null;
 let lastModifiedMap = {};
+let queue            = [];
+let flushing         = false;
+let retryTimeout = null;
+
 
 try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
-try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; } catch {}
+try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── FUNÇÕES VISUAIS (POPUP E LOADING) ──────────────────────────────────────
+// ─── HELPERS DE UI ─────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-
-// Mostra um overlay de carregamento
-function showLoading(text = 'Carregando...') {
-  let el = document.getElementById('custom-loading');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'custom-loading';
-    el.style.cssText = `
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5); z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
-      font-family: sans-serif; font-size: 1.2rem; color: white;
-    `;
-    el.innerHTML = `<div id="custom-loading-text">${text}</div>`;
-    document.body.appendChild(el);
-  } else {
-    document.getElementById('custom-loading-text').textContent = text;
-    el.style.display = 'flex';
-  }
+function showLoading() {
+  if (document.getElementById('loading-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'loading-overlay';
+  Object.assign(overlay.style, {
+    position:'fixed', top:0, left:0, width:'100%', height:'100%',
+    backgroundColor:'rgba(0,0,0,0.7)', display:'flex',
+    alignItems:'center', justifyContent:'center',
+    zIndex:10000, opacity:0, transition:'opacity 0.3s ease'
+  });
+  const icon = document.createElement('i');
+  icon.className = 'fa-duotone fa-solid fa-spinner-third';
+  Object.assign(icon.style, {
+    fontSize:'3rem', color:'#008d4c', animation:'spin 1s linear infinite'
+  });
+  overlay.appendChild(icon);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.style.opacity = '1');
 }
 
-// Esconde o overlay de carregamento
 function hideLoading() {
-  const el = document.getElementById('custom-loading');
-  if (el) el.style.display = 'none';
+  const o = document.getElementById('loading-overlay');
+  if (!o) return;
+  o.style.opacity = '0';
+  o.addEventListener('transitionend', () => o.remove(), { once:true });
 }
 
-// Mostra um popup temporário
-function showPopup(msg = '', tempo = 3000) {
-  const popup = document.createElement('div');
-  popup.textContent = msg;
-  popup.style.cssText = `
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: #00a65a; color: white; padding: 12px 24px;
-    border-radius: 8px; font-family: sans-serif; z-index: 9999;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.4); font-size: 1rem;
-    opacity: 0; transition: opacity 0.3s ease;
-  `;
-  document.body.appendChild(popup);
-  setTimeout(() => { popup.style.opacity = 1; }, 10);
+function showPopup(msg, type = 'info') {
+  const COLORS = {
+    success: '#34c759',
+    error: '#F44336',
+    info: '#2196F3'
+  };
+
+  let p = document.getElementById('sync-notification-popup');
+  if (p) p.remove();
+
+  p = document.createElement('div');
+  p.id = 'sync-notification-popup';
+  p.textContent = msg;
+
+  Object.assign(p.style, {
+    position: 'fixed',
+    right: '30px',
+    bottom: '30px',
+    padding: '14px 24px',
+    borderRadius: '12px',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    border: 1px solid ${COLORS[type] || COLORS.info},
+    color: '#f8fafc',
+    font: '14px "Segoe UI", sans-serif',
+    boxShadow: 0 8px 24px ${COLORS[type]}33,
+    transform: 'translateY(30px)',
+    opacity: 0,
+    zIndex: 10001,
+    transition: 'transform 0.4s ease, opacity 0.4s'
+  });
+
+  document.body.appendChild(p);
+
+  requestAnimationFrame(() => {
+    p.style.opacity = '1';
+    p.style.transform = 'translateY(0)';
+  });
+
   setTimeout(() => {
-    popup.style.opacity = 0;
-    setTimeout(() => popup.remove(), 300);
-  }, tempo);
+    p.style.opacity = '0';
+    p.style.transform = 'translateY(30px)';
+    p.addEventListener('transitionend', () => p.remove(), { once: true });
+  }, 3500);
 }
+
+// keyframes para spinner
+const style = document.createElement('style');
+style.textContent = @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}};
+document.head.appendChild(style);
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── FUNÇÕES AUXILIARES ─────────────────────────────────────────────────────
+// ─── HELPERS DE SINCRONIZAÇÃO ───────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
 const saveQueue = () => localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 const saveTsMap = () => localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap));
 
-async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
+async function fetchWithTimeout(url, options={}, timeout=FETCH_TIMEOUT) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
-
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(url, {...options, signal:controller.signal});
+    if (!res.ok) throw new Error(HTTP ${res.status});
     return res;
-  } finally {
-    clearTimeout(id);
-  }
+  } finally { clearTimeout(id); }
 }
 
 async function fetchWithFallback(urls, options) {
-  let lastError;
+  let lastErr;
   for (const url of urls) {
     for (let i = 1; i <= MAX_RETRIES; i++) {
       try {
         return await fetchWithTimeout(url, options);
       } catch (e) {
-        lastError = e;
+        lastErr = e;
         await new Promise(r => setTimeout(r, 300 * i));
       }
     }
   }
-  throw lastError;
+  throw lastErr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── INTERCEPTA localStorage.setItem ────────────────────────────────────────
+// ─── INTERCEPTA localStorage.setItem PARA SINCRONIZAR ───────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
 const originalSetItem = localStorage.setItem.bind(localStorage);
@@ -125,18 +156,27 @@ localStorage.setItem = (key, value) => {
 
   if (value === prev || !SYNC_KEYS.includes(key)) return;
 
-  const timestamp = Date.now();
-  lastModifiedMap[key] = timestamp;
+  const ts = Date.now();
+  lastModifiedMap[key] = ts;
 
-  queue.push({ userId, key, value, timestamp, bucketId });
-  saveQueue();
+  queue.push({ userId, key, value, timestamp: ts, bucketId });
   saveTsMap();
+  saveQueue();
 
-  flushQueue();
+  showLoading();
+
+  const MIN_LOADING_DURATION = 1500;
+  const startTime = Date.now();
+
+  flushQueue().finally(() => {
+    const elapsed = Date.now() - startTime;
+    const delay = Math.max(0, MIN_LOADING_DURATION - elapsed);
+    setTimeout(hideLoading, delay);
+  });
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── ENVIA A FILA PARA O SERVIDOR ───────────────────────────────────────────
+// ─── Envia a fila de dados para o servidor ──────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
 async function flushQueue() {
@@ -144,64 +184,51 @@ async function flushQueue() {
   flushing = true;
   let successCount = 0;
 
-  showLoading('Enviando dados...');
-
   for (const op of [...queue]) {
     try {
       const { userId, bucketId, key, value, timestamp } = op;
       const body = JSON.stringify({ userId, key, value, timestamp });
-
-      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
+      const uploadURL = ${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)};
 
       await fetchWithFallback(
         [uploadURL, WORKER_URL],
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body
-        }
+        { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
       );
 
-      queue = queue.filter(q => !(q.key === key && q.timestamp === timestamp));
-      lastModifiedMap[key] = timestamp;
+      queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
+      lastModifiedMap[op.key] = op.timestamp;
+      saveQueue();
+      saveTsMap();
       successCount++;
     } catch (e) {
-      console.error('Erro ao sincronizar', op.key, e);
+      console.error('Erro sync key', op.key, e);
     }
   }
 
-  saveQueue();
-  saveTsMap();
   flushing = false;
 
-  hideLoading();
-
-  if (successCount > 0) {
-    showPopup(`Sincronizados ${successCount} itens com sucesso.`);
-  }
-
+  // Se ainda restaram dados na fila, e estamos online, agendar nova tentativa
   if (queue.length > 0 && navigator.onLine && !retryTimeout) {
     retryTimeout = setTimeout(() => {
       retryTimeout = null;
       flushQueue();
-    }, 30000);
+    }, 30000); // Tenta de novo em 30 segundos
   }
 
   return successCount;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── RESTAURA DADOS DO SERVIDOR ─────────────────────────────────────────────
+// ─── RESTAURA DO SERVIDOR ─────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
 async function restoreStorage() {
   if (!navigator.onLine) return 0;
+  showLoading();
 
-  showLoading('Restaurando dados...');
-  let restored = 0;
-
+  let applied = 0;
   try {
-    const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${bucketId}`, { cache: 'no-store' });
+    const res = await fetchWithTimeout(${SERVER_LOAD}?userId=${bucketId}, { cache: 'no-store' });
     const json = await res.json();
 
     if (json.dados) {
@@ -214,49 +241,49 @@ async function restoreStorage() {
         if (localValue === null || timestamp > localTimestamp) {
           originalSetItem(key, value);
           lastModifiedMap[key] = timestamp;
-          restored++;
+          applied++;
         }
       }
     }
   } catch (e) {
-    console.error('Erro ao restaurar dados:', e);
-    showPopup('Erro ao restaurar dados do servidor.');
+    console.error('Erro ao restaurar:', e);
+    showPopup('Falha ao restaurar dados', 'error');
+  } finally {
+    hideLoading();
+    flushing = false;
+    flushQueue();
   }
 
-  hideLoading();
-  saveTsMap();
-
-  if (restored > 0) {
-    showPopup(`Restaurados ${restored} itens do servidor.`);
-  }
-
-  return restored;
+  return applied;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── FUNÇÕES GLOBAIS ────────────────────────────────────────────────────────
+// ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
+////////////////////////////////////////////////////////////////////////////////
+
+window.addEventListener('online',  () => { showPopup('Online', 'info'); /* restoreStorage(); */ });
+window.addEventListener('offline', () => showPopup('Offline', 'error'));
+
+////////////////////////////////////////////////////////////////////////////////
+// ─── Expondo funções úteis globalmente ──────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
 window.restoreStorage = restoreStorage;
 
 window.sincronizarAgora = async () => {
-  if (!navigator.onLine) {
-    showPopup('Sem conexão com a internet!');
-    return;
-  }
-
-  showLoading('Sincronizando...');
+  if (!navigator.onLine) return showPopup('Sem conexão', 'error');
+  showPopup('Sincronizando manualmente...', 'info');
   await restoreStorage();
   await flushQueue();
-  hideLoading();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── RESTAURAÇÃO AUTOMÁTICA A CADA 5 MINUTOS ───────────────────────────────
+// ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
 setInterval(() => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
+    console.log('[Sync] Verificando atualizações do servidor...');
     restoreStorage();
   }
 }, 300000); // 5 minutos
