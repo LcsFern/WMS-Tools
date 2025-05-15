@@ -204,21 +204,21 @@ async function flushQueue() {
 } else {
   console.error(`Erro ao sincronizar "${op.key}":`, e);
 }
-        showPopup(`Erro ao sincronizar "${op.key}".`, 'error');
+        showPopup(`🚫 Erro ao sincronizar "${op.key}".`, 'error');
         // Não remove da fila, tenta novamente na próxima execução
       }
     }
 
     // Notificar resultado da sincronização
     if (successCount > 0) {
-      showPopup(`${successCount} item(ns) sincronizado(s) com sucesso.`, 'success');
+      showPopup(`✅ ${successCount} item(ns) sincronizado(s) com sucesso.`, 'success');
     } else {
-      showPopup('Nenhum dado para enviar.', 'info');
+      showPopup(`🚫 Nenhum dado para enviar.`, 'info');
     }
     return successCount;
   } catch (e) {
     console.error('Erro geral em flushQueue:', e);
-    showPopup('Erro ao sincronizar dados. Será re-tentado em 5 min.', 'error');
+    showPopup('🚫 Erro ao sincronizar dados. Será re-tentado em 5 min.', 'error');
     return 0;
   } finally {
     flushing = false;
@@ -277,7 +277,7 @@ async function restoreStorage() {
     }
   } catch (e) {
     console.error('Erro ao restaurar:', e);
-    showPopup('Falha ao restaurar dados', 'error');
+    showPopup('🚫 Falha ao restaurar dados', 'error');
   } finally {
     hideLoading();
     flushing = false;
@@ -292,8 +292,8 @@ async function restoreStorage() {
 ////////////////////////////////////////////////////////////////////////////////
 // ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-window.addEventListener('online',  () => { showPopup('Online', 'info'); /* REMOVER restoreStorage(); */ });
-window.addEventListener('offline', () => showPopup('Offline', 'error'));
+window.addEventListener('online',  () => { showPopup('✅ Online', 'info'); /* REMOVER restoreStorage(); */ });
+window.addEventListener('offline', () => showPopup('🚫 Offline', 'error'));
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -305,8 +305,8 @@ window.restoreStorage = restoreStorage;
 // ─── Chamável via console: sincroniza manualmente ───────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 window.sincronizarAgora = async () => {
-  if (!navigator.onLine) return showPopup('Sem conexão', 'error');
-  showPopup('Sincronizando manualmente...', 'info');
+  if (!navigator.onLine) return showPopup('🚫 Sem conexão', 'error');
+  showPopup('🔄 Sincronizando manualmente...', 'info');
   await flushQueue();
   await restoreStorage();
 };
@@ -318,7 +318,7 @@ window.sincronizarAgora = async () => {
 setInterval(() => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
     console.log('[Sync] Verificando atualizações do servidor...');
-    showPopup('Verificando atualizações do servidor...', 'info');
+    showPopup('🔄 Verificando atualizações do servidor...', 'info');
     // Chama a função de restauração
     restoreStorage();
   }
@@ -327,7 +327,7 @@ setInterval(() => {
 setInterval(() => {
   if (navigator.onLine) {
     console.log('[Sync] Tentativa automática de Sincronização...');
-    showPopup('Tentativa automática de Sincronização...', 'info');
+    showPopup('🔄 Tentativa automática de Sincronização...', 'info');
     flushQueue();
   }
 }, 300000); // 300000 ms = 5 minutos
@@ -336,13 +336,13 @@ setInterval(() => {
 window.verFilaDeSincronizacao = () => {
   const fila = JSON.parse(localStorage.getItem('syncQueue')) || [];
   if (fila.length === 0) {
-    showPopup('Fila de sincronização vazia.', 'info');
+    showPopup('🚫 Fila de sincronização vazia.', 'info');
     console.log('[Sync] Fila vazia');
   } else {
     console.table(fila.map(({ key, timestamp }) => ({
       chave: key,
       data: new Date(timestamp).toLocaleString()
     })));
-    showPopup(`Existem ${fila.length} item(ns) na fila de sincronização.`, 'info');
+    showPopup(`✅ Existem ${fila.length} item(ns) na fila de sincronização.`, 'info');
   }
 };
