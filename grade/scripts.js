@@ -348,62 +348,63 @@ async function loadGradeFromStorage() {
 
   setupAutocomplete(gradeCompleta);
 }
-
-async function resetGrade() {
-  // Pergunta para o usuário e coleta as chaves que ele quer deletar
-  let keysToDelete = [];
-
-  const confirmarOndas = await askConfirmationAsync("Deseja apagar os Picking Dinâmicos?");
-  if (confirmarOndas) {
-    localStorage.removeItem("ondasdin");
-    keysToDelete.push("ondasdin");
-  }
-
-  const confirmarRessu = await askConfirmationAsync("Deseja apagar os Ressuprimentos?");
-  if (confirmarRessu) {
-    localStorage.removeItem("reaba");
-    keysToDelete.push("reaba");
-  }
-
-  const confirmarMovs = await askConfirmationAsync("Deseja apagar as Movimentações?");
-  if (confirmarMovs) {
-    localStorage.removeItem("movimentacoesProcessadas");
-    keysToDelete.push("movimentacoesProcessadas");
-  }
-
-  // Remove as demais chaves locais fixas
-  localStorage.removeItem("activeSeparatorsSaved");
-  localStorage.removeItem("historicalInactiveSeparators");
-  localStorage.removeItem("gradeCompleta");
-  localStorage.removeItem("result_state_monitor");
-  document.getElementById('excelData').value = '';
-  document.getElementById('gradeSection').classList.remove('hidden');
-  document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('resetBtn').classList.add('hidden');
-
-  if (keysToDelete.length > 0) {
-    // Envia pedido para deletar as chaves do banco SQL
-    try {
-      const response = await fetch('https://labsuaideia.store/api/deleteData.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          userId: userId,  // certifique-se que userId está definido no seu script global
-          keys: keysToDelete
-        })
-      });
-      const json = await response.json();
-      if (json.success) {
-        showPopup(`Dados deletados do banco: ${json.deleted_keys.join(', ')}`, 'success');
-      } else {
-        showPopup('Falha ao deletar dados do banco.', 'error');
-      }
-    } catch (error) {
-      showPopup('Erro na comunicação com o servidor.', 'error');
-      console.error(error);
-    }
+// Função pra deletar keys diretamente do servidor
+// (ex: ao resetar a grade)
+async function deletarDoServidor(keys) {
+  // Envia uma requisição para deletar as keys no servidor
+  try {
+    const response = await fetch('https://labsuaideia.store/api/deletesql.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: (localStorage.getItem('username') || 'desconhecido').toLowerCase(), keys })
+    });
+    if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
+    showPopup(`Dados deletados: ${keys.join(', ')}`, 'success');
+  } catch (e) {
+    console.error('Erro ao deletar do servidor:', e);
+    showPopup('Erro ao apagar dados no servidor', 'error');
   }
 }
+//Função pra resetar a grade e keys principais do servidor
+function resetGrade() {
+  askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
+    if (confirmarOndas) {
+      localStorage.removeItem("ondasdin");
+      deletarDoServidor(['ondasdin']);
+    }
+
+    askConfirmation("Deseja apagar os Ressuprimentos?", function (confirmarRessu) {
+      if (confirmarRessu) {
+        localStorage.removeItem("reaba");
+        deletarDoServidor(['reaba']);
+      }
+
+      askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
+        if (confirmarMovs) {
+          localStorage.removeItem("movimentacoesProcessadas");
+          deletarDoServidor(['movimentacoesProcessadas']);
+        }
+
+        // Apaga direto as outras keys e manda apagar do servidor também
+        const outrasKeys = [
+          "activeSeparatorsSaved",
+          "historicalInactiveSeparators",
+          "gradeCompleta",
+          "result_state_monitor"
+        ];
+        outrasKeys.forEach(k => localStorage.removeItem(k));
+        deletarDoServidor(outrasKeys);
+
+        // Limpa elementos da UI
+        document.getElementById('excelData').value = '';
+        document.getElementById('gradeSection').classList.remove('hidden');
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('resetBtn').classList.add('hidden');
+      });
+    });
+  });
+}
+
 
 // Função auxiliar para usar askConfirmation com async/await
 function askConfirmationAsync(msg) {
