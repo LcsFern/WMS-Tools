@@ -349,30 +349,67 @@ async function loadGradeFromStorage() {
   setupAutocomplete(gradeCompleta);
 }
 
-function resetGrade() {
-  askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
-    if (confirmarOndas) localStorage.removeItem("ondasdin");
+async function resetGrade() {
+  // Pergunta para o usuário e coleta as chaves que ele quer deletar
+  let keysToDelete = [];
 
-    askConfirmation("Deseja apagar os Ressuprimentos?", function (confirmarRessu) {
-      if (confirmarRessu) localStorage.removeItem("reaba");
+  const confirmarOndas = await askConfirmationAsync("Deseja apagar os Picking Dinâmicos?");
+  if (confirmarOndas) {
+    localStorage.removeItem("ondasdin");
+    keysToDelete.push("ondasdin");
+  }
 
-      askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
-        if (confirmarMovs) localStorage.removeItem("movimentacoesProcessadas");
+  const confirmarRessu = await askConfirmationAsync("Deseja apagar os Ressuprimentos?");
+  if (confirmarRessu) {
+    localStorage.removeItem("reaba");
+    keysToDelete.push("reaba");
+  }
 
-});
+  const confirmarMovs = await askConfirmationAsync("Deseja apagar as Movimentações?");
+  if (confirmarMovs) {
+    localStorage.removeItem("movimentacoesProcessadas");
+    keysToDelete.push("movimentacoesProcessadas");
+  }
 
-      // Zera os demais dados
-      localStorage.removeItem("activeSeparatorsSaved");
-      localStorage.removeItem("historicalInactiveSeparators");
-      localStorage.removeItem("gradeCompleta");
-      localStorage.removeItem("result_state_monitor");
-      document.getElementById('excelData').value = '';
-      document.getElementById('gradeSection').classList.remove('hidden');
-      document.getElementById('dashboard').classList.add('hidden');
-      document.getElementById('resetBtn').classList.add('hidden');
-    });
-  });
+  // Remove as demais chaves locais fixas
+  localStorage.removeItem("activeSeparatorsSaved");
+  localStorage.removeItem("historicalInactiveSeparators");
+  localStorage.removeItem("gradeCompleta");
+  localStorage.removeItem("result_state_monitor");
+  document.getElementById('excelData').value = '';
+  document.getElementById('gradeSection').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('resetBtn').classList.add('hidden');
+
+  if (keysToDelete.length > 0) {
+    // Envia pedido para deletar as chaves do banco SQL
+    try {
+      const response = await fetch('https://labsuaideia.store/api/deleteData.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          userId: userId,  // certifique-se que userId está definido no seu script global
+          keys: keysToDelete
+        })
+      });
+      const json = await response.json();
+      if (json.success) {
+        showPopup(`Dados deletados do banco: ${json.deleted_keys.join(', ')}`, 'success');
+      } else {
+        showPopup('Falha ao deletar dados do banco.', 'error');
+      }
+    } catch (error) {
+      showPopup('Erro na comunicação com o servidor.', 'error');
+      console.error(error);
+    }
+  }
 }
+
+// Função auxiliar para usar askConfirmation com async/await
+function askConfirmationAsync(msg) {
+  return new Promise(resolve => askConfirmation(msg, resolve));
+}
+
 
 function askConfirmation(msg, callback) {
   const popup = document.getElementById('customResetPopup');
