@@ -176,11 +176,14 @@ title: "Homepage"
   <div class="header">
     <h1><i class="fas fa-rocket"></i> WMS Tools</h1>
     <div class="header-actions">
+       <button id="refreshDataBtn" class="header-button">
+        <i class="fa-solid fa-rotate-right"></i> Recarregar Página
+      </button>
       <button id="sync-button" onclick="sendAndRestoreData()" class="header-button">
         <i class="fas fa-sync-alt"></i> Sincronizar Dados
       </button>
-      <button id="refreshDataBtn" class="header-button">
-        <i class="fa-solid fa-rotate-right"></i> Recarregar Página
+      <button id="verFilaBtn" class="header-button" onclick="verFilaDeSincronizacao()">
+        <i class="fas fa-list-alt"></i> Ver Fila de Sincronização
       </button>
     </div>
   </div>

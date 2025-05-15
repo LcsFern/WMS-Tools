@@ -311,3 +311,18 @@ setInterval(() => {
     flushQueue();
   }
 }, 300000); // 300000 ms = 5 minutos
+////////////////////////////////////////////////////////////////////////////////
+// ─── VER FILA DE SINCRONIZAÇÃO ──────────────────────────────────────────────
+window.verFilaDeSincronizacao = () => {
+  const fila = JSON.parse(localStorage.getItem('syncQueue')) || [];
+  if (fila.length === 0) {
+    showPopup('Fila de sincronização vazia.', 'info');
+    console.log('[Sync] Fila vazia');
+  } else {
+    console.table(fila.map(({ key, timestamp }) => ({
+      chave: key,
+      data: new Date(timestamp).toLocaleString()
+    })));
+    showPopup(`Existem ${fila.length} item(ns) na fila de sincronização.`, 'info');
+  }
+};
