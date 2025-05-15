@@ -25,16 +25,20 @@ const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCas
 let lastModifiedMap = {};
 let queue            = [];
 let flushing         = false;
-let retryTimeout = null;
-
+let retryTimeout     = null;
 
 try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
-try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
+try { queue           = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── HELPERS DE UI ─────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+
+let loadingStartTime = 0; // Armazena o tempo de início do loading
+
 function showLoading() {
+  loadingStartTime = Date.now();
+
   if (document.getElementById('loading-overlay')) return;
   const overlay = document.createElement('div');
   overlay.id = 'loading-overlay';
@@ -165,13 +169,24 @@ localStorage.setItem = (key, value) => {
 
   showLoading();
 
-  const MIN_LOADING_DURATION = 1500;
-  const startTime = Date.now();
-
-  flushQueue().finally(() => {
-    const elapsed = Date.now() - startTime;
-    const delay = Math.max(0, MIN_LOADING_DURATION - elapsed);
-    setTimeout(hideLoading, delay);
+  // Dispara sincronização e mostra notificação após loading mínimo de 1.5s
+  flushQueue().then(success => {
+    const delay = Math.max(0, 1500 - (Date.now() - loadingStartTime));
+    setTimeout(() => {
+      hideLoading();
+      if (success > 0) {
+        showPopup(`🔄 ${success} dado${success > 1 ? 's' : ''} sincronizado${success > 1 ? 's' : ''}`, 'success');
+      } else {
+        showPopup('⚠️ Nenhum dado sincronizado', 'error');
+      }
+    }, delay);
+  }).catch(err => {
+    const delay = Math.max(0, 1500 - (Date.now() - loadingStartTime));
+    setTimeout(() => {
+      hideLoading();
+      showPopup('❌ Erro na sincronização', 'error');
+      console.error('Erro no flushQueue:', err);
+    }, delay);
   });
 };
 
@@ -207,12 +222,12 @@ async function flushQueue() {
 
   flushing = false;
 
-  // Se ainda restaram dados na fila, e estamos online, agendar nova tentativa
+  // Se ainda restaram dados na fila, agendar nova tentativa
   if (queue.length > 0 && navigator.onLine && !retryTimeout) {
     retryTimeout = setTimeout(() => {
       retryTimeout = null;
       flushQueue();
-    }, 30000); // Tenta de novo em 30 segundos
+    }, 30000); // 30 segundos
   }
 
   return successCount;
@@ -225,8 +240,9 @@ async function flushQueue() {
 async function restoreStorage() {
   if (!navigator.onLine) return 0;
   showLoading();
-
+  const start = Date.now();
   let applied = 0;
+
   try {
     const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${bucketId}`, { cache: 'no-store' });
     const json = await res.json();
@@ -234,10 +250,8 @@ async function restoreStorage() {
     if (json.dados) {
       for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
         if (!SYNC_KEYS.includes(key)) continue;
-
         const localValue = localStorage.getItem(key);
         const localTimestamp = lastModifiedMap[key] || 0;
-
         if (localValue === null || timestamp > localTimestamp) {
           originalSetItem(key, value);
           lastModifiedMap[key] = timestamp;
@@ -247,12 +261,15 @@ async function restoreStorage() {
     }
   } catch (e) {
     console.error('Erro ao restaurar:', e);
-    showPopup('Falha ao restaurar dados', 'error');
-  } finally {
+  }
+
+  const delay = Math.max(0, 1500 - (Date.now() - start));
+  setTimeout(() => {
     hideLoading();
+    showPopup(applied > 0 ? `✔️ ${applied} chave${applied > 1 ? 's' : ''} restaurada${applied > 1 ? 's' : ''}` : '⚠️ Nenhuma chave restaurada', applied > 0 ? 'success' : 'info');
     flushing = false;
     flushQueue();
-  }
+  }, delay);
 
   return applied;
 }
@@ -261,7 +278,7 @@ async function restoreStorage() {
 // ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
-window.addEventListener('online',  () => { showPopup('Online', 'info'); /* restoreStorage(); */ });
+window.addEventListener('online',  () => { showPopup('Online', 'info'); });
 window.addEventListener('offline', () => showPopup('Offline', 'error'));
 
 ////////////////////////////////////////////////////////////////////////////////
