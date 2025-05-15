@@ -6,8 +6,8 @@ const SERVER_SAVE   = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD   = 'https://labsuaideia.store/api/load.php';
 const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
-const FETCH_TIMEOUT = 10000;  // ms
-const MAX_RETRIES   = 3;
+const FETCH_TIMEOUT = 10000;  // Tempo limite para requisições em ms
+const MAX_RETRIES   = 3;      // Número máximo de tentativas
 
 const SYNC_KEYS = [
   'ondasdin','gradeCompleta','movimentacoesProcessadas',
@@ -25,8 +25,8 @@ const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCas
 let lastModifiedMap = {};
 let queue            = [];
 let flushing         = false;
-let retryTimeout = null;
-
+let retryTimeout     = null;
+let loadingStartTime = 0;
 
 try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
 try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
@@ -34,6 +34,8 @@ try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── HELPERS DE UI ─────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+
+// Exibe o overlay de carregamento
 function showLoading() {
   if (document.getElementById('loading-overlay')) return;
   const overlay = document.createElement('div');
@@ -54,6 +56,7 @@ function showLoading() {
   requestAnimationFrame(() => overlay.style.opacity = '1');
 }
 
+// Esconde o overlay de carregamento
 function hideLoading() {
   const o = document.getElementById('loading-overlay');
   if (!o) return;
@@ -61,6 +64,7 @@ function hideLoading() {
   o.addEventListener('transitionend', () => o.remove(), { once:true });
 }
 
+// Mostra uma notificação flutuante
 function showPopup(msg, type = 'info') {
   const COLORS = {
     success: '#34c759',
@@ -84,10 +88,10 @@ function showPopup(msg, type = 'info') {
     backgroundColor: 'rgba(255,255,255,0.08)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
-    border: 1px solid ${COLORS[type] || COLORS.info},
+    border: `1px solid ${COLORS[type] || COLORS.info}`,
     color: '#f8fafc',
     font: '14px "Segoe UI", sans-serif',
-    boxShadow: 0 8px 24px ${COLORS[type]}33,
+    boxShadow: `0 8px 24px ${COLORS[type]}33`,
     transform: 'translateY(30px)',
     opacity: 0,
     zIndex: 10001,
@@ -108,9 +112,9 @@ function showPopup(msg, type = 'info') {
   }, 3500);
 }
 
-// keyframes para spinner
+// Animação do spinner
 const style = document.createElement('style');
-style.textContent = @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}};
+style.textContent = `@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`;
 document.head.appendChild(style);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +129,7 @@ async function fetchWithTimeout(url, options={}, timeout=FETCH_TIMEOUT) {
   const id = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(url, {...options, signal:controller.signal});
-    if (!res.ok) throw new Error(HTTP ${res.status});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res;
   } finally { clearTimeout(id); }
 }
@@ -164,14 +168,27 @@ localStorage.setItem = (key, value) => {
   saveQueue();
 
   showLoading();
+  loadingStartTime = Date.now();
 
-  const MIN_LOADING_DURATION = 1500;
-  const startTime = Date.now();
-
-  flushQueue().finally(() => {
-    const elapsed = Date.now() - startTime;
-    const delay = Math.max(0, MIN_LOADING_DURATION - elapsed);
-    setTimeout(hideLoading, delay);
+  flushQueue().then(success => {
+    const elapsed = Date.now() - loadingStartTime;
+    const delay = Math.max(0, 1500 - elapsed);
+    setTimeout(() => {
+      hideLoading();
+      if (success > 0) {
+        showPopup(`🔄 ${success} dado${success > 1 ? 's' : ''} sincronizado${success > 1 ? 's' : ''}`, 'success');
+      } else {
+        showPopup('⚠️ Nenhum dado sincronizado', 'error');
+      }
+    }, delay);
+  }).catch(err => {
+    const elapsed = Date.now() - loadingStartTime;
+    const delay = Math.max(0, 1500 - elapsed);
+    setTimeout(() => {
+      hideLoading();
+      showPopup('❌ Erro na sincronização', 'error');
+      console.error('Erro no flushQueue:', err);
+    }, delay);
   });
 };
 
@@ -188,7 +205,7 @@ async function flushQueue() {
     try {
       const { userId, bucketId, key, value, timestamp } = op;
       const body = JSON.stringify({ userId, key, value, timestamp });
-      const uploadURL = ${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)};
+      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
 
       await fetchWithFallback(
         [uploadURL, WORKER_URL],
@@ -207,12 +224,11 @@ async function flushQueue() {
 
   flushing = false;
 
-  // Se ainda restaram dados na fila, e estamos online, agendar nova tentativa
   if (queue.length > 0 && navigator.onLine && !retryTimeout) {
     retryTimeout = setTimeout(() => {
       retryTimeout = null;
       flushQueue();
-    }, 30000); // Tenta de novo em 30 segundos
+    }, 30000);
   }
 
   return successCount;
@@ -225,10 +241,11 @@ async function flushQueue() {
 async function restoreStorage() {
   if (!navigator.onLine) return 0;
   showLoading();
+  loadingStartTime = Date.now();
 
   let applied = 0;
   try {
-    const res = await fetchWithTimeout(${SERVER_LOAD}?userId=${bucketId}, { cache: 'no-store' });
+    const res = await fetchWithTimeout(`${SERVER_LOAD}?userId=${bucketId}`, { cache: 'no-store' });
     const json = await res.json();
 
     if (json.dados) {
@@ -247,11 +264,22 @@ async function restoreStorage() {
     }
   } catch (e) {
     console.error('Erro ao restaurar:', e);
-    showPopup('Falha ao restaurar dados', 'error');
+    applied = -1;
   } finally {
-    hideLoading();
-    flushing = false;
-    flushQueue();
+    const elapsed = Date.now() - loadingStartTime;
+    const delay = Math.max(0, 1500 - elapsed);
+    setTimeout(() => {
+      hideLoading();
+      if (applied > 0) {
+        showPopup(`☁️ ${applied} item${applied > 1 ? 's' : ''} restaurado${applied > 1 ? 's' : ''}`, 'success');
+      } else if (applied === 0) {
+        showPopup('ℹ️ Nenhum dado novo encontrado', 'info');
+      } else {
+        showPopup('❌ Falha ao restaurar dados', 'error');
+      }
+      flushing = false;
+      flushQueue();
+    }, delay);
   }
 
   return applied;
@@ -261,8 +289,8 @@ async function restoreStorage() {
 // ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
-window.addEventListener('online',  () => { showPopup('Online', 'info'); /* restoreStorage(); */ });
-window.addEventListener('offline', () => showPopup('Offline', 'error'));
+window.addEventListener('online',  () => { showPopup('📶 Online', 'info'); });
+window.addEventListener('offline', () => showPopup('📴 Offline', 'error'));
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── Expondo funções úteis globalmente ──────────────────────────────────────
@@ -286,4 +314,4 @@ setInterval(() => {
     console.log('[Sync] Verificando atualizações do servidor...');
     restoreStorage();
   }
-}, 300000); // 5 minutos
+}, 300000); // A cada 5 minutos
