@@ -38,6 +38,8 @@ try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } 
 // Exibe o overlay de carregamento
 function showLoading() {
   if (document.getElementById('loading-overlay')) return;
+  loadingStartTime = Date.now();
+
   const overlay = document.createElement('div');
   overlay.id = 'loading-overlay';
   Object.assign(overlay.style, {
@@ -112,7 +114,7 @@ function showPopup(msg, type = 'info') {
   }, 3500);
 }
 
-// Animação do spinner
+// Keyframes para animação do spinner
 const style = document.createElement('style');
 style.textContent = `@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`;
 document.head.appendChild(style);
@@ -155,24 +157,27 @@ async function fetchWithFallback(urls, options) {
 
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
-  const prev = localStorage.getItem(key);
+  // salva sempre no storage
   originalSetItem(key, value);
 
-  if (value === prev || !SYNC_KEYS.includes(key)) return;
+  // só sincroniza se a chave estiver na lista
+  if (!SYNC_KEYS.includes(key)) return;
 
+  // registra timestamp e adiciona na fila
   const ts = Date.now();
   lastModifiedMap[key] = ts;
-
   queue.push({ userId, key, value, timestamp: ts, bucketId });
   saveTsMap();
   saveQueue();
 
+  // exibe spinner e marca início
   showLoading();
-  loadingStartTime = Date.now();
 
+  // dispara a sincronização
   flushQueue().then(success => {
     const elapsed = Date.now() - loadingStartTime;
     const delay = Math.max(0, 1500 - elapsed);
+
     setTimeout(() => {
       hideLoading();
       if (success > 0) {
@@ -184,6 +189,7 @@ localStorage.setItem = (key, value) => {
   }).catch(err => {
     const elapsed = Date.now() - loadingStartTime;
     const delay = Math.max(0, 1500 - elapsed);
+
     setTimeout(() => {
       hideLoading();
       showPopup('❌ Erro na sincronização', 'error');
@@ -205,13 +211,15 @@ async function flushQueue() {
     try {
       const { userId, bucketId, key, value, timestamp } = op;
       const body = JSON.stringify({ userId, key, value, timestamp });
-      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
+      // usa userId correto
+      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(userId)}`;
 
       await fetchWithFallback(
         [uploadURL, WORKER_URL],
         { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
       );
 
+      // remove da fila e atualiza ts
       queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
       lastModifiedMap[op.key] = op.timestamp;
       saveQueue();
@@ -224,6 +232,7 @@ async function flushQueue() {
 
   flushing = false;
 
+  // se ainda tiver dados na fila, agenda nova tentativa
   if (queue.length > 0 && navigator.onLine && !retryTimeout) {
     retryTimeout = setTimeout(() => {
       retryTimeout = null;
@@ -251,7 +260,6 @@ async function restoreStorage() {
     if (json.dados) {
       for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
         if (!SYNC_KEYS.includes(key)) continue;
-
         const localValue = localStorage.getItem(key);
         const localTimestamp = lastModifiedMap[key] || 0;
 
@@ -268,6 +276,7 @@ async function restoreStorage() {
   } finally {
     const elapsed = Date.now() - loadingStartTime;
     const delay = Math.max(0, 1500 - elapsed);
+
     setTimeout(() => {
       hideLoading();
       if (applied > 0) {
