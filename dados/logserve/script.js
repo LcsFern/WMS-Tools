@@ -6,10 +6,10 @@ const refreshButton  = document.getElementById('refreshButton');
 const searchInput    = document.getElementById('searchInput');
 
 const username    = localStorage.getItem('username')?.toLowerCase() || 'all';
-const LOAD_API    = 'https://labsuaideia.store/api/load.php';
-const WORKER_LOAD = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
-const HISTORY_API = 'https://labsuaideia.store/api/history.php';
+const LOAD_API    = 'https://labsuaideia.store/api/loadsql.php';
+const HISTORY_API = 'https://labsuaideia.store/api/historysql.php'; // ainda não implementado
 
+// Nomes personalizados exibidos no painel
 const nomesPersonalizados = {
   'logHistoricoMudancas': 'Última Sincronização de Logs de Alterações',
   'checkbox_state_monitor': 'Última Sincronização checkbox carros em conferência',
@@ -25,6 +25,7 @@ const nomesPersonalizados = {
   'pickingTimestamp': 'Horário de sincronização pendências de picking'
 };
 
+// Ícones personalizados para cada chave
 const iconesChaves = {
   'checkbox_state_monitor': 'fa-solid fa-check-square',
   'movimentacoesProcessadas': 'fa-solid fa-truck-container',
@@ -41,6 +42,7 @@ const iconesChaves = {
   'default': 'fa-solid fa-circle-info'
 };
 
+// Exibe notificações flutuantes
 function showToast(mensagem, tipo) {
   const toast = document.createElement('div');
   toast.classList.add('toast', tipo);
@@ -49,6 +51,7 @@ function showToast(mensagem, tipo) {
   setTimeout(() => toast.remove(), 5000);
 }
 
+// Carrega logs do servidor SQL
 async function carregarLogs() {
   logContainer.innerHTML = '<p class="placeholder">Carregando logs...</p>';
   let registros = {};
@@ -57,23 +60,18 @@ async function carregarLogs() {
     const res = await fetch(`${LOAD_API}?userId=${encodeURIComponent(username)}`, {
       cache: 'no-store', signal: AbortSignal.timeout(10000)
     });
-    if (!res.ok) throw new Error();
-    registros = (await res.json()).dados || {};
-  } catch {
-    try {
-      const res2 = await fetch(`${WORKER_LOAD}?userId=${encodeURIComponent(username)}`, {
-        cache: 'no-store', signal: AbortSignal.timeout(10000)
-      });
-      if (!res2.ok) throw new Error();
-      registros = (await res2.json()).dados || {};
-    } catch {
-      return showToast("Falha ao carregar dados do servidor.", "error");
-    }
+    if (!res.ok) throw new Error('Erro ao carregar dados do SQL');
+    const json = await res.json();
+    registros = json.dados || {};
+  } catch (error) {
+    console.error(error);
+    return showToast("Falha ao carregar dados do servidor SQL.", "error");
   }
 
   processarLogs(registros);
 }
 
+// Processa e exibe os logs recebidos
 function processarLogs(registros) {
   logContainer.innerHTML = '';
   const chaves = Object.keys(registros);
@@ -88,6 +86,7 @@ function processarLogs(registros) {
     const entry = registros[key];
     const nomeExibido = nomesPersonalizados[key] || key;
     let icone = iconesChaves.default;
+
     for (const cat in iconesChaves) {
       if (key.includes(cat)) {
         icone = iconesChaves[cat];
@@ -126,6 +125,7 @@ function processarLogs(registros) {
   });
 }
 
+// Requisição para histórico (ainda não funcional pois depende do historysql.php)
 async function fetchHistory(key) {
   const res = await fetch(`${HISTORY_API}?key=${encodeURIComponent(key)}`, {
     cache: 'no-store'
@@ -135,6 +135,7 @@ async function fetchHistory(key) {
   return json.dados[key] || [];
 }
 
+// Restaura a versão anterior de uma chave
 async function restaurarAnterior(key) {
   try {
     showToast(`Buscando versão anterior de "${key}"…`, 'info');
@@ -158,7 +159,7 @@ async function restaurarAnterior(key) {
   }
 }
 
-
+// Filtra os logs de acordo com o texto digitado
 function filtrarLogs() {
   const termo = searchInput.value.toLowerCase();
   document.querySelectorAll('.log-entry').forEach(entrada => {
@@ -168,6 +169,7 @@ function filtrarLogs() {
   });
 }
 
+// Botões e eventos
 refreshButton.addEventListener('click', carregarLogs);
 searchInput.addEventListener('input', filtrarLogs);
 
@@ -176,6 +178,8 @@ document.getElementById('syncButton')?.addEventListener('click', () => {
 });
 
 document.addEventListener('DOMContentLoaded', carregarLogs);
+
+// Modal de confirmação de restauração
 function confirmarRestauracao({ key, timestamp, userId }, onConfirm) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -195,7 +199,6 @@ function confirmarRestauracao({ key, timestamp, userId }, onConfirm) {
     </div>
   `;
 
-  // Eventos dos botões
   modal.querySelector('.cancel').onclick = () => overlay.remove();
   modal.querySelector('.confirm').onclick = () => {
     overlay.remove();
@@ -205,6 +208,8 @@ function confirmarRestauracao({ key, timestamp, userId }, onConfirm) {
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 }
+
+// Formata o nome do usuário exibido
 function formatarUsuario(nome) {
   if (!nome) return 'Desconhecido';
   return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
