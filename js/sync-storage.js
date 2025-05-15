@@ -2,13 +2,15 @@
 // ─── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
+// URLs do servidor (save.php e load.php continuam os mesmos)
 const SERVER_SAVE   = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD   = 'https://labsuaideia.store/api/load.php';
 const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
-const FETCH_TIMEOUT = 10000;  // Tempo limite para requisições em ms
-const MAX_RETRIES   = 3;      // Número máximo de tentativas
+const FETCH_TIMEOUT = 10000;  // ms
+const MAX_RETRIES   = 3;      // Tentativas por requisição
 
+// Todas as chaves que serão sincronizadas
 const SYNC_KEYS = [
   'ondasdin','gradeCompleta','movimentacoesProcessadas',
   'ondas','result_state_monitor','checkbox_state_monitor',
@@ -16,30 +18,27 @@ const SYNC_KEYS = [
   'pickingData','pickingTimestamp'
 ];
 
+// Internal storage keys
 const QUEUE_KEY  = 'syncQueue';
 const TS_MAP_KEY = 'syncLastModified';
 
-const bucketId = 'all';
+// Identificador global (todos compartilham os mesmos dados)
+const bucketId = 'all';  // dados são salvos em bucket global
 const userId   = (localStorage.getItem('username') || 'desconhecido').toLowerCase();
 
 let lastModifiedMap = {};
 let queue            = [];
 let flushing         = false;
-let retryTimeout     = null;
-let loadingStartTime = 0;
 
+// Carrega estado interno do localStorage
 try { lastModifiedMap = JSON.parse(localStorage.getItem(TS_MAP_KEY)) || {}; } catch {}
 try { queue            = JSON.parse(localStorage.getItem(QUEUE_KEY))   || []; } catch {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── HELPERS DE UI ─────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-
-// Exibe o overlay de carregamento
 function showLoading() {
   if (document.getElementById('loading-overlay')) return;
-  loadingStartTime = Date.now();
-
   const overlay = document.createElement('div');
   overlay.id = 'loading-overlay';
   Object.assign(overlay.style, {
@@ -58,7 +57,6 @@ function showLoading() {
   requestAnimationFrame(() => overlay.style.opacity = '1');
 }
 
-// Esconde o overlay de carregamento
 function hideLoading() {
   const o = document.getElementById('loading-overlay');
   if (!o) return;
@@ -66,7 +64,6 @@ function hideLoading() {
   o.addEventListener('transitionend', () => o.remove(), { once:true });
 }
 
-// Mostra uma notificação flutuante
 function showPopup(msg, type = 'info') {
   const COLORS = {
     success: '#34c759',
@@ -114,7 +111,8 @@ function showPopup(msg, type = 'info') {
   }, 3500);
 }
 
-// Keyframes para animação do spinner
+
+// keyframes para spinner
 const style = document.createElement('style');
 style.textContent = `@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`;
 document.head.appendChild(style);
@@ -122,7 +120,6 @@ document.head.appendChild(style);
 ////////////////////////////////////////////////////////////////////////////////
 // ─── HELPERS DE SINCRONIZAÇÃO ───────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-
 const saveQueue = () => localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 const saveTsMap = () => localStorage.setItem(TS_MAP_KEY, JSON.stringify(lastModifiedMap));
 
@@ -154,54 +151,30 @@ async function fetchWithFallback(urls, options) {
 ////////////////////////////////////////////////////////////////////////////////
 // ─── INTERCEPTA localStorage.setItem PARA SINCRONIZAR ───────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-
 const originalSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = (key, value) => {
-  // salva sempre no storage
+  const prev = localStorage.getItem(key);
   originalSetItem(key, value);
 
-  // só sincroniza se a chave estiver na lista
-  if (!SYNC_KEYS.includes(key)) return;
+  // só reage se for chave sincronizada e valor mudou
+  if (value === prev || !SYNC_KEYS.includes(key)) return;
 
-  // registra timestamp e adiciona na fila
   const ts = Date.now();
   lastModifiedMap[key] = ts;
+
+  // Evita duplicar na fila
   queue.push({ userId, key, value, timestamp: ts, bucketId });
   saveTsMap();
   saveQueue();
 
-  // exibe spinner e marca início
   showLoading();
 
-  // dispara a sincronização
-  flushQueue().then(success => {
-    const elapsed = Date.now() - loadingStartTime;
-    const delay = Math.max(0, 1500 - elapsed);
-
-    setTimeout(() => {
-      hideLoading();
-      if (success > 0) {
-        showPopup(`🔄 ${success} dado${success > 1 ? 's' : ''} sincronizado${success > 1 ? 's' : ''}`, 'success');
-      } else {
-        showPopup('⚠️ Nenhum dado sincronizado', 'error');
-      }
-    }, delay);
-  }).catch(err => {
-    const elapsed = Date.now() - loadingStartTime;
-    const delay = Math.max(0, 1500 - elapsed);
-
-    setTimeout(() => {
-      hideLoading();
-      showPopup('❌ Erro na sincronização', 'error');
-      console.error('Erro no flushQueue:', err);
-    }, delay);
-  });
+flushQueue().finally(hideLoading);
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// ─── Envia a fila de dados para o servidor ──────────────────────────────────
-////////////////////////////////////////////////////////////////////////////////
 
+
+// Envia a fila de dados para o servidor
 async function flushQueue() {
   if (flushing || !navigator.onLine || queue.length === 0) return 0;
   flushing = true;
@@ -211,15 +184,13 @@ async function flushQueue() {
     try {
       const { userId, bucketId, key, value, timestamp } = op;
       const body = JSON.stringify({ userId, key, value, timestamp });
-      // usa userId correto
-      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(userId)}`;
-
+      const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
       await fetchWithFallback(
         [uploadURL, WORKER_URL],
         { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
       );
 
-      // remove da fila e atualiza ts
+      // Remove da fila
       queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
       lastModifiedMap[op.key] = op.timestamp;
       saveQueue();
@@ -230,27 +201,18 @@ async function flushQueue() {
     }
   }
 
-  flushing = false;
-
-  // se ainda tiver dados na fila, agenda nova tentativa
-  if (queue.length > 0 && navigator.onLine && !retryTimeout) {
-    retryTimeout = setTimeout(() => {
-      retryTimeout = null;
-      flushQueue();
-    }, 30000);
-  }
-
+  // Retorna o número de itens enviados
   return successCount;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURA DO SERVIDOR ─────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-
+// Função para restaurar dados com verificação de timestamp
 async function restoreStorage() {
-  if (!navigator.onLine) return 0;
+  if (!navigator.onLine) return 0; // Não tenta restaurar se estiver offline
   showLoading();
-  loadingStartTime = Date.now();
 
   let applied = 0;
   try {
@@ -260,9 +222,11 @@ async function restoreStorage() {
     if (json.dados) {
       for (const [key, { value, timestamp }] of Object.entries(json.dados)) {
         if (!SYNC_KEYS.includes(key)) continue;
+
         const localValue = localStorage.getItem(key);
         const localTimestamp = lastModifiedMap[key] || 0;
 
+        // Aplica a restauração somente se o valor do servidor for mais novo
         if (localValue === null || timestamp > localTimestamp) {
           originalSetItem(key, value);
           lastModifiedMap[key] = timestamp;
@@ -272,55 +236,47 @@ async function restoreStorage() {
     }
   } catch (e) {
     console.error('Erro ao restaurar:', e);
-    applied = -1;
+    showPopup('Falha ao restaurar dados', 'error');
   } finally {
-    const elapsed = Date.now() - loadingStartTime;
-    const delay = Math.max(0, 1500 - elapsed);
-
-    setTimeout(() => {
-      hideLoading();
-      if (applied > 0) {
-        showPopup(`☁️ ${applied} item${applied > 1 ? 's' : ''} restaurado${applied > 1 ? 's' : ''}`, 'success');
-      } else if (applied === 0) {
-        showPopup('ℹ️ Nenhum dado novo encontrado', 'info');
-      } else {
-        showPopup('❌ Falha ao restaurar dados', 'error');
-      }
-      flushing = false;
-      flushQueue();
-    }, delay);
+    hideLoading();
+    flushing = false;
+    flushQueue();
   }
 
+  // Retorna o número de itens restaurados
   return applied;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── EVENTOS DE REDE ────────────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
+window.addEventListener('online',  () => { showPopup('Online', 'info'); /* REMOVER restoreStorage(); */ });
+window.addEventListener('offline', () => showPopup('Offline', 'error'));
 
-window.addEventListener('online',  () => { showPopup('📶 Online', 'info'); });
-window.addEventListener('offline', () => showPopup('📴 Offline', 'error'));
 
 ////////////////////////////////////////////////////////////////////////////////
-// ─── Expondo funções úteis globalmente ──────────────────────────────────────
+// ─── Expondo restoreStorage para uso externo ───────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
-
 window.restoreStorage = restoreStorage;
 
+////////////////////////////////////////////////////////////////////////////////
+// ─── Chamável via console: sincroniza manualmente ───────────────────────────
+////////////////////////////////////////////////////////////////////////////////
 window.sincronizarAgora = async () => {
   if (!navigator.onLine) return showPopup('Sem conexão', 'error');
   showPopup('Sincronizando manualmente...', 'info');
   await restoreStorage();
   await flushQueue();
 };
-
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
+// A cada 5 minutos (300.000 ms), tenta restaurar dados se a aba estiver ativa
 setInterval(() => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
     console.log('[Sync] Verificando atualizações do servidor...');
     restoreStorage();
   }
-}, 300000); // A cada 5 minutos
+}, 300000); // 5 minutos em milissegundos
