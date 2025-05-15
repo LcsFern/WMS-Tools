@@ -72,6 +72,7 @@ async function carregarLogs() {
 }
 
 // Processa e exibe os logs recebidos
+// Processa e exibe os logs recebidos
 function processarLogs(registros) {
   logContainer.innerHTML = '';
   const chaves = Object.keys(registros);
@@ -104,7 +105,7 @@ function processarLogs(registros) {
         <div class="log-key">${nomeExibido}</div>
         <div class="timestamp">${new Date(entry.timestamp).toLocaleString('pt-BR')}</div>
       </div>
-      <div class="log-user">Alterado por: <strong>${formatarUsuario(entry.userId)}</strong></div>
+      ${entry.userId ? `<div class="log-user">Alterado por: <strong>${formatarUsuario(entry.userId)}</strong></div>` : ''}
       <div class="log-value">${entry.value}</div>
     `;
 
@@ -124,6 +125,7 @@ function processarLogs(registros) {
     logContainer.appendChild(logDiv);
   });
 }
+
 
 // Requisição para histórico (ainda não funcional pois depende do historysql.php)
 async function fetchHistory(key) {
