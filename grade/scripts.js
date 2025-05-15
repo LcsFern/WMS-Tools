@@ -351,7 +351,19 @@ async function loadGradeFromStorage() {
 // Função pra deletar keys diretamente do servidor
 // (ex: ao resetar a grade)
 async function deletarDoServidor(keys) {
-  // Envia uma requisição para deletar as keys no servidor
+  // Mapeamento das keys para nomes amigáveis
+  const nomesPersonalizados = {
+    ondasdin: "Picking Dinâmicos",
+    reaba: "Ressuprimentos",
+    movimentacoesProcessadas: "Movimentações",
+    activeSeparatorsSaved: "Separadores Ativos",
+    historicalInactiveSeparators: "Separadores Inativos Históricos",
+    gradeCompleta: "Grade Completa",
+    result_state_monitor: "Estado do Monitor de picking",
+    pickingData: "Pendências de Picking",
+    checkbox_state_monitor: "Checkbox Carros em Conferência"
+  };
+
   try {
     const response = await fetch('https://labsuaideia.store/api/deletesql.php', {
       method: 'POST',
@@ -359,12 +371,17 @@ async function deletarDoServidor(keys) {
       body: JSON.stringify({ userId: (localStorage.getItem('username') || 'desconhecido').toLowerCase(), keys })
     });
     if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
-    showPopup(`Dados deletados: ${keys.join(', ')}`, 'success');
+
+    // Converte as keys para nomes amigáveis, ou usa a própria key se não achar
+    const nomesExibidos = keys.map(k => nomesPersonalizados[k] || k);
+
+    showPopup(`⛔ Dados deletados: ${nomesExibidos.join(', ')}`, 'success');
   } catch (e) {
     console.error('Erro ao deletar do servidor:', e);
-    showPopup('Erro ao apagar dados no servidor', 'error');
+    showPopup('❗ Erro ao apagar dados no servidor', 'error');
   }
 }
+
 //Função pra resetar a grade e keys principais do servidor
 function resetGrade() {
   askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
@@ -390,7 +407,9 @@ function resetGrade() {
           "activeSeparatorsSaved",
           "historicalInactiveSeparators",
           "gradeCompleta",
-          "result_state_monitor"
+          "result_state_monitor",
+          "checkbox_state_monitor",
+          "pickingData"
         ];
         outrasKeys.forEach(k => localStorage.removeItem(k));
         deletarDoServidor(outrasKeys);
