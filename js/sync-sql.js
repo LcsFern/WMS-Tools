@@ -188,9 +188,9 @@ async function flushQueue() {
         const body = JSON.stringify({ userId, key, value, timestamp });
         const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
         await fetchWithFallback(
-          [uploadURL, WORKER_URL],
-          { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
-        );
+  [uploadURL],
+  { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
+);
 
         // Remove da fila
         queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
