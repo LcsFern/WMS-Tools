@@ -7,7 +7,7 @@ const SERVER_SAVE   = 'https://labsuaideia.store/api/save.php';
 const SERVER_LOAD   = 'https://labsuaideia.store/api/load.php';
 const WORKER_URL    = 'https://dry-scene-2df7.tjslucasvl.workers.dev/';
 
-const FETCH_TIMEOUT = 10000;  // ms
+const FETCH_TIMEOUT = 30000;  // ms
 const MAX_RETRIES   = 3;      // Tentativas por requisição
 
 // Todas as chaves que serão sincronizadas
