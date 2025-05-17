@@ -5,7 +5,6 @@
 // URLs do servidor (save.php e load.php continuam os mesmos)
 const SERVER_SAVE   = 'https://labsuaideia.store/api/savesql.php';
 const SERVER_LOAD   = 'https://labsuaideia.store/api/loadsql.php';
-
 const FETCH_TIMEOUT = 30000;  // ms
 const MAX_RETRIES   = 3;      // Tentativas por requisição
 

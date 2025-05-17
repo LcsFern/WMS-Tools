@@ -7,7 +7,7 @@ const searchInput    = document.getElementById('searchInput');
 
 const username    = localStorage.getItem('username')?.toLowerCase() || 'all';
 const LOAD_API    = 'https://labsuaideia.store/api/loadsql.php';
-const HISTORY_API = 'https://labsuaideia.store/api/historysql.php'; // ainda não implementado
+const HISTORY_API = 'https://labsuaideia.store/api/historysql.php'; 
 
 // Nomes personalizados exibidos no painel
 const nomesPersonalizados = {
