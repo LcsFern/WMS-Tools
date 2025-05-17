@@ -322,14 +322,14 @@ setInterval(() => {
     restoreStorage();
   }
 }, 15000); // 15 segundos em milissegundos
-// ─── RETRY DE SINCRONIZAÇÃO A CADA 1 MINUTO ─────────────────────────────
+// ─── RETRY DE SINCRONIZAÇÃO A CADA 30 SEGUNDOS ─────────────────────────────
 setInterval(() => {
   if (navigator.onLine) {
     console.log('[Sync] Tentativa automática de Sincronização...');
     showPopup('🔄 Sincronizando...', 'info');
     flushQueue();
   }
-}, 60000); // 60000 ms = 1 minuto
+}, 30000); // 30000 ms = 30 segundos
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VER FILA DE SINCRONIZAÇÃO ──────────────────────────────────────────────
 window.verFilaDeSincronizacao = () => {
