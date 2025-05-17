@@ -314,14 +314,14 @@ window.sincronizarAgora = async () => {
 // ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
-// A cada 5 segundos (em ms), tenta restaurar dados se a aba estiver ativa
+// A cada 15 segundos (em ms), tenta restaurar dados se a aba estiver ativa
 setInterval(() => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
     console.log('[Sync] Verificando atualizações do servidor...');
     // Chama a função de restauração
     restoreStorage();
   }
-}, 5000); // 5 segundos em milissegundos
+}, 15000); // 15 segundos em milissegundos
 // ─── RETRY DE SINCRONIZAÇÃO A CADA 1 MINUTO ─────────────────────────────
 setInterval(() => {
   if (navigator.onLine) {
