@@ -361,7 +361,8 @@ async function deletarDoServidor(keys) {
     gradeCompleta: "Grade Completa",
     result_state_monitor: "Estado do Monitor de picking",
     pickingData: "Pendências de Picking",
-    checkbox_state_monitor: "Checkbox Carros em Conferência"
+    checkbox_state_monitor: "Checkbox Carros em Conferência",
+    pickingTimestamp: "Timestamp do pendencias de Picking"
   };
 
   try {
@@ -409,7 +410,8 @@ function resetGrade() {
           "gradeCompleta",
           "result_state_monitor",
           "checkbox_state_monitor",
-          "pickingData"
+          "pickingData",
+          "pickingTimestamp"
         ];
         outrasKeys.forEach(k => localStorage.removeItem(k));
         deletarDoServidor(outrasKeys);
