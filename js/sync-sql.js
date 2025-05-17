@@ -175,7 +175,12 @@ flushQueue().finally(hideLoading);
 
 
 // Envia a fila de dados para o servidor
-async function flushQueue() {
+async function flushQueue(modoSilencioso = false) {
+  if (!modoSilencioso) {
+    // Aqui você pode exibir spinner, animações etc, se desejar
+    // exibirSpinner(); por exemplo
+  }
+
   if (flushing || !navigator.onLine || queue.length === 0) return 0;
   flushing = true;
   let successCount = 0;
@@ -186,12 +191,17 @@ async function flushQueue() {
         const { userId, bucketId, key, value, timestamp } = op;
         const body = JSON.stringify({ userId, key, value, timestamp });
         const uploadURL = `${SERVER_SAVE}?userId=${encodeURIComponent(bucketId)}`;
-        await fetchWithFallback(
-  [uploadURL],
-  { method: 'POST', headers: {'Content-Type': 'application/json'}, body }
-);
 
-        // Remove da fila
+        await fetchWithFallback(
+          [uploadURL],
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body
+          }
+        );
+
+        // Remove da fila com base na chave e timestamp
         queue = queue.filter(q => !(q.key === op.key && q.timestamp === op.timestamp));
         lastModifiedMap[op.key] = op.timestamp;
         saveQueue();
@@ -199,25 +209,36 @@ async function flushQueue() {
         successCount++;
       } catch (e) {
         if (e.name === 'AbortError') {
-  console.warn(`Tempo excedido ao sincronizar "${op.key}".`);
-} else {
-  console.error(`Erro ao sincronizar "${op.key}":`, e);
-}
-        showPopup(`🚫 Erro ao sincronizar "${op.key}".`, 'error');
-        // Não remove da fila, tenta novamente na próxima execução
+          console.warn(`Tempo excedido ao sincronizar "${op.key}".`);
+        } else {
+          console.error(`Erro ao sincronizar "${op.key}":`, e);
+        }
+
+        if (!modoSilencioso) {
+          showPopup(`🚫 Erro ao sincronizar "${op.key}".`, 'error');
+        }
+
+        // Mantém na fila para tentar novamente depois
       }
     }
 
-    // Notificar resultado da sincronização
-    if (successCount > 0) {
-      showPopup(`✅ ${successCount} item(ns) sincronizado(s) com sucesso.`, 'success');
-    } else {
-      showPopup(`🚫 Nenhum dado para enviar.`, 'info');
+    // Notificar resultado da sincronização, se não estiver em modo silencioso
+    if (!modoSilencioso) {
+      if (successCount > 0) {
+        showPopup(`✅ ${successCount} item(ns) sincronizado(s) com sucesso.`, 'success');
+      } else {
+        showPopup(`🚫 Nenhum dado para enviar.`, 'info');
+      }
     }
+
     return successCount;
   } catch (e) {
     console.error('Erro geral em flushQueue:', e);
-    showPopup('🚫 Erro ao sincronizar dados. Será re-tentado em 5 min.', 'error');
+
+    if (!modoSilencioso) {
+      showPopup('🚫 Erro ao sincronizar dados. Será re-tentado em 5 min.', 'error');
+    }
+
     return 0;
   } finally {
     flushing = false;
@@ -225,11 +246,16 @@ async function flushQueue() {
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // ─── RESTAURA DO SERVIDOR ─────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 // Função para restaurar dados com verificação de timestamp
-async function restoreStorage() {
+async function restoreStorage(modoSilencioso = false) {
+  if (!modoSilencioso) {
+    // Aqui você pode exibir spinner, animações etc, se desejar
+    // exibirSpinner(); por exemplo
+  }
   if (!navigator.onLine) return 0; // Não tenta restaurar se offline
   showLoading();
 
@@ -331,9 +357,9 @@ async function cicloDeSincronizacao() {
   const houveMudancasRecentes = fila.length > 0 || (tempoAgora - ultimoSync < 15000); // 15s
 
   try {
-    const enviados    = await flushQueue();       // Envia o que está na fila
-    const atualizados = await restoreStorage();   // Restaura o que veio do servidor
-    
+    // Envia dados e restaura storage em modo silencioso, sem animações
+    const enviados    = await flushQueue(true);        // true = modoSilencioso
+    const atualizados = await restoreStorage(true);    // true = modoSilencioso
 
     if (enviados > 0 || atualizados > 0) {
       ultimoSync = Date.now();
@@ -355,6 +381,7 @@ function agendarProximaSincronizacao() {
 
 // Inicia o ciclo automático ao carregar
 cicloDeSincronizacao();
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VER FILA DE SINCRONIZAÇÃO ──────────────────────────────────────────────
