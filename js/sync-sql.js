@@ -314,22 +314,22 @@ window.sincronizarAgora = async () => {
 // ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
 ////////////////////////////////////////////////////////////////////////////////
 
-// A cada 15 segundos (em ms), tenta restaurar dados se a aba estiver ativa
+// A cada 90 segundos (em ms), tenta restaurar dados se a aba estiver ativa
 setInterval(() => {
-  if (document.visibilityState === 'visible' && navigator.onLine) {
+   if (navigator.onLine) {
     console.log('[Sync] Verificando atualizações do servidor...');
     // Chama a função de restauração
     restoreStorage();
   }
-}, 15000); // 15 segundos em milissegundos
-// ─── RETRY DE SINCRONIZAÇÃO A CADA 30 SEGUNDOS ─────────────────────────────
+}, 90000); // 90 segundos em milissegundos
+// ─── RETRY DE SINCRONIZAÇÃO A CADA 1 MINUTO ─────────────────────────────
 setInterval(() => {
   if (navigator.onLine) {
     console.log('[Sync] Tentativa automática de Sincronização...');
     showPopup('🔄 Sincronizando...', 'info');
     flushQueue();
   }
-}, 30000); // 30000 ms = 30 segundos
+}, 60000); // 60000 ms = 1 minuto
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VER FILA DE SINCRONIZAÇÃO ──────────────────────────────────────────────
 window.verFilaDeSincronizacao = () => {
