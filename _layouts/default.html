@@ -55,29 +55,62 @@ html, body, input, textarea, button {
   <!-- <script src="{{ '/js/sync-storage.js' | relative_url }}"></script> -->
   <script src="{{ '/js/sync-sql.js' | relative_url }}"></script>
   <script>
-// Garante que qualquer overlay que fique travado seja removido após 1.5s
+// Script global para esconder o loading-overlay caso trave por mais de 1.5 segundos
 (function () {
-  const MAX_OVERLAY_TIME = 1500; // 1.5 segundos
+  const TEMPO_LIMITE = 1500; // 1,5 segundos
 
-  const checkAndHideOverlay = () => {
+  // Função para esconder o overlay com transição
+  function esconderOverlay() {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
       overlay.style.opacity = '0';
       overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
 
-      // Se a transição falhar, remove à força após mais 300ms
+      // Força a remoção após 300ms se a transição falhar
       setTimeout(() => {
-        const o = document.getElementById('loading-overlay');
-        if (o) o.remove();
+        const aindaExiste = document.getElementById('loading-overlay');
+        if (aindaExiste) aindaExiste.remove();
       }, 300);
     }
-  };
+  }
 
-  // Espera o carregamento da página
-  window.addEventListener('load', () => {
-    // Aguarda até 1.5s e verifica se ainda está presente
-    setTimeout(checkAndHideOverlay, MAX_OVERLAY_TIME);
+  // Observador que detecta o aparecimento do overlay
+  const observer = new MutationObserver(() => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay && overlay.style.display !== 'none') {
+      setTimeout(() => {
+        const aindaExiste = document.getElementById('loading-overlay');
+        if (aindaExiste && aindaExiste.style.display !== 'none') {
+          esconderOverlay();
+        }
+      }, TEMPO_LIMITE);
+    }
   });
+
+  // Inicializa quando o DOM estiver pronto
+  function iniciarMonitoramento() {
+    const body = document.body;
+    if (body) {
+      observer.observe(body, { childList: true, subtree: true });
+
+      // Caso o overlay já exista na carga
+      const overlay = document.getElementById('loading-overlay');
+      if (overlay && overlay.style.display !== 'none') {
+        setTimeout(() => {
+          const aindaExiste = document.getElementById('loading-overlay');
+          if (aindaExiste && aindaExiste.style.display !== 'none') {
+            esconderOverlay();
+          }
+        }, TEMPO_LIMITE);
+      }
+    } else {
+      // Se ainda não carregou, tenta novamente depois
+      setTimeout(iniciarMonitoramento, 100);
+    }
+  }
+
+  // Aguarda o carregamento completo
+  window.addEventListener('load', iniciarMonitoramento);
 })();
 </script>
 </body>
