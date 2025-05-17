@@ -310,25 +310,52 @@ window.sincronizarAgora = async () => {
   await restoreStorage();
 };
 ////////////////////////////////////////////////////////////////////////////////
-// ─── RESTAURAÇÃO PERIÓDICA ──────────────────────────────────────────────────
+// ─── RESTAURAÇÃO E SINCRONIZAÇÃO DINÂMICA (Modo Silencioso + Inteligente) ──
 ////////////////////////////////////////////////////////////////////////////////
 
-// A cada 90 segundos (em ms), tenta restaurar dados se a aba estiver ativa
-setInterval(() => {
-   if (navigator.onLine) {
-    console.log('[Sync] Verificando atualizações do servidor...');
-    // Chama a função de restauração
-    restoreStorage();
+// Define os intervalos mínimo e máximo
+const INTERVALO_MIN_MS = 1000;   // 1 segundo (rápido)
+const INTERVALO_MAX_MS = 60000;  // 1 minuto (econômico)
+
+let ultimoSync = 0;
+let intervaloAtual = INTERVALO_MIN_MS;
+
+async function cicloDeSincronizacao() {
+  if (!navigator.onLine) {
+    agendarProximaSincronizacao();
+    return;
   }
-}, 90000); // 90 segundos em milissegundos
-// ─── RETRY DE SINCRONIZAÇÃO A CADA 1 MINUTO ─────────────────────────────
-setInterval(() => {
-  if (navigator.onLine) {
-    console.log('[Sync] Tentativa automática de Sincronização...');
-    showPopup('🔄 Sincronizando...', 'info');
-    flushQueue();
+
+  const tempoAgora = Date.now();
+  const fila = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+  const houveMudancasRecentes = fila.length > 0 || (tempoAgora - ultimoSync < 15000); // 15s
+
+  try {
+    const enviados    = await flushQueue();       // Envia o que está na fila
+    const atualizados = await restoreStorage();   // Restaura o que veio do servidor
+    
+
+    if (enviados > 0 || atualizados > 0) {
+      ultimoSync = Date.now();
+      intervaloAtual = INTERVALO_MIN_MS; // volta a ser rápido
+    } else if (!houveMudancasRecentes) {
+      intervaloAtual = Math.min(intervaloAtual * 2, INTERVALO_MAX_MS); // aumenta
+    }
+  } catch (e) {
+    console.error('[Sync] Erro durante sincronização inteligente:', e);
   }
-}, 60000); // 60000 ms = 1 minuto
+
+  agendarProximaSincronizacao();
+}
+
+// Agendador inteligente de próxima execução
+function agendarProximaSincronizacao() {
+  setTimeout(cicloDeSincronizacao, intervaloAtual);
+}
+
+// Inicia o ciclo automático ao carregar
+cicloDeSincronizacao();
+
 ////////////////////////////////////////////////////////////////////////////////
 // ─── VER FILA DE SINCRONIZAÇÃO ──────────────────────────────────────────────
 window.verFilaDeSincronizacao = () => {
