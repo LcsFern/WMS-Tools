@@ -54,5 +54,31 @@ html, body, input, textarea, button {
   {{ content }}
   <!-- <script src="{{ '/js/sync-storage.js' | relative_url }}"></script> -->
   <script src="{{ '/js/sync-sql.js' | relative_url }}"></script>
+  <script>
+// Garante que qualquer overlay que fique travado seja removido após 1.5s
+(function () {
+  const MAX_OVERLAY_TIME = 1500; // 1.5 segundos
+
+  const checkAndHideOverlay = () => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+
+      // Se a transição falhar, remove à força após mais 300ms
+      setTimeout(() => {
+        const o = document.getElementById('loading-overlay');
+        if (o) o.remove();
+      }, 300);
+    }
+  };
+
+  // Espera o carregamento da página
+  window.addEventListener('load', () => {
+    // Aguarda até 1.5s e verifica se ainda está presente
+    setTimeout(checkAndHideOverlay, MAX_OVERLAY_TIME);
+  });
+})();
+</script>
 </body>
 </html>
