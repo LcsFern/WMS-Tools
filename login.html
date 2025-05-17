@@ -211,7 +211,7 @@ async function login() {
 
     // Se a requisição principal falhar, tenta usar o Worker como fallback
     try {
-      const res = await fetch('https://corsproxy.io/?key=f5044a34&url=https://wmstools.ct.ws/api/login.php', { // URL do seu Worker
+      const res = await fetch('https://dry-scene-2df7.tjslucasvl.workers.dev/', { // URL do seu Worker
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
