@@ -1,62 +1,103 @@
 ---
 layout: default
-title: "Picking Dinâmicos"
+title: "WMS Tools - pesos variáveis"
 ---
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Logística Avançada com Badges</title>
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abastecer Picking Dinâmico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1><i class="fas fa-exchange-alt"></i> Abastecer Picking Dinâmico</h1>
-
-    <!-- Entradas -->
-    <div id="inputs">
-      <div class="section">
-        <label><i class="fas fa-table"></i> 1. Posições de Picking</label>
-        <textarea id="txtPicking" placeholder="Cole aqui o conteudo do Posições de picking copiados do excel"></textarea>
-      </div>
-      <div class="section">
-        <label><i class="fas fa-clipboard-list"></i> 2. Prévia de Pedidos</label>
-        <textarea id="txtPreview" placeholder="Cole aqui o conteudo da previa de pedidos copiados do excel"></textarea>
-      </div>
-      <div class="section">
-        <label><i class="fas fa-search"></i> 3. Pesquisa de SKU</label>
-        <textarea id="txtSku" placeholder="Cole aqui a pesquisa de SKU copiado do excel"></textarea>
-      </div>
-      <button id="btnProcess" class="btn btn-primary"><i class="fas fa-play"></i> Processar Dados</button>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-exchange-alt"></i> Abastecer Picking Dinâmico</h1>
+        </header>
+        
+        <main>
+            <section class="glass-panel input-section">
+                <h2><i class="fas fa-list"></i> Lista de Picking</h2>
+                <textarea id="listaPicking" placeholder="Cole a lista de picking aqui..." rows="1"></textarea>
+                <div class="button-container">
+                    <button id="processar" class="btn-primary"><i class="fas fa-cogs"></i> Processar Dados</button>
+                    <button id="limpar" class="btn-secondary"><i class="fas fa-trash"></i> Limpar</button>
+                    <button id="resetBtn" class="btn-secondary" style="display: none;"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+                <div id="status" class="status-bar"></div>
+            </section>
+            
+            <section class="results-section" style="display: none;">
+                <div class="glass-panel summary-section">
+                    <h2><i class="fas fa-chart-bar"></i> Resumo de Pendencias <i class="fas fa-exchange-alt"></i> Aereos </i></h2>
+                    <div class="summary-content">
+                        <div class="summary-item">
+                            <span class="summary-label">Total de Produtos:</span>
+                            <span id="totalProdutos" class="summary-value">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total de Caixas:</span>
+                            <span id="totalCaixas" class="summary-value">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Posições Congelado:</span>
+                            <span id="posicoesCongelado" class="summary-value">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Posições Resfriado:</span>
+                            <span id="posicoesResfriado" class="summary-value">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Posições Dinâmicas:</span>
+                            <span id="totalPosicoes" class="summary-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel details-section">
+                    <h2><i class="fas fa-table"></i> Detalhes dos Produtos</h2>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Buscar por código, nome ou placa...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="tabs">
+                        <button id="tabTodos" class="tab-button active">Todos</button>
+                        <button id="tabCongelados" class="tab-button">Congelados</button>
+                        <button id="tabResfriados" class="tab-button">Resfriados</button>
+                    </div>
+                    <div class="details-content">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Produto</th>
+                                    <th>Qtde</th>
+                                    <th>Paletes</th>
+                                    <th>Tipo</th>
+                                    <th>Veículos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaBody">
+                                <!-- Dados serão inseridos aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
     </div>
-
-    <!-- Resultados -->
-    <div id="resultado">
-      <button id="btnReset" class="btn btn-secondary" style="margin-bottom:20px;">
-        <i class="fas fa-rotate-left"></i> Resetar
-      </button>
-      <div class="cards">
-        <div class="card">
-          <h3>
-            <span><i class="fas fa-warehouse"></i> Forçar Ressuprimento</span>
-            <button id="copyResup" class="copy-btn" title="Copiar códigos"><i class="fas fa-copy"></i></button>
-          </h3>
-          <ul id="listaResup"></ul>
-        </div>
-        <div class="card">
-          <h3>
-            <span><i class="fas fa-exchange-alt"></i> Picking Dinâmico</span>
-            <button id="copyDyn" class="copy-btn" title="Copiar códigos"><i class="fas fa-copy"></i></button>
-          </h3>
-          <ul id="listaDinamico"></ul>
-        </div>
-      </div>
+    
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Processando dados...</p>
     </div>
-  </div>
-
-  <script src="script.js"></script>
+    
+    <div id="notificationContainer" class="notification-container"></div>
+    
+    <script src="script.js"></script>
 </body>
 </html>
