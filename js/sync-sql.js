@@ -340,8 +340,8 @@ window.sincronizarAgora = async () => {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Define os intervalos mínimo e máximo
-const INTERVALO_MIN_MS = 15000;   // 15 segundos (rápido)
-const INTERVALO_MAX_MS = 120000;  // 2 minutos (econômico)
+const INTERVALO_MIN_MS = 30000;   // 30 segundos (rápido)
+const INTERVALO_MAX_MS = 300000;  // 5 minutos (econômico)
 
 let ultimoSync = 0;
 let intervaloAtual = INTERVALO_MIN_MS;
