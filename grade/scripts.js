@@ -353,15 +353,15 @@ async function loadGradeFromStorage() {
 async function deletarDoServidor(keys) {
   // Mapeamento das keys para nomes amigáveis
   const nomesPersonalizados = {
-    ondasDinamicos: "Picking Dinâmicos",
-    ondasReabastecimentos: "Ressuprimentos",
+    ondasdin: "Picking Dinâmicos",
+    reaba: "Ressuprimentos",
     movimentacoesProcessadas: "Movimentações",
     activeSeparatorsSaved: "Separadores Ativos",
     historicalInactiveSeparators: "Separadores Inativos Históricos",
     gradeCompleta: "Grade Completa",
-    estadoMonitorResultados: "Estado do Monitor de picking",
+    result_state_monitor: "Estado do Monitor de picking",
     pickingData: "Pendências de Picking",
-    estadoCheckboxMonitor: "Checkbox Carros em Conferência",
+    checkbox_state_monitor: "Checkbox Carros em Conferência",
     pickingTimestamp: "Timestamp do pendencias de Picking"
   };
 
@@ -387,14 +387,14 @@ async function deletarDoServidor(keys) {
 function resetGrade() {
   askConfirmation("Deseja apagar os Picking Dinâmicos?", function (confirmarOndas) {
     if (confirmarOndas) {
-      localStorage.removeItem("ondasDinamicos");
-      deletarDoServidor(['ondasDinamicos']);
+      localStorage.removeItem("ondasdin");
+      deletarDoServidor(['ondasdin']);
     }
 
     askConfirmation("Deseja apagar os Ressuprimentos?", function (confirmarRessu) {
       if (confirmarRessu) {
-        localStorage.removeItem("ondasReabastecimentos");
-        deletarDoServidor(['ondasReabastecimentoseabastecimentos]);
+        localStorage.removeItem("reaba");
+        deletarDoServidor(['reaba']);
       }
 
       askConfirmation("Deseja apagar as Movimentações?", function (confirmarMovs) {
@@ -408,8 +408,8 @@ function resetGrade() {
           "activeSeparatorsSaved",
           "historicalInactiveSeparators",
           "gradeCompleta",
-          "estadoMonitorResultados",
-          "estadoCheckboxMonitor",
+          "result_state_monitor",
+          "checkbox_state_monitor",
           "pickingData",
           "pickingTimestamp"
         ];

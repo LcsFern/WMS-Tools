@@ -1,5 +1,5 @@
-const STORAGE_KEY = "estadoCheckboxMonitor";
-const RESULT_STORAGE_KEY = "estadoMonitorResultados";
+const STORAGE_KEY = "checkbox_state_monitor";
+const RESULT_STORAGE_KEY = "result_state_monitor";
 let registrosCombinados = [];
 let resetCriado = false;
 let separadoresPorOE = new Map();

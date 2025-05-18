@@ -3,8 +3,8 @@
     ondas: 'Ondas Pré-GRADE',
     gradeCompleta: 'GRADE',
     movimentacoesProcessadas: 'Movimentações',
-    ondasDinamicos: 'Picking Dinâmico',
-    ondasReabastecimentos: 'Ressuprimento',
+    ondasdin: 'Picking Dinâmico',
+    reaba: 'Ressuprimento',
     pickingData: 'Pendencias de Picking'
   };
 
@@ -12,8 +12,8 @@
     ondas: 'fa-solid fa-list-tree',
     gradeCompleta: 'fa-solid fa-table-cells',
     movimentacoesProcessadas: 'fa-solid fa-truck-container',
-    ondasDinamicos: 'fa-solid fa-list-check',
-    ondasReabastecimentos: 'fa-solid fa-shelves',
+    ondasdin: 'fa-solid fa-list-check',
+    reaba: 'fa-solid fa-shelves',
     pickingData: 'fas fa-tasks',
     default: 'fa-solid fa-circle-info'
   };
