@@ -1,12 +1,12 @@
 // Carregar dashboard salvo ao iniciar
 document.addEventListener('DOMContentLoaded', () => {
-  const savedDashboard = localStorage.getItem('dashboardHTML');
+  const savedDashboard = localStorage.getItem('htmlDashboard');
   if (savedDashboard) {
     document.getElementById('inputSection').style.display = 'none';
     const dashboard = document.getElementById('dashboard');
     dashboard.style.display = 'block';
     dashboard.querySelector('#resultado').innerHTML = savedDashboard;
-    document.getElementById('exportarBtn').addEventListener('click', () => exportarRanking(JSON.parse(localStorage.getItem('rankingArray'))));
+    document.getElementById('exportarBtn').addEventListener('click', () => exportarRanking(JSON.parse(localStorage.getItem('arrayRanking'))));
     document.getElementById('resetBtnDash').addEventListener('click', resetDados);
   }
 });
@@ -113,11 +113,11 @@ function calcularRanking() {
     }
   });
 
-  // Criar rankingArray ordenado por caixasSeparadas do maior para o menor
-  let rankingArray = Object.values(consolidated).sort((a, b) => b.caixasSeparadas - a.caixasSeparadas);
+  // Criar arrayRanking ordenado por caixasSeparadas do maior para o menor
+  let arrayRanking = Object.values(consolidated).sort((a, b) => b.caixasSeparadas - a.caixasSeparadas);
 
   // Criar uma cópia para os cálculos dos cards
-  const rankingArrayForCards = [...rankingArray];
+  const rankingArrayForCards = [...arrayRanking];
 
   // Normalização para pontuação (0-100) para o destaque
   const maxVisitasVal = Math.max(...rankingArrayForCards.map(i => i.visitas), 1);
@@ -138,7 +138,7 @@ function calcularRanking() {
   const maxPeso = rankingArrayForCards.reduce((max, curr) => curr.pesoSeparado > max.pesoSeparado ? curr : max, rankingArrayForCards[0] || {});
   const destaque = destaqueArray[0];
 
-  let dashboardHTML = `
+  let htmlDashboard = `
     <div class="highlights">
       <div class="highlight-card" data-type="destaque">
         <i class="fas fa-star"></i>
@@ -198,13 +198,13 @@ function calcularRanking() {
       </thead>
       <tbody>`;
 
-  // Usar rankingArray original, ordenado por caixasSeparadas
-  rankingArray.forEach((item, index) => {
+  // Usar arrayRanking original, ordenado por caixasSeparadas
+  arrayRanking.forEach((item, index) => {
     const pesoMedioPorCaixa = item.caixasSeparadas > 0 ? (item.pesoSeparado / item.caixasSeparadas).toFixed(2) : 0;
     const caixasPorPicking = item.visitas > 0 ? (item.caixasSeparadas / item.visitas).toFixed(2) : 0;
     const caixasPorCarga = item.cargasSeparadas > 0 ? (item.caixasSeparadas / item.cargasSeparadas).toFixed(2) : 0;
 
-    dashboardHTML += `
+    htmlDashboard += `
       <tr>
         <td>${formatRank(index)}</td>
         <td class="separador-cell" data-index="${index}">
@@ -223,28 +223,28 @@ function calcularRanking() {
       </tr>`;
   });
 
-  dashboardHTML += `</tbody></table>`;
+  htmlDashboard += `</tbody></table>`;
 
   document.getElementById('inputSection').style.display = 'none';
   const dashboard = document.getElementById('dashboard');
   dashboard.style.display = 'block';
-  dashboard.querySelector('#resultado').innerHTML = dashboardHTML;
+  dashboard.querySelector('#resultado').innerHTML = htmlDashboard;
   
-  localStorage.setItem('dashboardHTML', dashboardHTML);
-  localStorage.setItem('rankingArray', JSON.stringify(rankingArray));
+  localStorage.setItem('htmlDashboard', htmlDashboard);
+  localStorage.setItem('arrayRanking', JSON.stringify(arrayRanking));
 
-  document.getElementById('exportarBtn').addEventListener('click', () => exportarRanking(rankingArray));
+  document.getElementById('exportarBtn').addEventListener('click', () => exportarRanking(arrayRanking));
   document.getElementById('resetBtnDash').addEventListener('click', resetDados);
 }
 
-function exportarRanking(rankingArray) {
+function exportarRanking(arrayRanking) {
   const date = new Date();
   const fileName = `RANKING_PRODUTIVIDADE_${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}.csv`;
 
   const bom = '\uFEFF';
   let csv = `${bom};;;${new Date().toLocaleString('pt-BR').toUpperCase()}\n;PRODUTIVIDADE;;\n`;
   csv += "RANK;SEPARADOR;CARGAS SEPARADAS;PESO SEPARADO;VISITAS PICKING;CAIXAS SEPARADAS\n";
-  csv += rankingArray.map((item, index) => 
+  csv += arrayRanking.map((item, index) => 
     `${formatRank(index)};${item.separador.toUpperCase()};${item.cargasSeparadas};${item.pesoSeparado};${item.visitas};${item.caixasSeparadas}`
   ).join('\n');
 
@@ -259,8 +259,8 @@ function resetDados() {
   ['historicoInput', 'monitorInput', 'producaoInput'].forEach(id => {
     document.getElementById(id).value = "";
   });
-  localStorage.removeItem('dashboardHTML');
-  localStorage.removeItem('rankingArray');
+  localStorage.removeItem('htmlDashboard');
+  localStorage.removeItem('arrayRanking');
   document.getElementById('inputSection').style.display = 'block';
   document.getElementById('dashboard').style.display = 'none';
 }

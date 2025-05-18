@@ -1,5 +1,5 @@
 // Carrega as ondas do localStorage ou inicializa um array vazio
-let ondas = JSON.parse(localStorage.getItem('ondasdin')) || [];
+let ondas = JSON.parse(localStorage.getItem('ondasDinamicos')) || [];
 // Determina o número da onda atual com base no maior número existente
 let ondaAtual = ondas.length > 0 ? Math.max(...ondas.map(o => o.numero)) : 0;
 
@@ -171,7 +171,7 @@ function processarMovimentacao(rawText) {
   // Adiciona a nova onda ao array de ondas.
   ondas.push(novaOnda);
   // Salva o array atualizado de ondas no localStorage.
-  localStorage.setItem('ondasdin', JSON.stringify(ondas));
+  localStorage.setItem('ondasDinamicos', JSON.stringify(ondas));
 
   // Atualiza a exibição na tela, mostra a barra de pesquisa e oculta a área de importação.
   exibirMovimentacoes();
@@ -348,7 +348,7 @@ function exibirMovimentacoes() {
         e.stopPropagation();
         exportarPDF(onda.numero, 'congelado', onda.congelado);
         onda.exportado.congelado = true;
-        localStorage.setItem('ondasdin', JSON.stringify(ondas));
+        localStorage.setItem('ondasDinamicos', JSON.stringify(ondas));
         if (isOndaFinalizada(onda)) {
           header.querySelector('.export-checkbox').checked = true;
           card.classList.add('finalized-card');
@@ -362,7 +362,7 @@ function exibirMovimentacoes() {
         e.stopPropagation();
         exportarPDF(onda.numero, 'resfriado', onda.resfriado);
         onda.exportado.resfriado = true;
-        localStorage.setItem('ondasdin', JSON.stringify(ondas));
+        localStorage.setItem('ondasDinamicos', JSON.stringify(ondas));
         if (isOndaFinalizada(onda)) {
           header.querySelector('.export-checkbox').checked = true;
           card.classList.add('finalized-card');

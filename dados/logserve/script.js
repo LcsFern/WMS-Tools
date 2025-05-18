@@ -12,30 +12,30 @@ const HISTORY_API = 'https://labsuaideia.store/api/historysql.php';
 // Nomes personalizados exibidos no painel
 const nomesPersonalizados = {
   'logHistoricoMudancas': 'Última Sincronização de Logs de Alterações',
-  'checkbox_state_monitor': 'Última Sincronização checkbox carros em conferência',
-  'result_state_monitor': 'Última Sincronização pendências de picking',
-  'ondasdin': 'Última Sincronização picking dinâmico',
+  'estadoCheckboxMonitor': 'Última Sincronização checkbox carros em conferência',
+  'estadoMonitorResultados': 'Última Sincronização pendências de picking',
+  'ondasDinamicos': 'Última Sincronização picking dinâmico',
   'ondas': 'Última Sincronização Ondas da GRADE',
   'gradeCompleta': 'Última Sincronização grade completa',
-  'reaba': 'Última Sincronização reabastecimento',
+  'ondasReabastecimentos: 'Última Sincronização reabastecimento',
   'movimentacoesProcessadas': 'Última Sincronização movimentações',
-  'dashboardHTML': 'Última Sincronização Produtividade',
-  'rankingArray': 'Última Sincronização ranking',
+  'htmlDashboard': 'Última Sincronização Produtividade',
+  'arrayRanking': 'Última Sincronização ranking',
   'pickingData': 'Última Sincronização pendências de picking',
   'pickingTimestamp': 'Horário de sincronização pendências de picking'
 };
 
 // Ícones personalizados para cada chave
 const iconesChaves = {
-  'checkbox_state_monitor': 'fa-solid fa-check-square',
+  'estadoCheckboxMonitor': 'fa-solid fa-check-square',
   'movimentacoesProcessadas': 'fa-solid fa-truck-container',
-  'result_state_monitor': 'fa-solid fa-check-circle',
-  'ondasdin': 'fa-solid fa-list-check',
+  'estadoMonitorResultados': 'fa-solid fa-check-circle',
+  'ondasDinamicos': 'fa-solid fa-list-check',
   'ondas': 'fa-solid fa-list-tree',
   'gradeCompleta': 'fa-solid fa-table-cells',
-  'reaba': 'fa-solid fa-shelves',
-  'dashboardHTML': 'fas fa-chart-line',
-  'rankingArray': 'fa-solid fa-trophy',
+  'ondasReabastecimentos: 'fa-solid fa-shelves',
+  'htmlDashboard': 'fas fa-chart-line',
+  'arrayRanking': 'fa-solid fa-trophy',
   'logHistoricoMudancas': 'fa-solid fa-history',
   'pickingData': 'fas fa-tasks',
   'pickingTimestamp': 'fa-solid fa-clock',

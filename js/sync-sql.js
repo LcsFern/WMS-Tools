@@ -10,9 +10,9 @@ const MAX_RETRIES   = 3;      // Tentativas por requisição
 
 // Todas as chaves que serão sincronizadas
 const SYNC_KEYS = [
-  'ondasdin','gradeCompleta','movimentacoesProcessadas',
-  'ondas','result_state_monitor','checkbox_state_monitor',
-  'dashboardHTML','rankingArray','reaba',
+  'ondasDinamicos','gradeCompleta','movimentacoesProcessadas',
+  'ondas','estadoMonitorResultados','estadoCheckboxMonitor',
+  'htmlDashboard','arrayRanking','ondasReabastecimentos,
   'pickingData','pickingTimestamp'
 ];
 
