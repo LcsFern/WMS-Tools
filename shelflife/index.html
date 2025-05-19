@@ -1,15 +1,13 @@
 ---
 layout: default
-title: "WMS Tools - Consulta de Shelf Life"
+title: "WMS Shelf Life"
 ---
-
-<!-- shelf.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta de Shelf Life</title>
+  <title>Consulta de Shelf Life | WMS Tools</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
   <link rel="stylesheet" href="styles.css">
@@ -18,30 +16,162 @@ title: "WMS Tools - Consulta de Shelf Life"
   <div class="container">
     <h1><i class="fas fa-hourglass-half"></i> Consulta de Shelf Life</h1>
     
-    <div class="input-group glass-box">
-      <label for="productCode"><i class="fas fa-barcode"></i> Código do Produto</label>
-      <input type="text" id="productCode" placeholder="Ex: 10146" oninput="autocompleteProduct()">
-      <div id="autocomplete-list" class="autocomplete-items"></div>
+    <!-- Etapa 1: Seleção de Produto -->
+    <div id="step1" class="step active">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <h2 class="step-title">Selecione o Produto</h2>
+      </div>
+      
+      <div class="input-group glass-box">
+        <label for="productCode"><i class="fas fa-barcode"></i> Código ou Nome do Produto</label>
+        <input type="text" id="productCode" placeholder="Digite o código ou nome do produto" oninput="autocompleteProduct()">
+        <div id="autocomplete-list" class="autocomplete-items"></div>
+      </div>
+      
+      <div class="product-preview" id="productPreview" style="display:none;">
+        <div class="product-info">
+          <i class="fas fa-box-open"></i>
+          <div>
+            <h3 id="previewProductName">Nome do Produto</h3>
+            <span id="previewProductCode">Código</span>
+          </div>
+        </div>
+        <span id="previewValidity">0 dias</span>
+      </div>
+      
+      <button id="btnNextToStep2" class="button-next" onclick="goToStep(2)" disabled>
+        <span>Continuar</span> <i class="fas fa-arrow-right"></i>
+      </button>
     </div>
-
-    <div class="input-group glass-box">
-      <label for="manufactureDate"><i class="fas fa-calendar-alt"></i> Data de Fabricação</label>
-      <input type="date" id="manufactureDate">
+    
+    <!-- Etapa 2: Escolha entre Data ou Porcentagem -->
+    <div id="step2" class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <h2 class="step-title">Escolha uma Opção</h2>
+      </div>
+      
+      <div class="options-container">
+        <div class="option-card" onclick="selectOption('date')">
+          <div class="option-icon"><i class="fas fa-calendar-alt"></i></div>
+          <h3>Data de Fabricação</h3>
+          <p>Calcular shelf life a partir da data de fabricação</p>
+        </div>
+        
+        <div class="option-card" onclick="selectOption('percent')">
+          <div class="option-icon"><i class="fas fa-percentage"></i></div>
+          <h3>Porcentagem de Shelf</h3>
+          <p>Calcular datas a partir da % de shelf consumido</p>
+        </div>
+      </div>
+      
+      <!-- Opção de Data de Fabricação -->
+      <div id="dateOption" class="option-detail" style="display:none;">
+        <div class="input-group glass-box">
+          <label for="manufactureDate"><i class="fas fa-calendar-alt"></i> Data de Fabricação</label>
+          <input type="date" id="manufactureDate">
+        </div>
+        
+        <div class="button-group">
+          <button class="button-back" onclick="goToStep(1)">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <button class="button-calculate" onclick="calculateFromDate()">
+            <i class="fas fa-calculator"></i> Calcular
+          </button>
+        </div>
+      </div>
+      
+      <!-- Opção de Porcentagem -->
+      <div id="percentOption" class="option-detail" style="display:none;">
+        <div class="input-group glass-box">
+          <label for="shelfPercent"><i class="fas fa-percentage"></i> Porcentagem de Shelf Consumido</label>
+          <div class="slider-container">
+            <input type="range" id="shelfPercent" min="0" max="100" value="50" step="1" oninput="updatePercentValue()">
+            <span id="percentValue" class="percent-value">50%</span>
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button class="button-back" onclick="goToStep(1)">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <button class="button-calculate" onclick="calculateFromPercent()">
+            <i class="fas fa-calculator"></i> Calcular
+          </button>
+        </div>
+      </div>
     </div>
-
-    <button onclick="calculateShelfLife()">
-      <i class="fas fa-calculator"></i> Calcular Shelf Life
-    </button>
-
-    <div id="result" class="result glass-box" style="display:none;">
-      <h2><i class="fas fa-chart-line"></i> Resultado</h2>
-      <p><strong>Produto:</strong> <span id="productName"></span></p>
-      <p><strong>Data de Fabricação:</strong> <span id="displayManufactureDate"></span></p>
-      <p><strong>Data de Vencimento:</strong> <span id="expirationDate"></span></p>
-      <p><strong>Validade Total (dias):</strong> <span id="totalValidity"></span></p>
-      <p><strong>Tempo Restante (dias):</strong> <span id="timeLeft"></span></p>
-      <p><strong>Porcentagem de Shelf:</strong> <span id="shelfPercentage"></span></p>
-      <p><strong>Status:</strong> <span id="status"></span></p>
+    
+    <!-- Etapa 3: Resultados -->
+    <div id="step3" class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <h2 class="step-title">Resultado</h2>
+      </div>
+      
+      <div id="result" class="result glass-box">
+        <div class="result-header">
+          <div class="product-title">
+            <h3 id="resultProductName">Nome do Produto</h3>
+            <span id="resultProductCode">Código</span>
+          </div>
+          <span id="statusBadge" class="status-badge">Status</span>
+        </div>
+        
+        <div class="shelf-info">
+          <div class="info-card">
+            <div class="info-icon"><i class="fas fa-calendar-plus"></i></div>
+            <div class="info-content">
+              <span class="info-label">Data de Fabricação</span>
+              <span id="displayManufactureDate" class="info-value">--/--/----</span>
+            </div>
+          </div>
+          
+          <div class="info-card">
+            <div class="info-icon"><i class="fas fa-calendar-xmark"></i></div>
+            <div class="info-content">
+              <span class="info-label">Data de Vencimento</span>
+              <span id="expirationDate" class="info-value">--/--/----</span>
+            </div>
+          </div>
+          
+          <div class="info-card">
+            <div class="info-icon"><i class="fas fa-clock"></i></div>
+            <div class="info-content">
+              <span class="info-label">Validade Total</span>
+              <span id="totalValidity" class="info-value">0 dias</span>
+            </div>
+          </div>
+          
+          <div class="info-card">
+            <div class="info-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="info-content">
+              <span class="info-label">Tempo Restante</span>
+              <span id="timeLeft" class="info-value">0 dias</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="progress-container">
+          <div class="progress-label">
+            <span>Shelf Consumido: <span id="shelfPercentage">0%</span></span>
+          </div>
+          <div class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button class="button-back" onclick="goToStep(2)">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <button class="button-new" onclick="resetAndGoToStep(1)">
+            <i class="fas fa-plus"></i> Nova Consulta
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
