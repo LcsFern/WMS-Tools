@@ -487,7 +487,6 @@ footer {
     }
 }
 
-/* Estilo para o botão de cópia */
 .btn-copy {
     display: flex;
     align-items: center;
@@ -502,7 +501,6 @@ footer {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Animação de feedback de cópia */
 @keyframes copy-feedback {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
@@ -513,51 +511,21 @@ footer {
     animation: copy-feedback 0.3s ease;
 }
 
-/* Para centralizar o botão reset quando visível */
 #resetBtn {
     margin: 0 auto;
     display: inline-flex;
 }
-/* Adicione estas regras ao final do seu arquivo styles.css para corrigir o alinhamento */
 
-#listaPicking {
-    width: 100%;
-    min-height: 150px;
-    padding: 15px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--border-radius);
-    resize: vertical;
-    color: var(--text-light);
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    margin: 0 auto;
-    display: block;
-}
-
-.button-container {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin: 15px auto;
-}
-
-.btn-primary, .btn-secondary {
-    padding: 12px 20px;
-    border: none;
-    border-radius: var(--border-radius);
-    font-weight: 500;
+/* Estilos para placas clicáveis */
+.placa-clicavel {
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
     transition: var(--transition);
-    min-width: 150px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-#resetBtn {
-    margin: 0 auto;
-    display: inline-flex;
+.placa-clicavel:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

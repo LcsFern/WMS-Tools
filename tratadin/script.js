@@ -29,7 +29,25 @@ document.addEventListener('DOMContentLoaded', function() {
         todosProds: []
     };
     
-    let currentTab = 'todos'; // Alterado para 'todos'
+    let gradeCompleta = []; // Variável movida para escopo global
+        // Tenta carregar a gradeCompleta do localStorage assim que o DOM estiver pronto.
+    // Isso garante que, se a gradeCompleta já foi salva anteriormente,
+    // ela esteja disponível para funções como renderizarTabela quando
+    // os dados de 'tratadin' são carregados por verificarDadosSalvos() após um F5.
+    try {
+        const gradeCompletaSalvaStr = localStorage.getItem('gradeCompleta'); // Pega a string da grade salva
+        if (gradeCompletaSalvaStr) {
+            gradeCompleta = JSON.parse(gradeCompletaSalvaStr); // Converte a string de volta para objeto/array e guarda na variável
+            // console.log('Sucesso: gradeCompleta carregada do localStorage na inicialização.'); // Linha opcional para verificar no console se carregou
+        } else {
+            // console.warn('Aviso: gradeCompleta não encontrada no localStorage durante a inicialização.'); // Linha opcional
+        }
+    } catch (e) {
+        // Se der algum erro ao tentar carregar ou converter (ex: se o dado no localStorage estiver corrompido)
+        console.error('Erro ao carregar ou fazer parse da gradeCompleta do localStorage na inicialização:', e);
+        gradeCompleta = []; // Garante que gradeCompleta seja um array vazio para evitar mais erros.
+    }
+    let currentTab = 'todos';
 
     // Event Listeners
     processarBtn.addEventListener('click', processarDados);
@@ -37,9 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
     resetBtn.addEventListener('click', limparDados);
     searchInput.addEventListener('input', filtrarTabela);
     
-    // Detectar colagem de texto automaticamente
     listaPicking.addEventListener('paste', function() {
-        // Pequeno delay para garantir que o conteúdo colado seja incluído
         setTimeout(processarDados, 100);
     });
     
@@ -60,17 +76,14 @@ document.addEventListener('DOMContentLoaded', function() {
             mostrarLoading(true);
             atualizarStatus('Processando dados...', false);
             
-            // Obter dados do localStorage e arquivo JSON
-            const gradeCompleta = await obterGradeCompleta();
+            const gradeCompletaLocal = await obterGradeCompleta();
             const produtosData = await obterProdutosJson();
             
-            // Processar a lista de picking
             const linhas = pickingData.split('\n');
             const cabecalhos = linhas[0].split('\t');
             
             let pickingRows = [];
             
-            // Processar cada linha
             for (let i = 1; i < linhas.length; i++) {
                 if (!linhas[i].trim()) continue;
                 
@@ -84,23 +97,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 pickingRows.push(row);
             }
             
-            // Agrupar produtos
             const produtosAgrupados = agruparProdutos(pickingRows);
+            const produtosProcessados = calcularPosicoesEPlacas(produtosAgrupados, produtosData, gradeCompletaLocal);
             
-            // Calcular posições e associar com placa
-            const produtosProcessados = calcularPosicoesEPlacas(produtosAgrupados, produtosData, gradeCompleta);
-            
-            // Ordenar por quantidade (maior para menor)
             produtosProcessados.sort((a, b) => b.quantidade - a.quantidade);
             
-            // Separar por tipo (congelado/resfriado)
             const { congelados, resfriados } = separarPorTipo(produtosProcessados);
             
-            // Ordenar também os arrays separados
             congelados.sort((a, b) => b.quantidade - a.quantidade);
             resfriados.sort((a, b) => b.quantidade - a.quantidade);
             
-            // Atualizar o estado da aplicação
             processedData = {
                 produtos: produtosProcessados,
                 congelados: congelados,
@@ -108,26 +114,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 todosProds: produtosProcessados
             };
             
-            // Salvar dados processados no localStorage com a key 'tratadin'
             localStorage.setItem('tratadin', JSON.stringify(processedData));
             
-            // Atualizar o resumo
             atualizarResumo(produtosProcessados, congelados, resfriados);
-            
-            // Exibir na tabela inicial (todos)
             renderizarTabela(produtosProcessados);
             tabTodos.classList.add('active');
             tabCongelados.classList.remove('active');
             tabResfriados.classList.remove('active');
             
-            // Mostrar resultados e esconder a área de entrada
             resultsSection.style.display = 'flex';
             listaPicking.style.display = 'none';
             processarBtn.style.display = 'none';
             limparBtn.style.display = 'none';
             resetBtn.style.display = 'block';
-            resetBtn.classList.add('btn-primary'); // Adicionar classe btn-primary para estilo verde
-            resetBtn.classList.remove('btn-secondary'); // Remover classe btn-secondary
+            resetBtn.classList.add('btn-primary');
+            resetBtn.classList.remove('btn-secondary');
             
             atualizarStatus('Dados processados com sucesso!', false);
             mostrarNotificacao('Sucesso', 'Dados processados com sucesso', 'success');
@@ -144,7 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
         listaPicking.value = '';
         tabelaBody.innerHTML = '';
         
-        // Limpar estado
         processedData = {
             produtos: [],
             congelados: [],
@@ -152,25 +152,21 @@ document.addEventListener('DOMContentLoaded', function() {
             todosProds: []
         };
         
-        // Limpar resumo
         totalProdutos.textContent = '-';
         totalCaixas.textContent = '-';
         posicoesCongelado.textContent = '-';
         posicoesResfriado.textContent = '-';
         totalPosicoes.textContent = '-';
         
-        // Limpar status
         statusBar.classList.remove('active', 'error');
         statusBar.textContent = '';
         
-        // Mostrar área de entrada e esconder resultados
         resultsSection.style.display = 'none';
         listaPicking.style.display = 'block';
         processarBtn.style.display = 'inline-flex';
         limparBtn.style.display = 'inline-flex';
         resetBtn.style.display = 'none';
         
-        // Remover dados processados do localStorage
         localStorage.removeItem('tratadin');
         
         mostrarNotificacao('Info', 'Dados limpos', 'success');
@@ -179,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function mudarTab(tab) {
         currentTab = tab;
         
-        // Atualizar seleção visual
         [tabTodos, tabCongelados, tabResfriados].forEach(elem => {
             elem.classList.remove('active');
         });
@@ -195,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderizarTabela(processedData.resfriados);
         }
         
-        // Aplicar filtro de busca após trocar a tab
         filtrarTabela();
     }
 
@@ -235,6 +229,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Nova função para copiar texto genérico
+    function copiarTexto(texto, descricao) {
+        navigator.clipboard.writeText(texto).then(() => {
+            mostrarNotificacao('Sucesso', `${descricao} copiado para a área de transferência`, 'success');
+        }).catch(err => {
+            console.error('Erro ao copiar: ', err);
+            mostrarNotificacao('Erro', 'Não foi possível copiar o texto', 'error');
+        });
+    }
+
     // Funções auxiliares
     async function obterGradeCompleta() {
         try {
@@ -243,7 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Grade completa não encontrada no localStorage');
             }
             
-            return JSON.parse(gradeCompletaStr);
+            gradeCompleta = JSON.parse(gradeCompletaStr); // Atribui ao escopo global
+            return gradeCompleta;
         } catch (error) {
             console.error('Erro ao obter Grade', error);
             throw new Error('Salve a grade completa antes de processar os dados');
@@ -297,29 +302,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function calcularPosicoesEPlacas(produtosAgrupados, produtosData, gradeCompleta) {
         return produtosAgrupados.map(produto => {
-            // Encontrar info do produto no catálogo
             const infoProduto = produtosData.find(p => p['COD. PRODUTO'] === produto.codigo) || {
                 'CX/PALETE': '0',
                 'PRODUTO': produto.nome
             };
             
-            // Calcular número de paletes
             const caixasPorPalete = parseInt(infoProduto['CX/PALETE']) || 1;
             let numPaletes = 0;
             
             if (caixasPorPalete > 0) {
-                // Cálculo proporcional exato (0.3 para 60 caixas em palete de 200)
                 numPaletes = parseFloat((produto.quantidade / caixasPorPalete).toFixed(1));
-                // Se for 0, mas tiver alguma caixa, garantir pelo menos 0.1
                 if (numPaletes === 0 && produto.quantidade > 0) {
                     numPaletes = 0.1;
                 }
             }
             
-            // Calcular posições dinâmicas (mantemos o cálculo mesmo sem exibir a coluna)
             const posicoesDinamicas = Math.ceil(produto.quantidade / caixasPorPalete) || 1;
             
-            // Mapear OEs para placas
             const placas = new Set();
             produto.oes.forEach(oe => {
                 const gradeItem = gradeCompleta.find(item => item.OE === oe);
@@ -329,14 +328,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             return {
-                ...produto,
-                codigo: produto.codigo,
-                nome: infoProduto['PRODUTO'] || produto.nome,
-                caixasPorPalete,
-                paletes: numPaletes,
-                posicoesDinamicas,
-                placas: Array.from(placas),
-                tipo: produto.origem.startsWith('C04') ? 'resfriado' : 'congelado'
+                ...produto, // Copia as propriedades originais de 'produto' (codigo, nome inicial, quantidade, origem, temperatura, oes (Set), tipo)
+                nome: infoProduto['PRODUTO'] || produto.nome, // Atualiza o nome se um melhor for encontrado em produtosData
+                oes: Array.from(produto.oes || []), // PONTO CHAVE: Converte o Set 'oes' para um Array ANTES de salvar. Adicionado '|| []' para segurança extra.
+                // As propriedades 'codigo' e 'tipo' já estão corretas e incluídas pelo ...produto.
+                // A redefinição explícita delas como no código original ('codigo: produto.codigo', 'tipo: produto.origem...') é redundante aqui.
+                caixasPorPalete, // Número de caixas por palete, conforme calculado
+                paletes: numPaletes, // Número de paletes, conforme calculado
+                posicoesDinamicas, // Número de posições dinâmicas, conforme calculado
+                placas: Array.from(placas) // Garante que 'placas' também seja um array (já estava assim)
             };
         });
     }
@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (produtos.length === 0) {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
-            td.colSpan = 6; // Reduzido para 6 colunas (removemos "posições")
+            td.colSpan = 6;
             td.textContent = 'Nenhum produto encontrado';
             td.style.textAlign = 'center';
             tr.appendChild(td);
@@ -434,16 +434,39 @@ document.addEventListener('DOMContentLoaded', function() {
             tdTipo.appendChild(tipoTag);
             tr.appendChild(tdTipo);
             
-            // Placas
+            // Placas com tooltip de OEs e cópia ao clicar
             const tdPlacas = document.createElement('td');
             const placasLista = document.createElement('div');
             placasLista.classList.add('placas-lista');
             
             if (produto.placas.length > 0) {
                 produto.placas.forEach(placa => {
+                    const oesRelacionadas = [];
+                    produto.oes.forEach(oe => {
+                        const gradeItem = gradeCompleta.find(item => 
+                            item.OE === oe && item['PLACA ROTEIRIZADA'] === placa
+                        );
+                        if (gradeItem) {
+                            oesRelacionadas.push(oe);
+                        }
+                    });
+                    
                     const placaItem = document.createElement('span');
                     placaItem.classList.add('placa-item');
                     placaItem.textContent = placa;
+                    
+                    if (oesRelacionadas.length > 0) {
+                        placaItem.title = `OE: ${oesRelacionadas.join(', ')}`;
+                        placaItem.setAttribute('data-oes', oesRelacionadas.join(', '));
+                        placaItem.classList.add('placa-clicavel');
+                        placaItem.addEventListener('click', function() {
+                            const oes = this.getAttribute('data-oes');
+                            copiarTexto(oes, `OE do veículo ${placa}`);
+                        });
+                    } else {
+                        placaItem.title = 'Nenhuma OE associada';
+                    }
+                    
                     placasLista.appendChild(placaItem);
                 });
             } else {
@@ -470,7 +493,6 @@ document.addEventListener('DOMContentLoaded', function() {
             statusBar.classList.remove('error');
         }
         
-        // Auto-esconder após alguns segundos
         setTimeout(() => {
             statusBar.classList.remove('active');
         }, 5000);
@@ -514,38 +536,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         notificationContainer.appendChild(notification);
         
-        // Mostrar a notificação com um pequeno atraso para permitir a animação
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
         
-        // Remover a notificação após um período
         setTimeout(() => {
             notification.classList.remove('show');
-            
-            // Esperar a animação terminar antes de remover o elemento
             setTimeout(() => {
                 notificationContainer.removeChild(notification);
             }, 300);
         }, 5000);
     }
 
-    // Função para verificar e carregar dados salvos do localStorage
     function verificarDadosSalvos() {
         try {
             const dadosSalvos = localStorage.getItem('tratadin');
             if (dadosSalvos) {
                 const dados = JSON.parse(dadosSalvos);
-                // Carregar dados salvos
                 processedData = dados;
                 
-                // Atualizar o resumo
                 atualizarResumo(dados.todosProds, dados.congelados, dados.resfriados);
-                
-                // Exibir na tabela inicial (todos)
                 renderizarTabela(dados.todosProds);
                 
-                // Mostrar resultados e esconder a área de entrada
                 resultsSection.style.display = 'flex';
                 listaPicking.style.display = 'none';
                 processarBtn.style.display = 'none';
@@ -554,7 +566,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetBtn.classList.add('btn-primary');
                 resetBtn.classList.remove('btn-secondary');
                 
-                // Selecionar a aba "Todos" como ativa
                 tabTodos.classList.add('active');
                 tabCongelados.classList.remove('active');
                 tabResfriados.classList.remove('active');
@@ -563,21 +574,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Erro ao carregar dados salvos:', error);
-            localStorage.removeItem('tratadin'); // Remove dados corrompidos
+            localStorage.removeItem('tratadin');
         }
     }
 
-    // Inicialização inicial
-    resultsSection.style.display = 'none'; // Esconder resultados inicialmente
-    resetBtn.style.display = 'none'; // Esconder botão de reset inicialmente
+    resultsSection.style.display = 'none';
+    resetBtn.style.display = 'none';
     
     try {
-        // Verificar se há dados no localStorage para gradeCompleta
         if (!localStorage.getItem('gradeCompleta')) {
             console.warn('gradeCompleta não encontrada no localStorage.');
         }
-        
-        // Verificar se existem dados salvos
         verificarDadosSalvos();
     } catch (error) {
         console.error('Erro ao verificar localStorage:', error);
