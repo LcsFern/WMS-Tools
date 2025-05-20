@@ -589,4 +589,261 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
         console.error('Erro ao verificar localStorage:', error);
     }
+
+    // Configuração e gerenciamento de posições de picking
+    const configButton = document.getElementById('configButton');
+    const configModal = document.getElementById('configModal');
+    const closeConfigModal = document.getElementById('closeConfigModal');
+    const posicoesPickingInput = document.getElementById('posicoesPickingInput');
+    const salvarPosicoesBtn = document.getElementById('salvarPosicoesBtn');
+    const limparPosicoesBtn = document.getElementById('limparPosicoesBtn');
+    const totalPosicoesCarregadas = document.getElementById('totalPosicoesCarregadas');
+
+    // Estado para posições de picking
+    let posicoesPickingData = [];
+
+    // Abrir modal de configuração
+    configButton.addEventListener('click', () => {
+        configModal.classList.add('active');
+        
+        // Carregar dados existentes no textarea
+        const posicoesPickingSalvas = localStorage.getItem('posicoesdepicking');
+        if (posicoesPickingSalvas) {
+            const dados = JSON.parse(posicoesPickingSalvas);
+            posicoesPickingData = dados;
+            
+            // Reconstituir o texto formatado em forma de tabela
+            let linhasTexto = ['ID BOX\tTIPO\tLOCALIZAÇÃO\tPRODUTO\tDESCRIÇÃO DO PRODUTO\tQTD BUFFER\tQTD ATUAL\tROTA\tQTD_MINIMA\tETIQUETA PALETE\tN.KIT\tSHELF LIFE\tMO'];
+            
+            dados.forEach(linha => {
+                const textoLinha = [
+                    linha['ID BOX'] || '',
+                    linha['TIPO'] || '',
+                    linha['LOCALIZAÇÃO'] || '',
+                    linha['PRODUTO'] || '',
+                    linha['DESCRIÇÃO DO PRODUTO'] || '',
+                    linha['QTD BUFFER'] || '',
+                    linha['QTD ATUAL'] || '',
+                    linha['ROTA'] || '',
+                    linha['QTD_MINIMA'] || '',
+                    linha['ETIQUETA PALETE'] || '',
+                    linha['N.KIT'] || '',
+                    linha['SHELF LIFE'] || '',
+                    linha['MO'] || ''
+                ].join('\t');
+                
+                linhasTexto.push(textoLinha);
+            });
+            
+            posicoesPickingInput.value = linhasTexto.join('\n');
+            totalPosicoesCarregadas.textContent = dados.length;
+        } else {
+            posicoesPickingInput.value = '';
+            totalPosicoesCarregadas.textContent = '0';
+        }
+    });
+
+    // Fechar modal de configuração
+    closeConfigModal.addEventListener('click', () => {
+        configModal.classList.remove('active');
+    });
+
+    // Fechar modal clicando fora
+    configModal.addEventListener('click', (e) => {
+        if (e.target === configModal) {
+            configModal.classList.remove('active');
+        }
+    });
+
+    // Salvar posições de picking
+    salvarPosicoesBtn.addEventListener('click', () => {
+        const texto = posicoesPickingInput.value.trim();
+        
+        if (!texto) {
+            mostrarNotificacao('Aviso', 'Insira dados de posições de picking', 'error');
+            return;
+        }
+        
+        try {
+            // Processar dados colados
+            const linhas = texto.split('\n');
+            const cabecalhos = linhas[0].split('\t');
+            
+            // Verificar cabeçalhos obrigatórios
+            const cabecalhosObrigatorios = ['PRODUTO', 'LOCALIZAÇÃO'];
+            const cabecalhosPresentes = cabecalhosObrigatorios.every(cabecalho => 
+                cabecalhos.includes(cabecalho)
+            );
+            
+            if (!cabecalhosPresentes) {
+                mostrarNotificacao('Erro', 'Dados inválidos: Faltam cabeçalhos obrigatórios (PRODUTO, LOCALIZAÇÃO)', 'error');
+                return;
+            }
+            
+            // Converter para objeto
+            let dados = [];
+            
+            for (let i = 1; i < linhas.length; i++) {
+                if (!linhas[i].trim()) continue;
+                
+                const valores = linhas[i].split('\t');
+                let linha = {};
+                
+                cabecalhos.forEach((header, index) => {
+                    linha[header] = valores[index] || '';
+                });
+                
+                dados.push(linha);
+            }
+            
+            // Salvar no localStorage
+            localStorage.setItem('posicoesdepicking', JSON.stringify(dados));
+            posicoesPickingData = dados;
+            
+            totalPosicoesCarregadas.textContent = dados.length;
+            mostrarNotificacao('Sucesso', `${dados.length} posições de picking salvas`, 'success');
+            
+            // Atualizar visualização se estiver na tela de resultados
+            if (tabelaBody.innerHTML !== '') {
+                atualizarIndicadoresPicking();
+            }
+            
+        } catch (error) {
+            console.error('Erro ao processar posições de picking:', error);
+            mostrarNotificacao('Erro', 'Não foi possível processar os dados: ' + error.message, 'error');
+        }
+    });
+
+    // Limpar posições de picking
+    limparPosicoesBtn.addEventListener('click', () => {
+        posicoesPickingInput.value = '';
+        localStorage.removeItem('posicoesdepicking');
+        posicoesPickingData = [];
+        totalPosicoesCarregadas.textContent = '0';
+        mostrarNotificacao('Info', 'Posições de picking removidas', 'success');
+        
+        // Atualizar visualização se estiver na tela de resultados
+        if (tabelaBody.innerHTML !== '') {
+            atualizarIndicadoresPicking();
+        }
+    });
+
+    // Função para adicionar indicadores de picking nas linhas da tabela
+    function atualizarIndicadoresPicking() {
+        // Remover indicadores existentes
+        document.querySelectorAll('.picking-indicator').forEach(el => el.remove());
+        
+        // Se não tiver dados de posições, sair
+        if (!posicoesPickingData.length) return;
+        
+        // Obter todos os códigos de produtos da tabela
+        const linhasTabela = tabelaBody.querySelectorAll('tr');
+        
+        linhasTabela.forEach(linha => {
+            const tdCodigo = linha.querySelector('td:first-child');
+            if (!tdCodigo) return;
+            
+            const codigoContainer = tdCodigo.querySelector('div');
+            if (!codigoContainer) return;
+            
+            const codigoTexto = codigoContainer.querySelector('span');
+            if (!codigoTexto) return;
+            
+            const codigoProduto = codigoTexto.textContent;
+            
+            // Encontrar posições de picking para este código
+            const posicoesEncontradas = posicoesPickingData.filter(pos => 
+                pos['PRODUTO'] === codigoProduto
+            );
+            
+            if (posicoesEncontradas.length > 0) {
+                // Criar indicador de picking
+                const pickingIndicator = document.createElement('div');
+                pickingIndicator.className = 'picking-indicator';
+                pickingIndicator.innerHTML = '<i class="fas fa-map-marker-alt"></i>';
+                
+                // Criar tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'picking-tooltip';
+                
+                // Título do tooltip
+                const titulo = document.createElement('div');
+                titulo.style.fontWeight = 'bold';
+                titulo.style.marginBottom = '5px';
+                titulo.textContent = `Posições de Picking (${posicoesEncontradas.length})`;
+                tooltip.appendChild(titulo);
+                
+                // Adicionar cada posição ao tooltip
+                posicoesEncontradas.forEach(pos => {
+                    const posicaoItem = document.createElement('div');
+                    posicaoItem.className = 'picking-location';
+                    
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-box';
+                    posicaoItem.appendChild(icon);
+                    
+                    const texto = document.createElement('span');
+                    texto.textContent = `    ${pos['LOCALIZAÇÃO']}`;
+                    texto.style.display = 'block';
+                    texto.style.textAlign = 'center';
+                    posicaoItem.appendChild(texto);
+                    
+                    tooltip.appendChild(posicaoItem);
+                });
+                
+                // Apende o tooltip primeiro (fora de tela)
+pickingIndicator.appendChild(tooltip);
+
+// Aguarda o próximo repaint para calcular posição
+requestAnimationFrame(() => {
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const indicatorRect = pickingIndicator.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    // Espaço disponível acima e abaixo
+    const spaceAbove = indicatorRect.top;
+    const spaceBelow = viewportHeight - indicatorRect.bottom;
+
+    // Limpa classes anteriores
+    tooltip.classList.remove('tooltip-top', 'tooltip-bottom');
+
+    // Decide onde posicionar
+    if (spaceBelow < tooltipRect.height + 20 && spaceAbove > tooltipRect.height + 20) {
+        tooltip.classList.add('tooltip-top'); // Aparece para cima
+    } else {
+        tooltip.classList.add('tooltip-bottom'); // Aparece para baixo (padrão)
+    }
+});
+
+                codigoContainer.appendChild(pickingIndicator);
+            }
+        });
+    }
+
+    // Modificar a função renderizarTabela para chamar atualizarIndicadoresPicking após renderizar
+    const renderizarTabelaOriginal = renderizarTabela;
+    renderizarTabela = function(produtos) {
+        renderizarTabelaOriginal(produtos);
+        
+        // Carregar dados de posições de picking se existirem
+        if (localStorage.getItem('posicoesdepicking')) {
+            try {
+                posicoesPickingData = JSON.parse(localStorage.getItem('posicoesdepicking'));
+                atualizarIndicadoresPicking();
+            } catch (e) {
+                console.error('Erro ao carregar posições de picking:', e);
+            }
+        }
+    };
+
+    // Carregar posições de picking ao iniciar
+    try {
+        const posicoesPickingSalvas = localStorage.getItem('posicoesdepicking');
+        if (posicoesPickingSalvas) {
+            posicoesPickingData = JSON.parse(posicoesPickingSalvas);
+            console.log(`${posicoesPickingData.length} posições de picking carregadas`);
+        }
+    } catch (e) {
+        console.error('Erro ao carregar posições de picking:', e);
+    }
 });

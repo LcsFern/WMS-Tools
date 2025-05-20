@@ -1,16 +1,16 @@
 ---
 layout: default
-title: "WMS Tools - Tratar dinamicos"
+title: "Tratar Dinâmicos"
 ---
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abastecer Picking Dinâmico</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+    <title>WMS Tools - Tratar dinâmicos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+     <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,22 +18,22 @@ title: "WMS Tools - Tratar dinamicos"
         <header>
             <h1><i class="fas fa-exchange-alt"></i> Abastecer Picking Dinâmico</h1>
         </header>
-        
+
         <main>
-            <section class="glass-panel input-section">
-                <h2><i class="fas fa-list"></i> Lista de Picking</h2>
-                <textarea id="listaPicking" placeholder="Cole a lista de picking aqui..." rows="1"></textarea>
+            <section class="input-section glass-panel">
+                <h2><i class="fas fa-clipboard-list"></i> Lista de Picking</h2>
+                <textarea id="listaPicking" placeholder="Cole os dados da lista de picking aqui..."></textarea>
                 <div class="button-container">
                     <button id="processar" class="btn-primary"><i class="fas fa-cogs"></i> Processar Dados</button>
                     <button id="limpar" class="btn-secondary"><i class="fas fa-trash"></i> Limpar</button>
-                    <button id="resetBtn" class="btn-secondary" style="display: none;"><i class="fas fa-undo"></i> Reset</button>
+                    <button id="resetBtn" class="btn-secondary"><i class="fas fa-undo"></i> Reset</button>
                 </div>
                 <div id="status" class="status-bar"></div>
             </section>
-            
-            <section class="results-section" style="display: none;">
-                <div class="glass-panel summary-section">
-                    <h2><i class="fas fa-chart-bar"></i> Resumo de Pendencias <i class="fas fa-exchange-alt"></i> Aereos </i></h2>
+
+            <section class="results-section">
+                <div class="summary-section glass-panel">
+                    <h2><i class="fas fa-chart-bar"></i> Resumo de Pendências Aéreas</h2>
                     <div class="summary-content">
                         <div class="summary-item">
                             <span class="summary-label">Total de Produtos:</span>
@@ -57,11 +57,11 @@ title: "WMS Tools - Tratar dinamicos"
                         </div>
                     </div>
                 </div>
-                
-                <div class="glass-panel details-section">
+
+                <div class="details-section glass-panel">
                     <h2><i class="fas fa-table"></i> Detalhes dos Produtos</h2>
                     <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="Buscar por código, nome ou placa...">
+                        <input type="text" id="searchInput" placeholder="Pesquisar por código, produto ou veículo...">
                         <i class="fas fa-search"></i>
                     </div>
                     <div class="tabs">
@@ -81,24 +81,53 @@ title: "WMS Tools - Tratar dinamicos"
                                     <th>Veículos</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabelaBody">
-                                <!-- Dados serão inseridos aqui -->
-                            </tbody>
+                            <tbody id="tabelaBody"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
         </main>
-        
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Processando dados...</p>
+        </div>
+
+        <div id="notificationContainer" class="notification-container"></div>
+
+        <!-- Botão flutuante de configuração -->
+        <div id="configButton" class="config-button">
+            <i class="fas fa-cog"></i>
+        </div>
+
+        <!-- Modal de configuração -->
+        <div id="configModal" class="config-modal">
+            <div class="config-modal-content glass-panel">
+                <div class="config-modal-header">
+                    <h2><i class="fas fa-map-marker-alt"></i> Configurar Posições de Picking</h2>
+                    <button id="closeConfigModal" class="close-button"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="config-modal-body">
+                    <p>Cole os dados das posições de picking:</p>
+                    <textarea id="posicoesPickingInput" placeholder="Cole os dados de posições de picking aqui..."></textarea>
+                    <div class="config-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Salve as posições de picking antes de fechar essa janela.</span>
+                    </div>
+                    <div class="button-container">
+                        <button id="salvarPosicoesBtn" class="btn-primary"><i class="fas fa-save"></i> Salvar Posições</button>
+                        <button id="limparPosicoesBtn" class="btn-secondary"><i class="fas fa-trash"></i> Limpar Posições</button>
+                    </div>
+                    <div class="posicoes-stats">
+                        <div class="summary-item">
+                            <span class="summary-label">Posições Carregadas:</span>
+                            <span id="totalPosicoesCarregadas" class="summary-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Processando dados...</p>
-    </div>
-    
-    <div id="notificationContainer" class="notification-container"></div>
-    
     <script src="script.js"></script>
 </body>
 </html>

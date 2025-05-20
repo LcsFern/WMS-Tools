@@ -13,7 +13,7 @@ const SYNC_KEYS = [
   'ondasdin','gradeCompleta','movimentacoesProcessadas',
   'ondas','result_state_monitor','checkbox_state_monitor',
   'dashboardHTML','rankingArray','reaba',
-  'pickingData','pickingTimestamp'
+  'pickingData','pickingTimestamp', 'posicoesdepicking',
 ];
 
 // Internal storage keys

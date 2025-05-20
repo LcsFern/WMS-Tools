@@ -56,7 +56,7 @@ header h1 i {
 }
 
 .glass-panel {
-    background: var(--glass);
+    background: var(--background);
     border-radius: var(--border-radius);
     padding: 25px;
     backdrop-filter: blur(10px);
@@ -256,6 +256,7 @@ main {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+    z-index: 1;
 }
 
 .tab-button {
@@ -280,6 +281,9 @@ main {
 
 .details-content {
     overflow-x: auto;
+    z-index: 1;
+    overflow-y: visible; 
+    position: relative;
 }
 
 table {
@@ -528,4 +532,225 @@ footer {
     background-color: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Botão de configuração flutuante */
+.config-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: var(--transition);
+    z-index: 100;
+}
+
+.config-button:hover {
+    background-color: var(--secondary);
+    transform: translateY(-5px) rotate(30deg);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Modal de configuração */
+.config-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+}
+
+.config-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.config-modal-content {
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.config-modal.active .config-modal-content {
+    transform: translateY(0);
+}
+
+.config-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+}
+
+.config-modal-header h2 {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.close-button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.close-button:hover {
+    color: var(--text-primary);
+    transform: rotate(90deg);
+}
+
+.config-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#posicoesPickingInput {
+    width: 100%;
+    min-height: 200px;
+    padding: 15px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    resize: vertical;
+    color: var(--text-light);
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.config-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: var(--border-radius);
+}
+
+.posicoes-stats {
+    margin-top: 10px;
+}
+
+/* Ícone de indicação de posição de picking */
+.picking-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--accent);
+    cursor: pointer;
+    margin-left: 5px;
+    position: relative;
+    z-index: 1000;
+}
+
+.picking-indicator:hover {
+    color: #fff;
+}
+
+/* Tooltip para exibir posições */
+.picking-tooltip {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: var(--text-light);
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    width: max-content;
+    max-width: 300px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    text-align: left;
+    z-index: 9999;
+}
+
+.tooltip-top {
+    bottom: 130%;
+}
+
+.tooltip-bottom {
+    top: 130%;
+}
+
+.tooltip-top::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+}
+
+.tooltip-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
+}
+
+.picking-indicator:hover .picking-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+.picking-location {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+    padding: 3px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.picking-location:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.picking-location i {
+    color: var(--accent);
 }
