@@ -160,9 +160,7 @@ function processarCSV(csvText) {
         !grupo.resfriado.separadores.length &&
         grupo.congelado.pendentes === 0 &&
         grupo.resfriado.pendentes === 0) return null;
-    let placa = (reg["TROCAR PLACA"] && reg["TROCAR PLACA"].trim() !== "")
-                  ? reg["TROCAR PLACA"].trim()
-                  : (reg["PLACA ROTEIRIZADA"] ? reg["PLACA ROTEIRIZADA"].trim() : "");
+    let placa = reg.["PLACA ROTEIRIZADA"] ? reg.["PLACA ROTEIRIZADA"].trim() : "");
     let destino = reg.DESTINO ? reg.DESTINO.trim() : "";
     let fullCongelado = grupo.congelado.separadores.length ? [...new Set(grupo.congelado.separadores)] : [];
     let fullResfriado = grupo.resfriado.separadores.length ? [...new Set(grupo.resfriado.separadores)] : [];
