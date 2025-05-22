@@ -1,0 +1,444 @@
+:root {
+  --primary: #008d4c;
+  --secondary: #00a65a;
+  --accent: #00f7ff;
+  --background: #0f172a;
+  --glass: rgba(255, 255, 255, 0.05);
+  --text: #f8fafc;
+  --blue-gradient-start: #0066cc;
+  --blue-gradient-end: #00a6ff;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui;
+  background: linear-gradient(45deg, var(--background), #1e293b);
+  color: var(--text);
+  margin: 0;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+h1 i {
+  /* Garante que o ícone dentro do h1 também pegue o gradiente, se possível, ou uma cor sólida */
+   background: linear-gradient(45deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-right: 0.5rem; /* Espaçamento entre ícone e texto */
+}
+
+
+.import-section {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.import-section h2 {
+    font-size: 1.5rem; /* Ajuste o tamanho conforme necessário */
+    margin-bottom: 1rem; /* Espaçamento abaixo do título da seção */
+    color: var(--text); /* Cor do texto, pode usar variáveis se definidas */
+}
+
+.import-section textarea {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  min-height: 100px; /* Altura mínima */
+  max-height: 200px; /* Altura máxima */
+  margin: 1.5rem auto;
+  padding: 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  resize: vertical; /* Permite redimensionamento vertical pelo usuário */
+}
+
+.import-section textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(64, 237, 58, 0.2);
+}
+
+button {
+  padding: 0.6rem 1rem;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.hidden {
+  display: none !important; /* Usar !important para garantir que sobreponha outros displays se necessário */
+}
+
+#movimentacoesContainer h2 {
+    font-size: 1.5rem; /* Ajuste o tamanho conforme necessário */
+    margin-bottom: 1rem; /* Espaçamento abaixo do título da seção */
+    color: var(--text); /* Cor do texto */
+    text-align: center; /* Centraliza o título da seção de operações processadas */
+}
+
+.group-card {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  margin: 1rem 0;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border-left: 4px solid transparent; /* Borda base para transição */
+  transition: opacity 0.3s ease, border-left-color 0.3s ease;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+}
+
+.group-info {
+  font-size: 1rem; /* Levemente reduzido para dar mais espaço */
+  font-weight: bold;
+  display: flex; /* Para alinhar os totais lado a lado */
+  gap: 15px; /* Espaço entre os totais */
+}
+
+.group-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.export-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  border: 2px solid var(--primary);
+  padding: 10px; /* Tamanho do checkbox */
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 20px; /* Largura explícita */
+  height: 20px; /* Altura explícita */
+  vertical-align: middle; /* Alinha melhor com o texto */
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--secondary);
+}
+
+input[type="checkbox"]:checked:after {
+  content: "\f00c"; /* Código para fa-check em Font Awesome 5/6 Free Solid */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900; /* Necessário para ícones sólidos */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px; /* Tamanho do ícone dentro do checkbox */
+}
+
+
+.conferencia-label {
+  font-weight: bold;
+  color: var(--text); /* Alterado para cor de texto padrão para melhor contraste inicial */
+  margin-left: 5px;
+  vertical-align: middle; /* Alinha melhor com o checkbox */
+}
+
+input[type="checkbox"]:checked + .conferencia-label {
+  color: var(--secondary); /* Cor verde quando checado */
+}
+
+
+.group-details table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  overflow: hidden; /* Para que o border-radius afete as bordas da tabela */
+}
+
+.group-details th,
+.group-details td {
+  padding: 0.8rem 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.group-details th {
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.group-details tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.group-details tr:hover {
+  background: rgba(255, 255, 255, 0.1); /* Efeito hover nas linhas da tabela */
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+  .container {
+    padding: 1rem;
+  }
+  .group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px; /* Espaço entre os itens empilhados */
+  }
+
+  .group-actions {
+    margin-top: 10px;
+    width: 100%;
+    justify-content: space-between;
+  }
+   .group-info {
+    flex-direction: column; /* Empilha os totais em telas menores */
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+
+.search-container {
+  margin: 1.5rem 0;
+  padding: 0.5rem;
+}
+
+.search-input-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary);
+}
+
+#searchInput {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 2.5rem; /* Padding esquerdo para o ícone */
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(64, 237, 58, 0.2);
+}
+
+#searchResults {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.process-more-container {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Badge para Dinâmico (Verde - Padrão) */
+.wave-badge {
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  padding: 6px 14px; /* Aumentado padding */
+  border-radius: 18px; /* Mais arredondado */
+  font-size: 0.9rem; /* Levemente maior */
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Sombra sutil */
+}
+
+/* Badge específico para Reabastecimento (Azul) */
+.wave-badge-reabastecimento {
+  background: linear-gradient(45deg, var(--blue-gradient-start), var(--blue-gradient-end));
+  /* Herda padding, border-radius, font-size, color, font-weight e box-shadow do .wave-badge se não especificado aqui */
+}
+
+
+.finalized-card {
+  opacity: 0.7; /* Levemente mais sutil */
+  border-left: 5px solid var(--secondary); /* Borda verde para Dinâmico finalizado */
+}
+
+.finalized-card.reabastecimento-card-finalized {
+    border-left-color: var(--blue-gradient-end); /* Borda azul para Reabastecimento finalizado */
+}
+
+
+/* Estilo comum para os botões de exportação */
+.btnExportar {
+  background: linear-gradient(45deg, #4a5568, #2d3748); /* Gradiente cinza escuro */
+  color: white;
+  padding: 8px 12px; /* Ajuste de padding */
+  border: none;
+  border-radius: 8px; /* Bordas mais arredondadas */
+  cursor: pointer;
+  font-size: 0.9rem; /* Tamanho da fonte */
+}
+
+.btnExportar:hover {
+  background: linear-gradient(45deg, #2d3748, #1a202c); /* Efeito hover mais escuro */
+}
+
+.btnExportar i {
+  margin-right: 5px; /* Espaço entre ícone e texto */
+}
+
+
+/* Estilo para o overlay do pop-up (fundo escurecido) */
+.custom-popup {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Mais escuro */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s; /* Atraso na remoção da visibilidade */
+}
+
+.custom-popup:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease;
+}
+
+.custom-popup-content {
+  background: var(--background);
+  padding: 30px; /* Mais padding */
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6); /* Sombra mais forte */
+  width: 90%;
+  max-width: 480px; /* Um pouco maior */
+  text-align: center;
+  position: relative;
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); /* Efeito de mola */
+}
+
+.custom-popup:not(.hidden) .custom-popup-content {
+  transform: scale(1);
+}
+
+.custom-popup-close-btn {
+  position: absolute;
+  top: 15px; /* Ajuste de posição */
+  right: 20px; /* Ajuste de posição */
+  font-size: 30px;
+  font-weight: bold;
+  color: var(--text);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.custom-popup-close-btn:hover {
+  color: var(--primary);
+  transform: rotate(90deg); /* Efeito de rotação */
+}
+
+.custom-popup-icon {
+  font-size: 3.5rem; /* Ícone maior */
+  margin-bottom: 20px;
+}
+
+.custom-popup-icon .fa-triangle-exclamation { color: #f8bb86; }
+.custom-popup-icon .fa-circle-check { color: var(--secondary); }
+.custom-popup-icon .fa-circle-xmark { color: #f27474; }
+.custom-popup-icon .fa-circle-info { color: #75c синхронноef; } /* Cor para info */
+
+
+.custom-popup-content p {
+  font-size: 1.15rem; /* Texto da mensagem um pouco maior */
+  color: var(--text);
+  margin-bottom: 25px;
+  line-height: 1.7;
+}
+
+.custom-popup-ok-btn {
+  padding: 12px 30px;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05rem; /* Texto do botão um pouco maior */
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.custom-popup-ok-btn:hover {
+  transform: translateY(-3px) scale(1.05); /* Efeito de elevação e zoom */
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+}

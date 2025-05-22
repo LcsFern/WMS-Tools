@@ -1,0 +1,49 @@
+---
+layout: default
+title: "E573 Hub - Picking & Reabastecimento"
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>E573 Hub - Picking & Reabastecimento</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1><i class="fa-solid fa-shelves"></i> Dinâmicos & Reabastecimento</h1>
+      <section class="import-section" id="importSection">
+        <h2> importar dados   <i class="fa-solid fa-file-xls"></i></h2>
+        <textarea id="movimentacaoInput" placeholder="Cole aqui os dados do Excel (Dinâmico ou Reabastecimento)..."></textarea>
+      </section>
+      <div class="process-more-container hidden" id="processMoreContainer">
+        <button id="btnProcessarMais"><i class="fa-solid fa-plus-circle"></i> Processar Mais Dados</button>
+      </div>
+      <div class="search-container hidden" id="searchContainer">
+        <div class="search-input-container">
+          <i class="fa-solid fa-search search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Pesquisar etiqueta, produto...">
+          <span id="searchResults"></span>
+        </div>
+      </div>
+      <section id="movimentacoesContainer" class="hidden">
+        <h2>Operações Processadas</h2>
+        <div id="movimentacoesList"></div>
+      </section>
+    </div>
+    <script src="script.js"></script>
+    <div id="customAlertPopup" class="custom-popup hidden">
+      <div class="custom-popup-content">
+        <span class="custom-popup-close-btn">&times;</span>
+        <div id="customAlertIcon" class="custom-popup-icon"></div>
+        <p id="customAlertMessage"></p>
+        <button id="customAlertOkButton" class="custom-popup-ok-btn">OK</button>
+      </div>
+    </div>
+  </body>
+</html>
