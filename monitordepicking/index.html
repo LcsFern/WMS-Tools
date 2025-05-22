@@ -9,8 +9,6 @@ title: "E573 Painel - pendencias de picking"
   <meta charset="UTF-8">
   <title>Monitor de Picking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Font Awesome para ícones -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.4.2/css/all.css" />
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -25,11 +23,9 @@ title: "E573 Painel - pendencias de picking"
         id="csvContent" 
         placeholder=" Cole o CSV do Monitor de Picking"
       ></textarea>
-      <!-- Botão "Importar via Conteúdo" removido -->
-    </div>
+      </div>
 
     <div id="results">
-      <!-- Seção: Resumo Geral -->
       <div class="section" id="resumoGeralSection">
         <h2>
           <i class="fas fa-chart-pie"></i>
@@ -60,12 +56,10 @@ title: "E573 Painel - pendencias de picking"
         </div>
       </div>
 
-      <!-- Seção: Separadores Ativos (com filtro de temperatura e container para inativos) -->
       <div class="section" id="activeSeparatorsSection">
         <h2>
           <i class="fas fa-users-cog"></i>
           Separadores Ativos
-          <!-- Filtro para temperatura -->
           <select id="activeFilterTemp" class="filter-select">
             <option value="Todos">TODOS</option>
             <option value="CONGELADO">CONGELADO</option>
@@ -89,16 +83,13 @@ title: "E573 Painel - pendencias de picking"
           </thead>
           <tbody id="activeSeparatorsBody"></tbody>
         </table>
-        <!-- Container para os separadores inativos (apresentados somente quando existirem resultados) -->
         <div id="inactiveSeparatorsContainer"></div>
       </div>
 
-      <!-- Seção: Cargas Pendentes com filtro de temperatura -->
       <div class="section" id="emptyLoadsSection">
         <h2>
           <i class="fas fa-truck-loading"></i>
           Cargas Pendentes (Unificadas FIXO + VARIÁVEL)
-          <!-- Filtro para temperatura -->
           <select id="loadFilterTemp" class="filter-select">
             <option value="Todos">TODOS</option>
             <option value="CONGELADO">CONGELADO</option>
