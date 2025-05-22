@@ -89,10 +89,11 @@ title: "WMS Shelf Life"
           <label for="shelfPercent"><i class="fas fa-percentage"></i> Porcentagem de Shelf Consumido</label>
           <div class="slider-container">
             <input type="range" id="shelfPercent" min="0" max="100" value="50" step="1" oninput="updatePercentValue()">
+            <input type="number" id="percentInput" min="0" max="100" value="50" class="percent-input" oninput="updatePercentFromInput()">
             <span id="percentValue" class="percent-value">50%</span>
           </div>
         </div>
-        
+
         <div class="button-group">
           <button class="button-back" onclick="goToStep(1)">
             <i class="fas fa-arrow-left"></i> Voltar

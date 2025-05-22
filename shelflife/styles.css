@@ -289,6 +289,15 @@ button:disabled {
   align-items: center;
 }
 
+.percent-input {
+  width: 40px;
+  margin-left: 10px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  text-align: center;
+}
+
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -460,7 +469,7 @@ input[type="range"]::-moz-range-thumb {
 /* Autocomplete */
 #autocomplete-list {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   width: 100%;
   background: var(--background);

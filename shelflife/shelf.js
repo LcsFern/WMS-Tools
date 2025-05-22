@@ -69,6 +69,13 @@ function updatePercentValue() {
   document.getElementById('percentValue').textContent = percent + '%';
 }
 
+function updatePercentFromInput() {
+  const percentInput = document.getElementById('percentInput').value;
+  const percent = Math.max(0, Math.min(100, percentInput)); // Garante que o valor esteja entre 0 e 100
+  document.getElementById('shelfPercent').value = percent;
+  document.getElementById('percentValue').textContent = percent + '%';
+}
+
 // Função de autocompletar com preenchimento automático do nome
 function autocompleteProduct() {
   const input = document.getElementById("productCode");
@@ -168,7 +175,7 @@ function calculateFromPercent() {
     return;
   }
 
-  const shelfPercent = parseInt(document.getElementById("shelfPercent").value);
+  const shelfPercent = parseInt(document.getElementById("percentInput").value);
 
   // Calcula a data de fabricação baseada na porcentagem 
   const today = new Date();
@@ -197,24 +204,24 @@ function displayResults(product, manufactureDate, expirationDate, totalValidity,
   // Intervalos de shelf consumido e status
   if (usedShelfPercentage < 32) {
     statusClass = "green";
-    statusText = "Válido";
+    statusText = "SHELF VERDE";
     statusColor = "#34c759"; // Verde acento
   } else if (usedShelfPercentage < 60) {
     statusClass = "yellow";
-    statusText = "Próximo da Validade";
+    statusText = "SHELF AMARELO";
     statusColor = "#ffe600"; // Amarelo
   } else if (usedShelfPercentage < 80) {
     statusClass = "orange";
-    statusText = "Perto de Expirar";
+    statusText = "SHELF LARANJA";
     statusColor = "#ff9100"; // Laranja
   } else if (usedShelfPercentage < 100) {
     statusClass = "red";
-    statusText = "DATA CRÍTICA!!!";
+    statusText = "SHELF VERMELHO";
     statusColor = "#ff4444"; // Vermelho
   } else {
     statusClass = "red";
     statusText = "Produto Vencido";
-    statusColor = "#ff4444"; // Vermelho
+    statusColor = "#b80000"; // Vermelho sangue
   }
 
   // Atualiza os elementos com os resultados
