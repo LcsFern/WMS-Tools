@@ -243,20 +243,21 @@ function agruparMovimentacoes(movimentacoes) {
 
 function extrairChaveOrdenacao(origem) {
   if (!origem || typeof origem !== 'string') {
-    return { camera: Infinity, rua: 'ZZZ', quadra: Infinity, numero: Infinity };
+    return { camera: Infinity, rua: 'Z', quadra: Infinity, numero: Infinity };
   }
   const str = origem.toUpperCase();
-  const match = str.match(/C(\d+)([A-Z]+)(Q(\d+))?(N(\d+))?/i);
-
+  const regex = /C(\d{2})([A-Z])Q(\d{2})N(\d+)/i;
+  const match = str.match(regex);
   if (match) {
     return {
-      camera: parseInt(match[1], 10),
-      rua:    match[2],
-      quadra: match[4] ? parseInt(match[4], 10) : 0,
-      numero: match[6] ? parseInt(match[6], 10) : 0
+      camera: parseInt(match[1], 10),    // ex: "03" → 3
+      rua:    match[2],                  // ex: "C"
+      quadra: parseInt(match[3], 10),    // ex: "02" → 2, "36" → 36
+      numero: parseInt(match[4], 10)     // ex: "2"  → 2
     };
   }
-  const shortMatch = str.match(/C(\d+)([A-Z]+)/i);
+  // Se não achar Q/N, ao menos captura Cxx e letra
+  const shortMatch = str.match(/C(\d{2})([A-Z])/i);
   if (shortMatch) {
     return {
       camera: parseInt(shortMatch[1], 10),
@@ -265,7 +266,8 @@ function extrairChaveOrdenacao(origem) {
       numero: 0
     };
   }
-  return { camera: Infinity, rua: 'ZZZ', quadra: Infinity, numero: Infinity };
+  // Qualquer outro caso vai para o fim
+  return { camera: Infinity, rua: 'Z', quadra: Infinity, numero: Infinity };
 }
 
 function compararOrigem(a, b) {
