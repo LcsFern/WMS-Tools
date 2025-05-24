@@ -80,6 +80,7 @@ function processarMovimentacao(rawText) {
     return;
   }
 
+  // Validação de consistência de tipos
   for (let i = 0; i < dadosLinhas.length; i++) {
     const cols = dadosLinhas[i].split('\t');
     if (cols.length <= COLUNA_TIPO_INDEX) {
@@ -122,11 +123,20 @@ function processarMovimentacao(rawText) {
 
   let movimentacoesAgrupadasDoPaste = agruparMovimentacoes(movimentacoesTemp);
 
+  // NOVA LÓGICA: Buscar onda ativa (não finalizada) ou criar nova
+  let currentOndasArray = operationType === 'reabastecimento' ? ondasReabastecimento : ondasDinamico;
+  let localStorageKey = operationType === 'reabastecimento' ? 'reaba' : 'ondasdin';
+  
+  // Encontra a onda ativa (não finalizada) do tipo atual
+  let ondaAtiva = currentOndasArray.find(onda => !isOndaFinalizada(onda));
+  
   let todasAsMovimentacoesExistentesAnteriores;
-  if (operationType === 'reabastecimento') {
-    todasAsMovimentacoesExistentesAnteriores = ondasReabastecimento.flatMap(onda => [...onda.congelado, ...onda.resfriado]);
+  if (ondaAtiva) {
+    // Se existe onda ativa, verificar duplicatas apenas nela
+    todasAsMovimentacoesExistentesAnteriores = [...ondaAtiva.congelado, ...ondaAtiva.resfriado];
   } else {
-    todasAsMovimentacoesExistentesAnteriores = ondasDinamico.flatMap(onda => [...onda.congelado, ...onda.resfriado]);
+    // Se não existe onda ativa, verificar duplicatas em todas as ondas anteriores
+    todasAsMovimentacoesExistentesAnteriores = currentOndasArray.flatMap(onda => [...onda.congelado, ...onda.resfriado]);
   }
 
   let numeroDeDuplicadosIgnorados = 0;
@@ -139,7 +149,7 @@ function processarMovimentacao(rawText) {
     );
 
     if (isDuplicate) {
-      console.warn(`Item duplicado (tipo: ${operationType}, já existente em onda anterior): Etiqueta ${novaMov.etiquetaPalete}, Produto ${novaMov.codProduto}, Origem ${novaMov.origem}. Não será carregado.`);
+      console.warn(`Item duplicado (tipo: ${operationType}): Etiqueta ${novaMov.etiquetaPalete}, Produto ${novaMov.codProduto}, Origem ${novaMov.origem}. Não será carregado.`);
       numeroDeDuplicadosIgnorados++;
       return false;
     }
@@ -147,73 +157,70 @@ function processarMovimentacao(rawText) {
   });
 
   if (movimentacoesAgrupadasDoPaste.length > 0 && movimentacoesRealmenteNovas.length === 0 && numeroDeDuplicadosIgnorados > 0) {
-    showCustomAlert(`Todos os ${numeroDeDuplicadosIgnorados} ite(ns) colado(s) já existem em ondas anteriores de ${operationType} e não foram carregados novamente.`, 'warning');
+    showCustomAlert(`Todos os ${numeroDeDuplicadosIgnorados} ite(ns) colado(s) já existem na onda atual/anteriores de ${operationType} e não foram carregados novamente.`, 'warning');
     document.getElementById('movimentacaoInput').value = '';
     return;
   }
-   if (numeroDeDuplicadosIgnorados > 0) {
-    showCustomAlert(`${numeroDeDuplicadosIgnorados} item(ns) duplicado(s) foram encontrados (já existiam em ondas anteriores de ${operationType}) e não foram carregados novamente.`, 'info');
+  
+  if (numeroDeDuplicadosIgnorados > 0) {
+    showCustomAlert(`${numeroDeDuplicadosIgnorados} item(ns) duplicado(s) foram encontrados e não foram carregados novamente.`, 'info');
   }
 
   if (movimentacoesRealmenteNovas.length === 0) {
-    showCustomAlert(`Nenhum item novo para adicionar para ${operationType} (após verificação de duplicatas e regras de categoria).`, 'info');
+    showCustomAlert(`Nenhum item novo para adicionar para ${operationType} (após verificação de duplicatas).`, 'info');
     document.getElementById('movimentacaoInput').value = '';
     return;
   }
 
-  const dataCriacaoOnda = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  let novaOndaNumero;
-  let currentOndasArray;
-  let localStorageKey;
+  // Se não existe onda ativa, criar nova
+  if (!ondaAtiva) {
+    const dataCriacaoOnda = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    let novaOndaNumero;
 
-  if (operationType === 'reabastecimento') {
-    ondaAtualReabastecimento++;
-    novaOndaNumero = ondaAtualReabastecimento;
-    currentOndasArray = ondasReabastecimento;
-    localStorageKey = 'reaba';
-  } else {
-    ondaAtualDinamico++;
-    novaOndaNumero = ondaAtualDinamico;
-    currentOndasArray = ondasDinamico;
-    localStorageKey = 'ondasdin';
+    if (operationType === 'reabastecimento') {
+      ondaAtualReabastecimento++;
+      novaOndaNumero = ondaAtualReabastecimento;
+    } else {
+      ondaAtualDinamico++;
+      novaOndaNumero = ondaAtualDinamico;
+    }
+
+    ondaAtiva = {
+      numero: novaOndaNumero,
+      congelado: [],
+      resfriado: [],
+      exportado: { congelado: false, resfriado: false },
+      dataCriacao: dataCriacaoOnda,
+      tipoOperacao: operationType
+    };
+
+    currentOndasArray.push(ondaAtiva);
   }
 
-  const novaOnda = {
-    numero: novaOndaNumero,
-    congelado: [],
-    resfriado: [],
-    exportado: { congelado: false, resfriado: false },
-    dataCriacao: dataCriacaoOnda,
-    tipoOperacao: operationType
-  };
-
+  // Adicionar novos itens à onda ativa
   movimentacoesRealmenteNovas.forEach(item => {
     const origem = item.origem || "";
     if (['C01', 'C02', 'C03'].includes(origem.slice(0, 3).toUpperCase())) {
-      novaOnda.congelado.push(item);
+      ondaAtiva.congelado.push(item);
     } else if (origem.slice(0, 3).toUpperCase() === 'C04') {
-      novaOnda.resfriado.push(item);
+      ondaAtiva.resfriado.push(item);
     }
   });
 
-  if (novaOnda.congelado.length === 0 && novaOnda.resfriado.length === 0) {
-    showCustomAlert(`Nenhuma movimentação válida (para ${operationType}, após categorização por temperatura) encontrada para criar uma nova onda.`, 'warning');
+  if (ondaAtiva.congelado.length === 0 && ondaAtiva.resfriado.length === 0) {
+    showCustomAlert(`Nenhuma movimentação válida encontrada para ${operationType}.`, 'warning');
     document.getElementById('movimentacaoInput').value = '';
-    if (operationType === 'reabastecimento') {
-      ondaAtualReabastecimento--;
-    } else {
-      ondaAtualDinamico--;
-    }
     return;
   }
 
-  novaOnda.congelado.sort(compararOrigem);
-  novaOnda.resfriado.sort(compararOrigem);
+  // Reordenar os itens
+  ondaAtiva.congelado.sort(compararOrigem);
+  ondaAtiva.resfriado.sort(compararOrigem);
 
-  currentOndasArray.push(novaOnda);
+  // Salvar no localStorage
   localStorage.setItem(localStorageKey, JSON.stringify(currentOndasArray));
 
-  //showCustomAlert(`Onda ${novaOndaNumero} de ${operationType} processada com sucesso! ${novaOnda.congelado.length} congelado(s), ${novaOnda.resfriado.length} resfriado(s).`, 'success');
+
   exibirMovimentacoes();
   mostrarBarraPesquisa();
   ocultarImportacaoExibirMais();
