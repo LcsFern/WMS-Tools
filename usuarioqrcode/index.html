@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de QR Code Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+
+  <style>
+    :root {
+      --primary: #008d4c;
+      --secondary: #00a65a;
+      --accent: #34c759;
+      --bg: #0f172a;
+      --glass: rgba(255, 255, 255, 0.05);
+      --text-main: #f8fafc;
+      --text-light: #e0e0e0;
+      --text-muted: #c0c0c0;
+      --danger: #ff4d4f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .container {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .field {
+      margin-bottom: 1.2rem;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      color: var(--text-light);
+    }
+
+    input {
+      width: 100%;
+      padding: 0.7rem 2.5rem 0.7rem 0.7rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      background-color: rgba(255,255,255,0.08);
+      color: var(--text-main);
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0;
+      margin: 0;
+      line-height: 1;
+      height: auto;
+      width: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.8rem 1.6rem;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .qr-result {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    #qrcode {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      display: inline-block;
+    }
+
+    /* .info removido para não exibir texto abaixo do QR Code */
+
+    .success {
+      margin-top: 1rem;
+      color: var(--accent);
+    }
+
+    .icon {
+      font-size: 3.2rem;
+    }
+
+    #salvar-btn {
+      display: none;
+      margin-top: 1rem;
+      background: linear-gradient(90deg, var(--accent), var(--secondary));
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--danger);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      z-index: 9999;
+      font-size: 0.95rem;
+      animation: fadein 0.3s ease, fadeout 0.3s ease 2.7s;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; bottom: 10px; }
+      to { opacity: 1; bottom: 20px; }
+    }
+
+    @keyframes fadeout {
+      from { opacity: 1; bottom: 20px; }
+      to { opacity: 0; bottom: 10px; }
+    }
+  </style>
+
+  <!-- Biblioteca QRCode.js -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+
+  <h1><i class="fas fa-qrcode icon"></i> Gerador de QR Code Login</h1>
+
+  <div class="container">
+    <!-- Campo de usuário -->
+    <div class="field">
+      <label for="usuario"><i class="fas fa-user"></i> Usuário</label>
+      <input type="text" id="usuario" placeholder="Digite o usuário" autocomplete="off">
+    </div>
+
+    <!-- Campo de senha com toggle de exibição -->
+    <div class="field">
+      <label for="senha"><i class="fas fa-lock"></i> Senha</label>
+      <input type="password" id="senha" placeholder="Digite a senha">
+      <button type="button" class="toggle-password" onclick="toggleSenha()">
+        <i class="fas fa-eye" id="icone-olho"></i>
+      </button>
+    </div>
+
+    <!-- Botão para gerar QR Code -->
+    <button onclick="gerarQRCode()">
+      <i class="fas fa-qrcode"></i> Gerar QR Code
+    </button>
+
+    <!-- Área de resultado do QR Code -->
+    <div class="qr-result" id="resultado" style="display: none;">
+      <div id="qrcode"></div>
+      <!-- Texto removido para não exibir usuário e senha em texto puro -->
+      <div class="success"><i class="fas fa-check-circle"></i> QR Code gerado com sucesso!</div>
+      <button id="salvar-btn" onclick="salvarQRCode()">
+        <i class="fas fa-download"></i> Salvar como imagem
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Alterna entre mostrar e ocultar a senha
+    function toggleSenha() {
+      const senhaInput = document.getElementById('senha');
+      const icone = document.getElementById('icone-olho');
+      if (senhaInput.type === 'password') {
+        senhaInput.type = 'text';
+        icone.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        senhaInput.type = 'password';
+        icone.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    // Exibe toast personalizado de erro
+    function mostrarToast(mensagem) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = mensagem;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Gera o QR Code com os dados + TAB final para coletores antigos
+    function gerarQRCode() {
+      const usuario = document.getElementById('usuario').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+
+      if (!usuario || !senha) {
+        mostrarToast("Preencha usuário e senha.");
+        return;
+      }
+
+      // Mantém o TAB (\t) entre usuário e senha e TAB final para o coletor agir como ENTER/TAB
+      const conteudo = `${usuario}\t${senha}\t`;
+
+      const qrDiv = document.getElementById('qrcode');
+      qrDiv.innerHTML = "";
+
+      new QRCode(qrDiv, {
+        text: conteudo,
+        width: 200,
+        height: 200,
+        colorDark: "#f8fafc",
+        colorLight: "#0f172a",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // Exibe area de resultado e botão de salvar
+      document.getElementById('resultado').style.display = 'block';
+      document.getElementById('salvar-btn').style.display = 'inline-block';
+      document.getElementById('salvar-btn').dataset.usuario = usuario;
+
+      // Limpa os campos para próxima geração
+      document.getElementById('usuario').value = "";
+      document.getElementById('senha').value = "";
+      document.getElementById('usuario').focus();
+    }
+
+    // Salva o QR gerado como imagem PNG
+    function salvarQRCode() {
+      const canvas = document.querySelector('#qrcode canvas');
+      const usuario = document.getElementById('salvar-btn').dataset.usuario || 'usuario';
+
+      if (canvas) {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL("image/png");
+        link.download = `usuario-${usuario}.png`;
+        link.click();
+      } else {
+        mostrarToast("QR Code não encontrado.");
+      }
+    }
+  </script>
+</body>
+</html>
